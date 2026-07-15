@@ -169,9 +169,16 @@ function ChatThread({ channel }: { channel: ChatChannel }): JSX.Element {
   const { data, isLoading, isError, error, refetch } = useChatMessages(channel.id)
   const queryClient = useQueryClient()
   const scrollRef = useRef<HTMLDivElement>(null)
+  const nearBottomRef = useRef(true)
+  const lastChannelRef = useRef(channel.id)
   const messages = data?.messages ?? []
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+
+  function onScroll(): void {
+    const el = scrollRef.current
+    if (el) nearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120
+  }
 
   async function send(): Promise<void> {
     const body = text.trim()
@@ -195,10 +202,18 @@ function ChatThread({ channel }: { channel: ChatChannel }): JSX.Element {
     }
   }
 
-  // Jump to the newest message whenever the channel or message set changes.
+  // Auto-scroll to the newest message on channel switch, or when new messages
+  // arrive only if the reader was already near the bottom — so polling doesn't
+  // yank someone who scrolled up to read history.
   useLayoutEffect(() => {
     const el = scrollRef.current
-    if (el) el.scrollTop = el.scrollHeight
+    if (!el) return
+    const channelChanged = lastChannelRef.current !== channel.id
+    lastChannelRef.current = channel.id
+    if (channelChanged || nearBottomRef.current) {
+      el.scrollTop = el.scrollHeight
+      nearBottomRef.current = true
+    }
   }, [channel.id, messages.length])
 
   return (
@@ -208,7 +223,7 @@ function ChatThread({ channel }: { channel: ChatChannel }): JSX.Element {
         {channel.description && <span className={styles.threadDesc}>{channel.description}</span>}
       </header>
 
-      <div className={styles.messages} ref={scrollRef}>
+      <div className={styles.messages} ref={scrollRef} onScroll={onScroll}>
         {isLoading ? (
           <Spinner label="加载消息…" />
         ) : isError ? (
