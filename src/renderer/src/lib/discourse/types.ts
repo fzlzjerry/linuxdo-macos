@@ -65,6 +65,10 @@ export interface Category {
   name: string
   color: string
   text_color?: string
+  /** linux.do sets 'icon' (Font Awesome name in `icon`) or 'emoji'; default 'square'. */
+  style_type?: 'square' | 'icon' | 'emoji'
+  icon?: string | null
+  emoji?: string | null
   slug: string
   topic_count: number
   post_count: number
@@ -74,6 +78,10 @@ export interface Category {
   read_restricted?: boolean
   position?: number
   topics_week?: number
+  has_children?: boolean
+  subcategory_ids?: number[]
+  /** Embedded child categories (linux.do's Lv1/Lv2/Lv3) when include_subcategories=true. */
+  subcategory_list?: Category[]
 }
 
 export interface CategoryListResponse {
