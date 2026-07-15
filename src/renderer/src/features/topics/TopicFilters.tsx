@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, X } from 'lucide-react'
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
 import { SpriteIcon } from '../../components/ui/SpriteIcon'
@@ -35,11 +36,14 @@ export function TopicFilters({ value, onChange }: Props): JSX.Element {
 function FilterPopover({
   open,
   anchor,
+  triggerRef,
   onClose,
   children
 }: {
   open: boolean
   anchor: { left: number; top: number } | null
+  /** Clicks on the trigger must not count as "outside" (it toggles itself). */
+  triggerRef: RefObject<HTMLElement>
   onClose: () => void
   children: ReactNode
 }): JSX.Element | null {
@@ -48,7 +52,8 @@ function FilterPopover({
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent): void => {
-      if (ref.current?.contains(e.target as Node)) return
+      const t = e.target as Node
+      if (ref.current?.contains(t) || triggerRef.current?.contains(t)) return
       onClose()
     }
     const onKey = (e: KeyboardEvent): void => {
@@ -72,10 +77,12 @@ function FilterPopover({
       window.removeEventListener('scroll', onScroll, true)
       window.removeEventListener('resize', onClose)
     }
-  }, [open, onClose])
+  }, [open, onClose, triggerRef])
 
   if (!open || !anchor) return null
-  return (
+  // Portaled to <body>: the toolbar's backdrop-filter turns it into the
+  // containing block for fixed descendants, which would shift coordinates.
+  return createPortal(
     <div
       ref={ref}
       className={styles.pop}
@@ -83,7 +90,8 @@ function FilterPopover({
       data-tauri-drag-region="false"
     >
       {children}
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -179,7 +187,7 @@ function CategoryFilter({ value, onChange }: Props): JSX.Element {
         )}
       </button>
 
-      <FilterPopover open={open} anchor={anchor} onClose={() => setOpen(false)}>
+      <FilterPopover open={open} anchor={anchor} triggerRef={btnRef} onClose={() => setOpen(false)}>
         <input
           className={styles.search}
           placeholder="搜索分类"
@@ -291,7 +299,7 @@ function TagFilter({ value, onChange }: Props): JSX.Element {
         )}
       </button>
 
-      <FilterPopover open={open} anchor={anchor} onClose={() => setOpen(false)}>
+      <FilterPopover open={open} anchor={anchor} triggerRef={btnRef} onClose={() => setOpen(false)}>
         <input
           className={styles.search}
           placeholder="搜索标签"
