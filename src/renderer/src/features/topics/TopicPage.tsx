@@ -11,7 +11,7 @@ import { DiscardBar, useDiscardGuard } from '../../components/composer/useDiscar
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
 import { Tag } from '../../components/ui/Tag'
 import { SpriteIcon } from '../../components/ui/SpriteIcon'
-import { useQuery } from '@tanstack/react-query'
+import { useTagIcons } from '../../lib/tagIcons'
 import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { ErrorState, Spinner } from '../../components/ui/states'
 import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
@@ -282,12 +282,7 @@ export function TopicPage(): JSX.Element {
   const canPost = topic?.details?.can_create_post !== false && !topic?.closed
 
   const tagNames = (topic?.tags ?? []).map(tagText)
-  const { data: tagIcons } = useQuery({
-    queryKey: ['tag-icons', ...tagNames],
-    queryFn: () => discourse.tagIcons(tagNames),
-    enabled: tagNames.length > 0,
-    staleTime: 24 * 60 * 60 * 1000
-  })
+  const tagIcons = useTagIcons(tagNames)
 
   const toolbar = (
     <Toolbar
@@ -332,7 +327,7 @@ export function TopicPage(): JSX.Element {
               <CategoryBadge categoryId={topic.category_id} size="md" />
               {topic.tags?.map((t) => (
                 <Tag key={tagKey(t)}>
-                  <SpriteIcon name={tagIcons?.[tagText(t)]} size={12} />
+                  <SpriteIcon name={tagIcons[tagText(t)]} size={12} />
                   {tagText(t)}
                 </Tag>
               ))}

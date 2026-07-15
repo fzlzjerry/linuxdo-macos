@@ -8,36 +8,23 @@
   outline-offset: calc(-1 * var(--ring-w));
 }
 
-.indicator {
-  width: 8px;
-  flex: none;
-  display: flex;
-  justify-content: center;
-}
-.dot {
-  width: 7px;
-  height: 7px;
-  border-radius: var(--r-full);
-  background: var(--accent);
-}
-
 .main {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .titleLine {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-2);
   min-width: 0;
 }
 
 .pin {
-  color: var(--accent);
+  color: var(--ink-3);
   flex: none;
   transform: rotate(45deg);
 }
@@ -52,6 +39,32 @@
   white-space: nowrap;
 }
 
+/* Unread count for tracked topics (blue pill, like the site). */
+.unreadPill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 17px;
+  padding: 0 6px;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Brand-new (unseen) topic marker. */
+.newDot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-full);
+  background: var(--accent);
+}
+
 .metaLine {
   display: flex;
   align-items: center;
@@ -60,38 +73,43 @@
   overflow: hidden;
 }
 
-.author {
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.stats {
+/* Participant avatar stack. */
+.posters {
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
+  gap: 4px;
   flex: none;
-  color: var(--ink-3);
+  min-width: 0;
 }
 
 .stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--fs-xs);
+  flex: none;
+  min-width: 44px;
+  text-align: right;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
   font-variant-numeric: tabular-nums;
-  min-width: 34px;
 }
-.stat svg {
-  opacity: 0.7;
+
+.views {
+  min-width: 52px;
+}
+
+/* Heat tiers for reply/view counts. */
+.warm {
+  color: color-mix(in oklch, var(--warning) 62%, var(--ink-2));
+  font-weight: 550;
+}
+.hot {
+  color: var(--warning);
+  font-weight: 700;
 }
 
 .time {
+  flex: none;
   font-size: var(--fs-xs);
   color: var(--ink-3);
   white-space: nowrap;
-  min-width: 56px;
+  min-width: 52px;
   text-align: right;
 }

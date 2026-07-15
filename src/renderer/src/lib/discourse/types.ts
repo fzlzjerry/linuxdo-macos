@@ -34,6 +34,7 @@ export interface TopicListItem {
   archived?: boolean
   unseen?: boolean
   unread?: number
+  unread_posts?: number
   new_posts?: number
   excerpt?: string
   visible?: boolean
