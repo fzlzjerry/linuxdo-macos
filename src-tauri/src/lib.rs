@@ -501,6 +501,35 @@ async fn auth_logout(app: AppHandle) -> Result<Value, String> {
     Ok(refresh_auth(&app).await)
 }
 
+/// Extract the site's svg icon sprite from the engine webview (which sits on
+/// the linux.do homepage, sprite already loaded and version-correct). The
+/// renderer injects it so `<use href="#icon">` in cooked HTML resolves.
+#[tauri::command]
+async fn svg_sprite(app: AppHandle) -> Result<String, String> {
+    ensure_engine(&app)?;
+    let webview = app
+        .get_webview_window("engine")
+        .ok_or_else(|| "engine webview not available".to_string())?;
+    let state = app.state::<AppState>();
+    let id = state.next_id.fetch_add(1, Ordering::SeqCst);
+    let (tx, rx) = oneshot::channel::<Value>();
+    state.pending.lock().unwrap().insert(id, tx);
+
+    let script = format!(
+        "(function() {{ var el = document.getElementById('svg-sprites'); \
+         try {{ window.__TAURI__.event.emit('bridge:result', {{ id: {id}, ok: true, sprite: el ? el.innerHTML : '' }}); }} catch (e) {{}} }})();"
+    );
+    webview.eval(&script).map_err(|e| e.to_string())?;
+
+    match tokio::time::timeout(Duration::from_secs(10), rx).await {
+        Ok(Ok(v)) => Ok(v.get("sprite").and_then(|s| s.as_str()).unwrap_or("").to_string()),
+        _ => {
+            state.pending.lock().unwrap().remove(&id);
+            Ok(String::new())
+        }
+    }
+}
+
 #[tauri::command]
 async fn open_external(app: AppHandle, url: String) -> Result<(), String> {
     if url.starts_with("http://") || url.starts_with("https://") {
@@ -681,6 +710,7 @@ pub fn run() {
             auth_show_login,
             auth_show_login_webview,
             auth_logout,
+            svg_sprite,
             open_external
         ])
         .run(tauri::generate_context!())

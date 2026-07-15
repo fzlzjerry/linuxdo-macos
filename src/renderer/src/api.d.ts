@@ -18,6 +18,8 @@ export interface LinuxDoApi {
     onNotice(cb: (n: AuthNotice) => void): () => void
   }
   openExternal(url: string): Promise<void>
+  /** The site's svg icon sprite markup, extracted from the engine webview. */
+  svgSprite(): Promise<string>
   window: {
     control(action: WindowControlAction): void
   }

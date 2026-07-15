@@ -48,6 +48,9 @@ const api = {
   openExternal(url: string): Promise<void> {
     return invoke<void>('open_external', { url })
   },
+  svgSprite(): Promise<string> {
+    return invoke<string>('svg_sprite')
+  },
   window: {
     control(action: WindowControlAction): void {
       const w = getCurrentWindow()

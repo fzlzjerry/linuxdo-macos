@@ -190,6 +190,28 @@ export const discourse = {
     })
   },
 
+  /** Per-tag icon lookup via the hashtag API (linux.do assigns FA icons to
+      some tags). Returns tag name → icon name; parsed defensively since the
+      response is keyed by hashtag type. */
+  async tagIcons(tags: string[]): Promise<Record<string, string>> {
+    if (tags.length === 0) return {}
+    const qs = tags.map((t) => `slugs[]=${encodeURIComponent(`${t}::tag`)}`).join('&')
+    const raw = await request<Record<string, unknown>>({ path: `/hashtags.json?${qs}` })
+    const out: Record<string, string> = {}
+    for (const bucket of Object.values(raw ?? {})) {
+      if (!Array.isArray(bucket)) continue
+      for (const h of bucket as Array<Record<string, unknown>>) {
+        if (h?.type === 'category') continue
+        const slug = typeof h?.slug === 'string' ? h.slug : undefined
+        const ref = typeof h?.ref === 'string' ? h.ref.replace(/::tag$/, '') : undefined
+        const icon = typeof h?.icon === 'string' ? h.icon : undefined
+        const key = slug ?? ref
+        if (key && icon) out[key] = icon
+      }
+    }
+    return out
+  },
+
   /** Existing-tag lookup (same endpoint the Discourse composer uses).
       Empty q returns the most-used tags, sorted by topic count. */
   searchTags(q: string, limit = 5): Promise<{ name: string; count: number }[]> {

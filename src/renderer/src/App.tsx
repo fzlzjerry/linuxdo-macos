@@ -18,6 +18,7 @@ import { LightboxHost } from './components/ui/Lightbox'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { initAuthBridge } from './store/auth'
 import { initSettings } from './store/settings'
+import { ensureSvgSprite } from './lib/svgSprite'
 import { useGlobalShortcuts } from './lib/shortcuts'
 import { useBackNav } from './lib/useBackNav'
 import styles from './App.module.css'
@@ -80,6 +81,7 @@ function AppShortcuts(): null {
 export function App(): JSX.Element {
   useEffect(() => {
     initSettings()
+    void ensureSvgSprite()
     return initAuthBridge()
   }, [])
 
