@@ -191,6 +191,49 @@
   text-decoration: none;
 }
 
+/* Hashtag/category chips carry an inline icon — keep chip + icon on one line
+   at text scale. */
+.cooked .hashtag-cooked,
+.cooked .hashtag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  vertical-align: -0.125em;
+}
+.cooked .hashtag-cooked svg,
+.cooked .hashtag-cooked img,
+.cooked .hashtag svg,
+.cooked .hashtag img {
+  width: 0.9em;
+  height: 0.9em;
+  flex: none;
+}
+.cooked .hashtag-category-square,
+.cooked .hashtag-color-square {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  flex: none;
+  border-radius: 2px;
+}
+
+/* Discourse inlines svg icons (category icons, quote controls, …) into
+   cooked HTML. Unsized they render viewport-wide — pin them to text scale. */
+.cooked svg.d-icon,
+.cooked svg.fa,
+.cooked svg.svg-icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.125em;
+  fill: currentColor;
+}
+/* Any other unsized inline svg is almost certainly an icon too. */
+.cooked svg:not([width]) {
+  max-width: 1.25em;
+  max-height: 1.25em;
+}
+
 .cooked kbd {
   font-family: var(--font-mono);
   font-size: 0.8em;
