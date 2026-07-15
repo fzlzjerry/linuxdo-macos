@@ -1,19 +1,25 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
+  Award,
   Bell,
+  BookOpenCheck,
   Bookmark,
+  CalendarDays,
   CircleDot,
   FileText,
   Flame,
   LayoutGrid,
   Mail,
+  MessagesSquare,
   Newspaper,
   PenSquare,
   Search,
   Settings,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  Trophy,
+  Users
 } from 'lucide-react'
 import { Avatar } from '../ui/Avatar'
 import { Button } from '../ui/Button'
@@ -47,7 +53,16 @@ export function Sidebar(): JSX.Element {
     { to: '/search', label: '搜索', icon: <Search size={17} /> }
   ]
 
+  const community: NavItem[] = [
+    { to: '/leaderboard', label: '积分榜', icon: <Trophy size={17} /> },
+    { to: '/events', label: '活动', icon: <CalendarDays size={17} /> },
+    { to: '/groups', label: '群组', icon: <Users size={17} /> },
+    { to: '/badges', label: '徽章', icon: <Award size={17} /> }
+  ]
+
   const me: NavItem[] = [
+    { to: '/posted', label: '我的帖子', icon: <MessagesSquare size={17} /> },
+    { to: '/read', label: '已读', icon: <BookOpenCheck size={17} /> },
     { to: '/notifications', label: '通知', icon: <Bell size={17} />, badge: auth.unreadNotifications },
     { to: '/messages', label: '私信', icon: <Mail size={17} />, badge: auth.unreadPersonalMessages },
     { to: '/settings', label: '设置', icon: <Settings size={17} /> }
@@ -81,6 +96,7 @@ export function Sidebar(): JSX.Element {
       <nav className={styles.nav}>
         <Section items={feeds} />
         <Section title="资料库" items={library} />
+        <Section title="社区" items={community} />
         <Section title="我的" items={me} />
       </nav>
 

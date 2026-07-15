@@ -3,23 +3,36 @@ import { Modal } from '../../components/ui/Modal'
 import { Field } from '../../components/ui/Field'
 import { Composer } from '../../components/composer/Composer'
 import { DiscardBar, useDiscardGuard } from '../../components/composer/useDiscardGuard'
+import { RecipientsInput } from './RecipientsInput'
 import { discourse } from '../../lib/discourse/client'
 import { toast } from '../../store/toast'
+import type { DraftContent } from '../../lib/discourse/draftContent'
 import styles from './MessagesPage.module.css'
 
 interface Props {
   open: boolean
   onClose: () => void
   onCreated?: (topicId: number) => void
+  /** Prefill recipients/title/body when resuming a saved draft. */
+  initialDraft?: DraftContent
 }
 
-export function NewMessageModal({ open, onClose, onCreated }: Props): JSX.Element {
+export function NewMessageModal({ open, onClose, onCreated, initialDraft }: Props): JSX.Element {
   const [recipients, setRecipients] = useState('')
   const [title, setTitle] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<{ recipients?: string; title?: string }>({})
   const [bodyDirty, setBodyDirty] = useState(false)
   const guard = useDiscardGuard(open, onClose)
+
+  // Seed fields when opened to resume a draft (normal opens keep prior behavior).
+  useEffect(() => {
+    if (!open || !initialDraft) return
+    setRecipients(initialDraft.recipients ?? '')
+    setTitle(initialDraft.title ?? '')
+    setBodyDirty(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const { setDirty } = guard
   useEffect(() => {
@@ -61,14 +74,12 @@ export function NewMessageModal({ open, onClose, onCreated }: Props): JSX.Elemen
     >
       <div className={styles.fields}>
         <Field label="收件人" error={errors.recipients} required>
-          <input
-            type="text"
+          <RecipientsInput
             value={recipients}
-            placeholder="用户名，用逗号分隔"
             autoFocus
             disabled={submitting}
-            onChange={(e) => {
-              setRecipients(e.target.value)
+            onChange={(v) => {
+              setRecipients(v)
               if (errors.recipients) setErrors((p) => ({ ...p, recipients: undefined }))
             }}
           />
@@ -88,6 +99,7 @@ export function NewMessageModal({ open, onClose, onCreated }: Props): JSX.Elemen
       </div>
 
       <Composer
+        initialValue={initialDraft?.reply ?? ''}
         submitting={submitting}
         submitLabel="发送"
         placeholder="写点什么…（支持 Markdown）"

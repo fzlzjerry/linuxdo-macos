@@ -1,0 +1,88 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-2) 0 var(--sp-6);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  text-align: left;
+  padding: var(--sp-2) var(--sp-5);
+  background: transparent;
+  border: none;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.row:hover {
+  background: var(--surface-hover);
+}
+
+.highlight {
+  background: var(--accent-soft);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  border-bottom: 1px solid var(--border);
+}
+.highlight:hover {
+  background: var(--accent-soft);
+}
+
+.rank {
+  flex: none;
+  width: 30px;
+  text-align: center;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.gold {
+  color: #d4a017;
+}
+.silver {
+  color: #9ca3af;
+}
+.bronze {
+  color: #b45309;
+}
+
+.meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.name {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.handle {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.youTag {
+  flex: none;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  background: var(--surface);
+}
+
+.score {
+  flex: none;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}

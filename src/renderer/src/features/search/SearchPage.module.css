@@ -68,6 +68,69 @@
   color: var(--ink);
 }
 
+.advToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-3);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.advToggle:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.advToggleOn {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.advPanel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+.advField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.advLabel {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.advSelect,
+.advInput {
+  height: 30px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+}
+.advInput {
+  width: 120px;
+}
+.advSelect:focus,
+.advInput:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .results {
   padding-bottom: var(--sp-6);
 }

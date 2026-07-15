@@ -6,6 +6,10 @@ import { TopicListPage } from './features/topics/TopicListPage'
 import { TopicPage } from './features/topics/TopicPage'
 import { CategoriesPage } from './features/categories/CategoriesPage'
 import { CategoryTopicsPage } from './features/categories/CategoryTopicsPage'
+import { LeaderboardPage } from './features/leaderboard/LeaderboardPage'
+import { EventsPage } from './features/events/EventsPage'
+import { BadgesPage } from './features/badges/BadgesPage'
+import { GroupsPage } from './features/groups/GroupsPage'
 import { NotificationsPage } from './features/notifications/NotificationsPage'
 import { SearchPage } from './features/search/SearchPage'
 import { ProfilePage } from './features/users/ProfilePage'
@@ -98,8 +102,14 @@ export function App(): JSX.Element {
           <Route path="/unread" element={<TopicListPage filter="unread" />} />
           <Route path="/hot" element={<TopicListPage filter="hot" />} />
           <Route path="/top" element={<TopicListPage filter="top" />} />
+          <Route path="/posted" element={<TopicListPage filter="posted" />} />
+          <Route path="/read" element={<TopicListPage filter="read" />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/c/:slug/:id" element={<CategoryTopicsPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/badges" element={<BadgesPage />} />
+          <Route path="/groups" element={<GroupsPage />} />
           <Route path="/t/:id" element={<TopicPage />} />
           <Route path="/bookmarks" element={<BookmarksPage />} />
           <Route path="/search" element={<SearchPage />} />

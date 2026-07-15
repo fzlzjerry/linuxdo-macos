@@ -10,6 +10,9 @@ import { LoginGate } from '../../components/ui/LoginGate'
 import { EmptyState, ErrorState, TopicListSkeleton } from '../../components/ui/states'
 import { useDrafts } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
+import { NewTopicModal } from '../../components/composer/NewTopicModal'
+import { NewMessageModal } from '../messages/NewMessageModal'
+import { parseDraftContent } from '../../lib/discourse/draftContent'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
 import { relativeTime } from '../../lib/format'
@@ -37,8 +40,28 @@ export function DraftsPage(): JSX.Element {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
+  const [resume, setResume] = useState<{ kind: 'topic' | 'pm'; draft: DraftItem } | null>(null)
 
   const { data, isLoading, isError, error, refetch } = useDrafts(auth.loggedIn)
+
+  /** Silently drop a draft once its resumed content is posted. */
+  const dropDraft = useCallback(
+    async (draft: DraftItem): Promise<void> => {
+      try {
+        await discourse.deleteDraft(draft.draft_key, draft.sequence)
+        await queryClient.invalidateQueries({ queryKey: ['drafts'] })
+      } catch {
+        /* the fresh post already exists; a stale draft is harmless */
+      }
+    },
+    [queryClient]
+  )
+
+  function openDraft(draft: DraftItem): void {
+    if (draft.draft_key === 'new_topic') setResume({ kind: 'topic', draft })
+    else if (draft.draft_key === 'new_private_message') setResume({ kind: 'pm', draft })
+    else if (draft.topic_id != null) navigate(`/t/${draft.topic_id}`)
+  }
 
   const handleDelete = useCallback(
     async (draft: DraftItem): Promise<void> => {
@@ -93,11 +116,31 @@ export function DraftsPage(): JSX.Element {
               key={d.draft_key}
               draft={d}
               deleting={deleting.has(d.draft_key)}
-              onOpen={() => d.topic_id != null && navigate(`/t/${d.topic_id}`)}
+              onOpen={() => openDraft(d)}
               onDelete={() => void handleDelete(d)}
             />
           ))}
         </div>
+      )}
+
+      {resume?.kind === 'topic' && (
+        <NewTopicModal
+          open
+          initialDraft={parseDraftContent(resume.draft.draft)}
+          onCreated={() => void dropDraft(resume.draft)}
+          onClose={() => setResume(null)}
+        />
+      )}
+      {resume?.kind === 'pm' && (
+        <NewMessageModal
+          open
+          initialDraft={parseDraftContent(resume.draft.draft)}
+          onCreated={() => {
+            void dropDraft(resume.draft)
+            setResume(null)
+          }}
+          onClose={() => setResume(null)}
+        />
       )}
     </PageScaffold>
   )
@@ -114,7 +157,10 @@ function DraftRow({
   onOpen: () => void
   onDelete: () => void
 }): JSX.Element {
-  const clickable = draft.topic_id != null
+  const clickable =
+    draft.topic_id != null ||
+    draft.draft_key === 'new_topic' ||
+    draft.draft_key === 'new_private_message'
   const label = draftLabel(draft.draft_key)
   const title = draft.title?.trim()
   const excerpt = htmlToText(draft.excerpt)

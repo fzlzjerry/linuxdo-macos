@@ -52,6 +52,15 @@ export function useCategories() {
   })
 }
 
+export function useFlagTypes(enabled: boolean) {
+  return useQuery({
+    queryKey: ['flag-types'],
+    queryFn: () => discourse.flagTypes(),
+    enabled,
+    staleTime: 30 * 60_000
+  })
+}
+
 export function useTopic(id: number) {
   return useQuery({
     queryKey: ['topic', id],
@@ -132,5 +141,37 @@ export function useSearch(term: string, enabled: boolean) {
     queryFn: () => discourse.search(term),
     enabled: enabled && term.trim().length > 1,
     staleTime: 30_000
+  })
+}
+
+export function useLeaderboard(id: number, period?: string) {
+  return useQuery({
+    queryKey: ['leaderboard', id, period ?? null],
+    queryFn: () => discourse.leaderboard(id, period),
+    staleTime: 60_000
+  })
+}
+
+export function useEvents() {
+  return useQuery({
+    queryKey: ['events'],
+    queryFn: () => discourse.events(),
+    staleTime: 60_000
+  })
+}
+
+export function useBadges() {
+  return useQuery({
+    queryKey: ['badges'],
+    queryFn: () => discourse.badges(),
+    staleTime: 10 * 60_000
+  })
+}
+
+export function useGroups() {
+  return useQuery({
+    queryKey: ['groups'],
+    queryFn: () => discourse.groups(),
+    staleTime: 10 * 60_000
   })
 }

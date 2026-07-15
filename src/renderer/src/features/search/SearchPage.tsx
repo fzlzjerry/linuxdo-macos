@@ -1,17 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, X } from 'lucide-react'
+import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { Avatar } from '../../components/ui/Avatar'
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
 import { Tag } from '../../components/ui/Tag'
 import { EmptyState, ErrorState, Spinner } from '../../components/ui/states'
-import { useSearch } from '../../lib/discourse/queries'
+import { useCategories, useSearch } from '../../lib/discourse/queries'
 import { useScrollMemory } from '../../lib/useScrollMemory'
 import { useAuth } from '../../store/auth'
 import { relativeTime } from '../../lib/format'
 import { tagKey, tagText } from '../../lib/discourse/types'
+import { buildSearchQuery, type SearchFilters } from './searchQuery'
 import styles from './SearchPage.module.css'
 
 const ENTITIES: Record<string, string> = {
@@ -42,20 +43,49 @@ function toPlainText(html: string | undefined): string {
 
 // Survives unmount so returning to /search restores the last search session.
 let lastSearchInput = ''
+let lastFilters: SearchFilters = {}
+
+const ORDERS: { value: NonNullable<SearchFilters['order']>; label: string }[] = [
+  { value: 'relevance', label: '相关度' },
+  { value: 'latest', label: '最新' },
+  { value: 'likes', label: '最多赞' },
+  { value: 'views', label: '最多浏览' }
+]
+
+const STATUSES: { value: string; label: string }[] = [
+  { value: '', label: '不限' },
+  { value: 'status:solved', label: '已解决' },
+  { value: 'status:unsolved', label: '未解决' },
+  { value: 'status:open', label: '开放中' },
+  { value: 'status:closed', label: '已关闭' },
+  { value: 'in:bookmarks', label: '我的书签' }
+]
 
 export function SearchPage(): JSX.Element {
   const [input, setInput] = useState(lastSearchInput)
-  const [term, setTerm] = useState(lastSearchInput)
+  const [filters, setFilters] = useState<SearchFilters>(lastFilters)
+  const [advanced, setAdvanced] = useState(() => Object.keys(lastFilters).length > 0)
+  const [term, setTerm] = useState(() => buildSearchQuery(lastSearchInput, lastFilters))
   const navigate = useNavigate()
   const auth = useAuth()
   const scrollRef = useRef<HTMLDivElement>(null)
+  const { data: categoriesData } = useCategories()
 
-  // Debounce the raw input into the query term (~350ms).
+  const topCategories = useMemo(
+    () => (categoriesData?.category_list.categories ?? []).filter((c) => !c.parent_category_id),
+    [categoriesData]
+  )
+
+  // Debounce the raw input + filters into the composed query term (~350ms).
   useEffect(() => {
     lastSearchInput = input
-    const id = setTimeout(() => setTerm(input), 350)
+    lastFilters = filters
+    const composed = buildSearchQuery(input, filters)
+    const id = setTimeout(() => setTerm(composed), 350)
     return () => clearTimeout(id)
-  }, [input])
+  }, [input, filters])
+
+  const patch = (p: Partial<SearchFilters>): void => setFilters((f) => ({ ...f, ...p }))
 
   const active = term.trim().length > 1
   const { data, isLoading, isError, error, refetch } = useSearch(term, active)
@@ -93,7 +123,101 @@ export function SearchPage(): JSX.Element {
               <X size={14} />
             </button>
           )}
+          <button
+            type="button"
+            className={`${styles.advToggle} ${advanced ? styles.advToggleOn : ''}`}
+            onClick={() => setAdvanced((v) => !v)}
+            aria-pressed={advanced}
+            aria-label="高级筛选"
+            title="高级筛选"
+          >
+            <SlidersHorizontal size={15} />
+          </button>
         </div>
+
+        {advanced && (
+          <div className={styles.advPanel}>
+            <label className={styles.advField}>
+              <span className={styles.advLabel}>排序</span>
+              <select
+                className={styles.advSelect}
+                value={filters.order ?? 'relevance'}
+                onChange={(e) => patch({ order: e.target.value as SearchFilters['order'] })}
+              >
+                {ORDERS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className={styles.advField}>
+              <span className={styles.advLabel}>状态</span>
+              <select
+                className={styles.advSelect}
+                value={filters.status ?? ''}
+                onChange={(e) => patch({ status: e.target.value })}
+              >
+                {STATUSES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className={styles.advField}>
+              <span className={styles.advLabel}>分类</span>
+              <select
+                className={styles.advSelect}
+                value={filters.categorySlug ?? ''}
+                onChange={(e) => patch({ categorySlug: e.target.value || undefined })}
+              >
+                <option value="">全部</option>
+                {topCategories.map((c) => (
+                  <option key={c.id} value={c.slug}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className={styles.advField}>
+              <span className={styles.advLabel}>用户</span>
+              <input
+                className={styles.advInput}
+                type="text"
+                value={filters.user ?? ''}
+                placeholder="用户名"
+                spellCheck={false}
+                onChange={(e) => patch({ user: e.target.value })}
+              />
+            </label>
+
+            <label className={styles.advField}>
+              <span className={styles.advLabel}>标签</span>
+              <input
+                className={styles.advInput}
+                type="text"
+                value={filters.tag ?? ''}
+                placeholder="标签"
+                spellCheck={false}
+                onChange={(e) => patch({ tag: e.target.value })}
+              />
+            </label>
+
+            <label className={styles.advField}>
+              <span className={styles.advLabel}>此日期后</span>
+              <input
+                className={styles.advInput}
+                type="date"
+                value={filters.after ?? ''}
+                onChange={(e) => patch({ after: e.target.value || undefined })}
+              />
+            </label>
+          </div>
+        )}
       </div>
 
       {!active ? (

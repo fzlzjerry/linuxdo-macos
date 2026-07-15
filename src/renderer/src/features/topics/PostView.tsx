@@ -1,7 +1,20 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bookmark, Link2, Loader2, Pencil, Reply, Trash2 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import {
+  Bookmark,
+  CheckCircle2,
+  Flag,
+  Link2,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Quote,
+  Reply,
+  Trash2
+} from 'lucide-react'
 import { Avatar } from '../../components/ui/Avatar'
+import { Menu, type MenuItem } from '../../components/ui/Menu'
 import { relativeTime } from '../../lib/format'
 import { discourse } from '../../lib/discourse/client'
 import type { Post, UserStatus } from '../../lib/discourse/types'
@@ -13,6 +26,7 @@ import { errorMessage } from '../../lib/errors'
 import { CookedContent } from './CookedContent'
 import { BoostSection } from './BoostSection'
 import { ReactionBar } from './ReactionBar'
+import { FlagModal } from './FlagModal'
 import styles from './PostView.module.css'
 
 /** Discourse trust levels 0–4 → a subtle pill accent. */
@@ -45,13 +59,16 @@ function StatusEmoji({ status }: { status: UserStatus }): JSX.Element | null {
 interface Props {
   post: Post
   onReply?: (post: Post) => void
+  onQuote?: (post: Post, quote: string) => void
   onEdit?: (post: Post) => void
   onDeleted?: () => void
 }
 
-export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Element {
+export function PostView({ post, onReply, onQuote, onEdit, onDeleted }: Props): JSX.Element {
   const auth = useAuth()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const articleRef = useRef<HTMLElement>(null)
   const canVisitProfile = !!post.username && !post.pending
   const visitProfile = (): void => {
     if (canVisitProfile) navigate(`/u/${post.username}`)
@@ -61,6 +78,9 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
   const [bookmarkBusy, setBookmarkBusy] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [accepted, setAccepted] = useState(!!post.accepted_answer)
+  const [solveBusy, setSolveBusy] = useState(false)
+  const [flagOpen, setFlagOpen] = useState(false)
 
   const edited = post.updated_at && post.created_at && post.updated_at !== post.created_at
   const groupTitle = post.user_title || post.primary_group_name
@@ -144,9 +164,55 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
     toast.success('链接已复制')
   }
 
+  function quote(): void {
+    const sel = window.getSelection()
+    const selected =
+      sel && !sel.isCollapsed && articleRef.current?.contains(sel.anchorNode)
+        ? sel.toString().trim()
+        : ''
+    const block = `[quote="${post.username}, post:${post.post_number}, topic:${post.topic_id}"]\n${selected}\n[/quote]\n\n`
+    onQuote?.(post, block)
+  }
+
+  async function toggleSolution(): Promise<void> {
+    if (!guard() || solveBusy) return
+    const next = !accepted
+    setAccepted(next)
+    setSolveBusy(true)
+    try {
+      if (next) await discourse.acceptSolution(post.id)
+      else await discourse.unacceptSolution(post.id)
+      toast.success(next ? '已采纳为答案' : '已取消采纳')
+      // Re-sync the whole topic: accepting shifts the flag off any prior answer.
+      void queryClient.invalidateQueries({ queryKey: ['topic', post.topic_id] })
+    } catch (e) {
+      setAccepted(!next)
+      toast.error(errorMessage(e, '操作失败'))
+    } finally {
+      setSolveBusy(false)
+    }
+  }
+
+  const moreItems: MenuItem[] = [
+    ...(onQuote
+      ? [{ key: 'quote', label: '引用回复', icon: <Quote size={15} />, onSelect: quote }]
+      : []),
+    { key: 'copy', label: '复制链接', icon: <Link2 size={15} />, onSelect: copyLink },
+    {
+      key: 'flag',
+      label: '举报',
+      icon: <Flag size={15} />,
+      danger: true,
+      onSelect: () => {
+        if (guard()) setFlagOpen(true)
+      }
+    }
+  ]
+
   return (
     <article
-      className={`${styles.post} ${post.pending ? styles.pending : ''}`}
+      ref={articleRef}
+      className={`${styles.post} ${post.pending ? styles.pending : ''} ${accepted ? styles.accepted : ''}`}
       id={`post-${post.post_number}`}
     >
       <header className={styles.header}>
@@ -253,9 +319,31 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
           <Bookmark size={15} fill={bookmarked ? 'currentColor' : 'none'} />
         </button>
 
-        <button className={styles.action} onClick={copyLink} title="复制链接" aria-label="复制链接">
-          <Link2 size={15} />
-        </button>
+        {accepted ? (
+          <button
+            className={`${styles.action} ${styles.solved}`}
+            onClick={() => void toggleSolution()}
+            disabled={solveBusy || !post.can_unaccept_answer}
+            title={post.can_unaccept_answer ? '取消采纳' : '已采纳为答案'}
+            aria-label="已采纳为答案"
+          >
+            <CheckCircle2 size={15} fill="currentColor" stroke="var(--surface)" />
+            <span>已采纳</span>
+          </button>
+        ) : (
+          post.can_accept_answer && (
+            <button
+              className={styles.action}
+              onClick={() => void toggleSolution()}
+              disabled={solveBusy}
+              title="采纳为答案"
+              aria-label="采纳为答案"
+            >
+              <CheckCircle2 size={15} />
+              <span>采纳</span>
+            </button>
+          )
+        )}
 
         <span className={styles.spacer} />
 
@@ -281,8 +369,19 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
             {confirmDel && <span>确定？</span>}
           </button>
         )}
+
+        <Menu
+          label="更多操作"
+          triggerClassName={styles.action}
+          trigger={<MoreHorizontal size={15} />}
+          align="end"
+          width={180}
+          items={moreItems}
+        />
       </footer>
       )}
+
+      <FlagModal open={flagOpen} postId={post.id} onClose={() => setFlagOpen(false)} />
     </article>
   )
 }

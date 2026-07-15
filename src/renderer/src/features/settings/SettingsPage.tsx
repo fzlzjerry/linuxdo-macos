@@ -119,6 +119,14 @@ export function SettingsPage(): JSX.Element {
               >
                 在浏览器中打开 linux.do
               </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<ExternalLink size={15} />}
+                onClick={() => void window.api?.openExternal('https://connect.linux.do')}
+              >
+                连接 Connect
+              </Button>
             </div>
           </div>
         </section>

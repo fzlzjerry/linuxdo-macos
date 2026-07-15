@@ -27,6 +27,7 @@ import { LINUXDO_ORIGIN } from '../../lib/discourse/urls'
 import { tagKey, tagText, type Post } from '../../lib/discourse/types'
 import { PostView } from './PostView'
 import { TopicProgress } from './TopicProgress'
+import { TopicNotificationMenu } from './TopicNotificationMenu'
 import { TopicDetailSkeleton } from './TopicDetailSkeleton'
 import styles from './TopicPage.module.css'
 
@@ -206,6 +207,11 @@ export function TopicPage(): JSX.Element {
     setComposer({ mode: 'reply', post })
   }
 
+  function openQuote(post: Post, quote: string): void {
+    if (!requireAuth()) return
+    setComposer({ mode: 'reply', post, draft: quote })
+  }
+
   async function openEdit(post: Post): Promise<void> {
     if (!requireAuth()) return
     try {
@@ -299,6 +305,13 @@ export function TopicPage(): JSX.Element {
               回复
             </Button>
           )}
+          {topic && (
+            <TopicNotificationMenu
+              key={id}
+              topicId={id}
+              initial={topic.details?.notification_level}
+            />
+          )}
           <IconButton label="刷新" onClick={() => void refetch()} disabled={isRefetching}>
             <RefreshCw size={16} className={isRefetching ? 'spin' : undefined} />
           </IconButton>
@@ -359,6 +372,7 @@ export function TopicPage(): JSX.Element {
                   <PostView
                     post={p}
                     onReply={canPost ? openReply : undefined}
+                    onQuote={canPost ? openQuote : undefined}
                     onEdit={(post) => void openEdit(post)}
                     onDeleted={() => setDeleted((s) => new Set(s).add(p.id))}
                   />

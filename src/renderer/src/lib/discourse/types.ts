@@ -158,6 +158,10 @@ export interface Post {
   bookmark_id?: number
   boosts?: Boost[]
   can_boost?: boolean
+  // discourse-solved plugin
+  can_accept_answer?: boolean
+  can_unaccept_answer?: boolean
+  accepted_answer?: boolean
   /** Client-only: an optimistic post awaiting server confirmation. */
   pending?: boolean
 }
@@ -205,6 +209,7 @@ export interface TopicDetail {
     last_poster?: DiscourseUser
     participants?: TopicParticipant[]
     can_create_post?: boolean
+    notification_level?: NotificationLevel
   }
 }
 
@@ -224,7 +229,7 @@ export function tagKey(tag: TagLike): string {
   return typeof tag === 'string' ? tag : String(tag.id ?? tag.slug ?? tag.name)
 }
 
-export type ListingFilter = 'latest' | 'new' | 'unread' | 'top' | 'hot'
+export type ListingFilter = 'latest' | 'new' | 'unread' | 'top' | 'hot' | 'posted' | 'read'
 export type TopPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'all'
 
 // Discourse PostActionType id for a "like".
@@ -327,6 +332,36 @@ export interface Badge {
   image_url?: string
   badge_type_id?: number
   slug?: string
+  grant_count?: number
+  allow_title?: boolean
+}
+export interface BadgeType {
+  id: number
+  name: string
+  sort_order?: number
+}
+export interface BadgesResponse {
+  badges: Badge[]
+  badge_types: BadgeType[]
+}
+
+// ---- Groups directory ----
+export interface GroupItem {
+  id: number
+  name: string
+  full_name?: string | null
+  user_count?: number
+  title?: string | null
+  flair_url?: string | null
+  flair_bg_color?: string | null
+  flair_color?: string | null
+  bio_excerpt?: string | null
+  visibility_level?: number
+}
+export interface GroupsResponse {
+  groups: GroupItem[]
+  total_rows_groups?: number
+  load_more_groups?: string
 }
 /** /u/:username/summary.json topics carry posts_count/like_count — NOT
     reply_count/bumped_at like list topics. */
@@ -409,3 +444,64 @@ export interface DraftsResponse {
 }
 
 export type NotificationLevel = 0 | 1 | 2 | 3 // muted / regular / tracking / watching
+
+// ---- Leaderboard (discourse-gamification) ----
+export interface LeaderboardUser {
+  id: number
+  username: string
+  name?: string
+  avatar_template?: string
+  total_score: number
+  position: number
+}
+export interface LeaderboardResponse {
+  personal?: { user?: LeaderboardUser; position?: number }
+  leaderboard?: {
+    id: number
+    name?: string
+    default_period?: number | string
+    period_filter_disabled?: boolean
+  }
+  users: LeaderboardUser[]
+}
+
+// ---- Events (discourse-calendar / post-event) ----
+export interface EventItem {
+  id: number
+  category_id?: number
+  name?: string | null
+  starts_at: string
+  ends_at?: string | null
+  all_day?: boolean
+  timezone?: string
+  post?: {
+    id: number
+    post_number?: number
+    url?: string
+    category_slug?: string
+    topic?: { id: number; title?: string; fancy_title?: string }
+  }
+}
+export interface EventsResponse {
+  events: EventItem[]
+}
+
+// A flaggable post-action type from /site.json (linux.do adds custom flags like
+// 凑字数 / AIGC未截图 / 违规推广 beyond the vanilla off_topic/inappropriate/spam).
+export interface FlagType {
+  id: number
+  name_key: string
+  name: string
+  description?: string
+  require_message?: boolean
+}
+export interface SiteResponse {
+  post_action_types?: Array<{
+    id: number
+    name_key: string
+    name?: string
+    description?: string
+    is_flag?: boolean
+    require_message?: boolean
+  }>
+}

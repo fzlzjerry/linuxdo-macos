@@ -1,13 +1,19 @@
 import type { DiscourseRequest } from '../../../../shared/api'
 import type {
+  BadgesResponse,
   BookmarksResponse,
   CategoryListResponse,
   DraftsResponse,
+  EventsResponse,
+  FlagType,
+  GroupsResponse,
+  LeaderboardResponse,
   ListingFilter,
   NotificationLevel,
   NotificationsResponse,
   Post,
   SearchResponse,
+  SiteResponse,
   TopicDetail,
   TopicListResponse,
   TopPeriod,
@@ -99,6 +105,10 @@ function listingPath(filter: ListingFilter, page: number, period: TopPeriod): st
       return `/unread.json?${p}`
     case 'hot':
       return `/hot.json?${p}`
+    case 'posted':
+      return `/posted.json?${p}`
+    case 'read':
+      return `/read.json?${p}`
     case 'latest':
     default:
       return `/latest.json?${p}`
@@ -185,6 +195,45 @@ export const discourse = {
       path: `/post_actions/${postId}.json?post_action_type_id=${LIKE_ACTION_ID}`,
       method: 'DELETE'
     })
+  },
+
+  /** The site's flaggable post-action types (labels/ids/require_message live on
+      the server; linux.do adds custom flags, so this must not be hard-coded). */
+  async flagTypes(): Promise<FlagType[]> {
+    const site = await request<SiteResponse>({ path: '/site.json' })
+    return (site.post_action_types ?? [])
+      .filter((p) => p.is_flag && p.name_key !== 'notify_user')
+      .map((p) => ({
+        id: p.id,
+        name_key: p.name_key,
+        name: p.name ?? p.name_key,
+        description: p.description,
+        require_message: p.require_message
+      }))
+  },
+
+  /** Flag a post with one of the site's flag type ids (see flagTypes()). */
+  flagPost(postId: number, postActionTypeId: number, message?: string): Promise<unknown> {
+    return request({
+      path: '/post_actions.json',
+      method: 'POST',
+      form: true,
+      body: {
+        id: postId,
+        post_action_type_id: postActionTypeId,
+        flag_topic: false,
+        ...(message ? { message } : {})
+      }
+    })
+  },
+
+  // discourse-solved: mark/unmark a reply as the topic's accepted answer.
+  acceptSolution(postId: number): Promise<unknown> {
+    return request({ path: '/solution/accept', method: 'POST', form: true, body: { id: postId } })
+  },
+
+  unacceptSolution(postId: number): Promise<unknown> {
+    return request({ path: '/solution/unaccept', method: 'POST', form: true, body: { id: postId } })
   },
 
   toggleReaction(postId: number, reactionId: string): Promise<unknown> {
@@ -350,6 +399,21 @@ export const discourse = {
     })
   },
 
+  /** "消除新" — mark every topic in the New list as seen. */
+  dismissNew(): Promise<unknown> {
+    return request({ path: '/topics/reset-new.json', method: 'PUT' })
+  },
+
+  /** "消除未读" — dismiss unread posts for the given tracked topics. */
+  dismissUnread(topicIds: number[]): Promise<unknown> {
+    return request({
+      path: '/topics/bulk.json',
+      method: 'PUT',
+      form: true,
+      body: { 'topic_ids[]': topicIds, 'operation[type]': 'dismiss_posts' }
+    })
+  },
+
   notifications(recent = false, offset = 0): Promise<NotificationsResponse> {
     const q = new URLSearchParams({ limit: '30' })
     if (recent) q.set('recent', 'true')
@@ -402,6 +466,25 @@ export const discourse = {
 
   drafts(): Promise<DraftsResponse> {
     return request<DraftsResponse>({ path: '/drafts.json' })
+  },
+
+  // discourse-gamification: the default leaderboard id is 1 ("全局排行榜").
+  leaderboard(id = 1, period?: string): Promise<LeaderboardResponse> {
+    const q = period ? `?period=${encodeURIComponent(period)}` : ''
+    return request<LeaderboardResponse>({ path: `/leaderboard/${id}.json${q}` })
+  },
+
+  // discourse-calendar: upcoming post-events across the forum.
+  events(): Promise<EventsResponse> {
+    return request<EventsResponse>({ path: '/discourse-post-event/events.json' })
+  },
+
+  badges(): Promise<BadgesResponse> {
+    return request<BadgesResponse>({ path: '/badges.json' })
+  },
+
+  groups(): Promise<GroupsResponse> {
+    return request<GroupsResponse>({ path: '/groups.json' })
   },
 
   deleteDraft(key: string, sequence: number): Promise<unknown> {

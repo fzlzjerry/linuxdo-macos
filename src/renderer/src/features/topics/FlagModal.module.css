@@ -1,0 +1,78 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.reason {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  width: 100%;
+  text-align: left;
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.reason:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+.reasonActive {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dot {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border-radius: var(--r-full);
+  border: 2px solid var(--border-strong);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.reasonActive .dot {
+  border-color: var(--accent);
+  background:
+    radial-gradient(circle, var(--accent) 0 4px, transparent 5px);
+}
+
+.reasonText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.reasonLabel {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+.reasonDesc {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: 1.35;
+}
+
+.message {
+  composes: input from '../../components/ui/Field.module.css';
+  margin-top: var(--sp-3);
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}

@@ -8,14 +8,19 @@ import { DiscardBar, useDiscardGuard } from './useDiscardGuard'
 import { useCategories } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
 import { toast } from '../../store/toast'
+import type { DraftContent } from '../../lib/discourse/draftContent'
 import styles from './NewTopicModal.module.css'
 
 interface Props {
   open: boolean
   onClose: () => void
+  /** Prefill the form when resuming a saved draft. */
+  initialDraft?: DraftContent
+  /** Fired after the topic is successfully created (before navigation). */
+  onCreated?: () => void
 }
 
-export function NewTopicModal({ open, onClose }: Props): JSX.Element {
+export function NewTopicModal({ open, onClose, initialDraft, onCreated }: Props): JSX.Element {
   const navigate = useNavigate()
   const { data } = useCategories()
   const categories = (data?.category_list.categories ?? []).filter((c) => !c.parent_category_id)
@@ -30,14 +35,16 @@ export function NewTopicModal({ open, onClose }: Props): JSX.Element {
   const guard = useDiscardGuard(open, onClose)
 
   // Fresh form every open — discarded/submitted content doesn't linger.
+  // When resuming a draft, seed the fields from it instead of clearing.
   useEffect(() => {
     if (!open) return
     setSession((s) => s + 1)
-    setTitle('')
-    setCategory('')
-    setTags('')
+    setTitle(initialDraft?.title ?? '')
+    setCategory(initialDraft?.categoryId ?? '')
+    setTags(initialDraft?.tags?.join(', ') ?? '')
     setErrors({})
     setBodyDirty(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   // The guard protects the whole form, not just the composer body.
@@ -64,6 +71,7 @@ export function NewTopicModal({ open, onClose }: Props): JSX.Element {
           .filter(Boolean)
       })
       toast.success('话题已发布')
+      onCreated?.()
       onClose()
       setTitle('')
       setTags('')
@@ -127,6 +135,7 @@ export function NewTopicModal({ open, onClose }: Props): JSX.Element {
         </div>
         <Composer
           key={session}
+          initialValue={initialDraft?.reply ?? ''}
           submitting={submitting}
           submitLabel="发布"
           minHeight={220}

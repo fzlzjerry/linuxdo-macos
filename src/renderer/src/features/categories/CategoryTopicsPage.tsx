@@ -1,8 +1,10 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { LayoutGrid } from 'lucide-react'
+import { LayoutGrid, RefreshCw } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
+import { Segmented } from '../../components/ui/Segmented'
+import { IconButton } from '../../components/ui/IconButton'
 import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { EmptyState, ErrorState, Spinner, TopicListSkeleton } from '../../components/ui/states'
 import { useCategoryTopics, mergeUsers } from '../../lib/discourse/queries'
@@ -10,8 +12,15 @@ import { useScrollMemory } from '../../lib/useScrollMemory'
 import { useListNav } from '../../lib/useListNav'
 import { useCategory } from '../../lib/discourse/CategoriesContext'
 import { useAuth } from '../../store/auth'
-import type { TopicListItem } from '../../lib/discourse/types'
+import type { ListingFilter, TopicListItem } from '../../lib/discourse/types'
 import { TopicRow } from '../topics/TopicRow'
+
+const CATEGORY_FILTERS: { value: ListingFilter; label: string }[] = [
+  { value: 'latest', label: '最新' },
+  { value: 'new', label: '新' },
+  { value: 'hot', label: '热门' },
+  { value: 'top', label: '排行' }
+]
 
 export function CategoryTopicsPage(): JSX.Element {
   const { slug = '', id: idParam } = useParams()
@@ -19,11 +28,12 @@ export function CategoryTopicsPage(): JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null)
   const auth = useAuth()
   const category = useCategory(id)
+  const [filter, setFilter] = useState<ListingFilter>('latest')
 
-  const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useCategoryTopics(slug, id)
+  const { data, isLoading, isError, error, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useCategoryTopics(slug, id, filter)
 
-  useScrollMemory(scrollRef, `category:${id}`, !isLoading && !!data)
+  useScrollMemory(scrollRef, `category:${id}:${filter}`, !isLoading && !!data)
   useListNav(scrollRef)
 
   const users = useMemo(() => mergeUsers(data?.pages), [data])
@@ -44,7 +54,25 @@ export function CategoryTopicsPage(): JSX.Element {
   return (
     <PageScaffold
       ref={scrollRef}
-      toolbar={<Toolbar title={category?.name ?? '分类'} subtitle={category ? `${category.topic_count} 话题` : undefined} />}
+      toolbar={
+        <Toolbar
+          title={category?.name ?? '分类'}
+          subtitle={category ? `${category.topic_count} 话题` : undefined}
+          right={
+            <>
+              <Segmented
+                options={CATEGORY_FILTERS}
+                value={filter}
+                onChange={setFilter}
+                aria-label="排序"
+              />
+              <IconButton label="刷新" onClick={() => void refetch()} disabled={isRefetching}>
+                <RefreshCw size={16} className={isRefetching ? 'spin' : undefined} />
+              </IconButton>
+            </>
+          }
+        />
+      }
     >
       {isLoading ? (
         <TopicListSkeleton />
