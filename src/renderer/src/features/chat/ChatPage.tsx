@@ -185,8 +185,10 @@ function ChatThread({ channel }: { channel: ChatChannel }): JSX.Element {
     if (!body || sending) return
     setSending(true)
     try {
-      await discourse.sendChatMessage(channel.id, body)
+      const stagedId = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`
+      await discourse.sendChatMessage(channel.id, body, stagedId)
       setText('')
+      nearBottomRef.current = true
       await queryClient.invalidateQueries({ queryKey: ['chat-messages', channel.id] })
     } catch (e) {
       toast.error(errorMessage(e, '发送失败'))

@@ -519,6 +519,17 @@ export const discourse = {
     return request<BadgesResponse>({ path: '/badges.json' })
   },
 
+  /** The distinct badge ids a user has earned (for marking the directory). */
+  async userBadgeIds(username: string): Promise<Set<number>> {
+    const r = await request<{ badges?: { id: number }[]; user_badges?: { badge_id: number }[] }>({
+      path: `/user-badges/${encodeURIComponent(username)}.json`
+    })
+    const ids = new Set<number>()
+    for (const b of r.badges ?? []) ids.add(b.id)
+    for (const ub of r.user_badges ?? []) ids.add(ub.badge_id)
+    return ids
+  },
+
   groups(): Promise<GroupsResponse> {
     return request<GroupsResponse>({ path: '/groups.json' })
   },
@@ -534,12 +545,13 @@ export const discourse = {
     })
   },
 
-  sendChatMessage(channelId: number, message: string): Promise<unknown> {
+  // The /chat/api/ surface expects JSON, and the create endpoint requires a
+  // client-generated staged_id (used to echo the message back).
+  sendChatMessage(channelId: number, message: string, stagedId: string): Promise<unknown> {
     return request({
       path: `/chat/api/channels/${channelId}/messages`,
       method: 'POST',
-      form: true,
-      body: { message }
+      body: { message, staged_id: stagedId }
     })
   },
 

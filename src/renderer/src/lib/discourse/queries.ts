@@ -177,6 +177,15 @@ export function useBadges() {
   })
 }
 
+export function useUserBadgeIds(username: string | undefined) {
+  return useQuery({
+    queryKey: ['user-badge-ids', username],
+    queryFn: () => discourse.userBadgeIds(username as string),
+    enabled: !!username,
+    staleTime: 5 * 60_000
+  })
+}
+
 export function useGroups() {
   return useQuery({
     queryKey: ['groups'],

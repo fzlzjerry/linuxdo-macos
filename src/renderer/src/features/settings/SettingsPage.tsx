@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { ExternalLink } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
@@ -27,6 +28,7 @@ const PREF_TOGGLES: { field: string; label: string; description: string }[] = [
 ]
 
 function PreferencesSection({ username }: { username: string }): JSX.Element {
+  const queryClient = useQueryClient()
   const { data, isLoading } = useUserPreferences(username)
   const [overrides, setOverrides] = useState<Record<string, boolean>>({})
   const [busy, setBusy] = useState<string | null>(null)
@@ -38,6 +40,14 @@ function PreferencesSection({ username }: { username: string }): JSX.Element {
     setBusy(field)
     try {
       await discourse.updatePreference(username, field, next)
+      // Re-read the server's truth; if the write didn't persist, the toggle
+      // snaps back so it never silently lies about being saved.
+      await queryClient.invalidateQueries({ queryKey: ['preferences', username] })
+      setOverrides((o) => {
+        const n = { ...o }
+        delete n[field]
+        return n
+      })
       toast.success('已保存')
     } catch (e) {
       setOverrides((o) => ({ ...o, [field]: !next }))

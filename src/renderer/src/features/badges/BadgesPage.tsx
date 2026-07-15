@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
-import { Award } from 'lucide-react'
+import { Award, Check } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { SpriteIcon } from '../../components/ui/SpriteIcon'
 import { EmptyState, ErrorState, CardGridSkeleton } from '../../components/ui/states'
-import { useBadges } from '../../lib/discourse/queries'
+import { useBadges, useUserBadgeIds } from '../../lib/discourse/queries'
 import { useAuth } from '../../store/auth'
 import { absolutize, LINUXDO_ORIGIN } from '../../lib/discourse/urls'
 import { compactNumber } from '../../lib/format'
@@ -14,6 +14,7 @@ import styles from './BadgesPage.module.css'
 export function BadgesPage(): JSX.Element {
   const auth = useAuth()
   const { data, isLoading, isError, error, refetch } = useBadges()
+  const { data: earned } = useUserBadgeIds(auth.loggedIn ? auth.username : undefined)
 
   const grouped = useMemo(() => {
     const types = data?.badge_types ?? []
@@ -29,7 +30,7 @@ export function BadgesPage(): JSX.Element {
   }, [data])
 
   function open(b: Badge): void {
-    void window.api?.openExternal(`${LINUXDO_ORIGIN}/badges/${b.id}-${b.slug ?? ''}`)
+    void window.api?.openExternal(`${LINUXDO_ORIGIN}/badges/${b.id}/${b.slug ?? ''}`)
   }
 
   return (
@@ -46,23 +47,36 @@ export function BadgesPage(): JSX.Element {
             <section key={type.id} className={styles.section}>
               <h3 className={styles.sectionTitle}>{type.name}</h3>
               <div className={styles.grid}>
-                {badges.map((b) => (
-                  <button key={b.id} type="button" className={styles.card} onClick={() => open(b)}>
-                    <span className={styles.icon}>
-                      {b.image_url ? (
-                        <img className={styles.iconImg} src={absolutize(b.image_url)} alt="" />
-                      ) : (
-                        <SpriteIcon name={(b.icon ?? '').replace(/^fa[rbsl]?-/, '')} size={20} />
+                {badges.map((b) => {
+                  const has = earned?.has(b.id)
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      className={`${styles.card} ${has ? styles.earned : ''}`}
+                      onClick={() => open(b)}
+                    >
+                      <span className={styles.icon}>
+                        {b.image_url ? (
+                          <img className={styles.iconImg} src={absolutize(b.image_url)} alt="" />
+                        ) : (
+                          <SpriteIcon name={(b.icon ?? '').replace(/^fa[rbsl]?-/, '')} size={20} />
+                        )}
+                      </span>
+                      <span className={styles.body}>
+                        <span className={styles.name}>{b.name}</span>
+                        {b.grant_count != null && (
+                          <span className={styles.count}>{compactNumber(b.grant_count)} 人获得</span>
+                        )}
+                      </span>
+                      {has && (
+                        <span className={styles.earnedBadge} title="已获得">
+                          <Check size={13} strokeWidth={3} />
+                        </span>
                       )}
-                    </span>
-                    <span className={styles.body}>
-                      <span className={styles.name}>{b.name}</span>
-                      {b.grant_count != null && (
-                        <span className={styles.count}>{compactNumber(b.grant_count)} 人获得</span>
-                      )}
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  )
+                })}
               </div>
             </section>
           ))}

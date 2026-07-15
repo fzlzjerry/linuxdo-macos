@@ -24,6 +24,7 @@
 }
 
 .card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--sp-3);
@@ -39,6 +40,24 @@
 .card:hover {
   border-color: var(--border-strong);
   background: var(--surface-hover);
+}
+.earned {
+  border-color: color-mix(in oklab, var(--accent) 40%, var(--border));
+  background: var(--accent-soft);
+}
+
+.earnedBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  color: var(--accent-ink, #fff);
 }
 
 .icon {

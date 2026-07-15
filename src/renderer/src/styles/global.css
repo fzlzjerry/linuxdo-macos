@@ -34,6 +34,30 @@ body {
   flex-direction: column;
 }
 
+/* macOS WKWebView hides overlay scrollbars until you scroll, which reads as
+   "no scrollbar". Style them so scroll regions always show an affordance. */
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 6px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-3);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 h1,
 h2,
 h3,
