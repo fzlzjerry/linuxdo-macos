@@ -3,6 +3,10 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
 
+use base64::Engine as _;
+use rand::RngCore;
+use rsa::pkcs8::{EncodePublicKey, LineEnding};
+use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey};
 use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter, Listener, Manager, WebviewUrl, WebviewWindowBuilder};
 use tokio::sync::oneshot;
@@ -10,12 +14,22 @@ use url::Url;
 
 const ORIGIN: &str = "https://linux.do";
 
-/// Shared state: pending bridge requests, an id counter, and the cached auth state.
+/// A browser-authorize attempt in flight (Discourse User-API-Key OTP flow).
+struct PendingLogin {
+    private_key: RsaPrivateKey,
+    nonce: String,
+}
+
+/// Shared state: pending bridge requests, an id counter, the cached auth state,
+/// and any in-flight browser login.
 struct AppState {
     pending: Mutex<HashMap<u64, oneshot::Sender<Value>>>,
     next_id: AtomicU64,
     auth: Mutex<Value>,
     login_polling: AtomicBool,
+    pending_login: Mutex<Option<PendingLogin>>,
+    started: std::time::Instant,
+    cold_reload_done: AtomicBool,
 }
 
 impl AppState {
@@ -25,8 +39,27 @@ impl AppState {
             next_id: AtomicU64::new(1),
             auth: Mutex::new(json!({ "loggedIn": false })),
             login_polling: AtomicBool::new(false),
+            pending_login: Mutex::new(None),
+            started: std::time::Instant::now(),
+            cold_reload_done: AtomicBool::new(false),
         }
     }
+}
+
+fn random_hex(n: usize) -> String {
+    let mut b = vec![0u8; n];
+    rand::thread_rng().fill_bytes(&mut b);
+    b.iter().map(|x| format!("{x:02x}")).collect()
+}
+
+/// Strip whitespace (Ruby Base64.encode64 inserts newlines), base64-decode,
+/// then RSA PKCS1v15-decrypt with our private key.
+fn rsa_decrypt(key: &RsaPrivateKey, b64: &str) -> Result<Vec<u8>, String> {
+    let cleaned: String = b64.chars().filter(|c| !c.is_whitespace()).collect();
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(cleaned)
+        .map_err(|e| e.to_string())?;
+    key.decrypt(Pkcs1v15Encrypt, &bytes).map_err(|e| e.to_string())
 }
 
 /// JS injected into the linux.do WKWebView. Runs a credentialed same-origin fetch
@@ -144,11 +177,28 @@ async fn do_request(app: &AppHandle, req: Value) -> Result<Value, String> {
         let raw = eval_fetch(app, &req).await?;
         let status = raw.get("status").and_then(|v| v.as_u64()).unwrap_or(0);
         let has_err = raw.get("error").is_some();
+        let needs_auth = raw.get("needsAuth").and_then(|v| v.as_bool()).unwrap_or(false);
         if (has_err || status == 0) && attempt < 3 {
             attempt += 1;
             let _ = ensure_engine(app);
             tokio::time::sleep(Duration::from_millis(1200)).await;
             continue;
+        }
+        // Cold start: on the first ~15s the engine may not have cleared Cloudflare
+        // yet. Reload the origin once and retry so first launch doesn't flash a
+        // spurious "need login" state.
+        {
+            let st = app.state::<AppState>();
+            if needs_auth && attempt < 1 && st.started.elapsed() < Duration::from_secs(15) {
+                attempt += 1;
+                if !st.cold_reload_done.swap(true, Ordering::SeqCst) {
+                    if let Some(e) = app.get_webview_window("engine") {
+                        let _ = e.eval(&format!("location.replace('{ORIGIN}/')"));
+                    }
+                }
+                tokio::time::sleep(Duration::from_millis(1800)).await;
+                continue;
+            }
         }
         if status == 429 && attempt < 2 {
             attempt += 1;
@@ -280,6 +330,48 @@ async fn auth_get_state(app: AppHandle) -> Result<Value, String> {
 
 #[tauri::command]
 async fn auth_show_login(app: AppHandle) -> Result<Value, String> {
+    // Discourse User-API-Key (OTP) flow: the user authorizes in their own browser
+    // (already logged in — one click, no password) and the app receives an encrypted
+    // token back via the discourse:// deep link.
+    let priv_key = RsaPrivateKey::new(&mut rand::thread_rng(), 2048).map_err(|e| e.to_string())?;
+    let pub_pem = RsaPublicKey::from(&priv_key)
+        .to_public_key_pem(LineEnding::LF)
+        .map_err(|e| e.to_string())?;
+    let nonce = random_hex(16);
+    let client_id = random_hex(16);
+
+    {
+        use tauri_plugin_deep_link::DeepLinkExt;
+        let _ = app.deep_link().register("discourse");
+    }
+
+    *app.state::<AppState>().pending_login.lock().unwrap() = Some(PendingLogin {
+        private_key: priv_key,
+        nonce: nonce.clone(),
+    });
+
+    let mut url = Url::parse(&format!("{ORIGIN}/user-api-key/new")).unwrap();
+    url.query_pairs_mut()
+        .append_pair("application_name", "LinuxDO")
+        .append_pair("client_id", &client_id)
+        .append_pair("scopes", "one_time_password")
+        .append_pair("public_key", &pub_pem)
+        .append_pair("nonce", &nonce)
+        .append_pair("auth_redirect", "discourse://auth_redirect");
+
+    {
+        use tauri_plugin_opener::OpenerExt;
+        app.opener()
+            .open_url(url.to_string(), None::<&str>)
+            .map_err(|e| e.to_string())?;
+    }
+
+    Ok(app.state::<AppState>().auth.lock().unwrap().clone())
+}
+
+/// Fallback: the in-app WKWebView login sheet (kept if the browser flow is unavailable).
+#[tauri::command]
+async fn auth_show_login_webview(app: AppHandle) -> Result<Value, String> {
     open_login_window(&app)?;
     let state = app.state::<AppState>();
     if !state.login_polling.swap(true, Ordering::SeqCst) {
@@ -335,9 +427,97 @@ async fn open_external(app: AppHandle, url: String) -> Result<(), String> {
     Ok(())
 }
 
+/// Handle a `discourse://auth_redirect?payload=…&oneTimePassword=…` callback:
+/// decrypt with our private key, verify the nonce, then redeem the OTP for a session.
+fn handle_deep_link(app: &AppHandle, url: &str) {
+    let parsed = match Url::parse(url) {
+        Ok(u) => u,
+        Err(_) => return,
+    };
+    if parsed.scheme() != "discourse" {
+        return;
+    }
+    let mut payload_b64: Option<String> = None;
+    let mut otp_b64: Option<String> = None;
+    for (k, v) in parsed.query_pairs() {
+        match k.as_ref() {
+            "payload" => payload_b64 = Some(v.into_owned()),
+            "oneTimePassword" | "one_time_password" => otp_b64 = Some(v.into_owned()),
+            _ => {}
+        }
+    }
+    let pending = match app.state::<AppState>().pending_login.lock().unwrap().take() {
+        Some(p) => p,
+        None => return,
+    };
+    let payload_b64 = match payload_b64 {
+        Some(p) => p,
+        None => return,
+    };
+    let payload_bytes = match rsa_decrypt(&pending.private_key, &payload_b64) {
+        Ok(b) => b,
+        Err(_) => return,
+    };
+    let payload: Value = match serde_json::from_slice(&payload_bytes) {
+        Ok(v) => v,
+        Err(_) => return,
+    };
+    if payload.get("nonce").and_then(|v| v.as_str()) != Some(pending.nonce.as_str()) {
+        return;
+    }
+    let otp = match otp_b64.and_then(|o| rsa_decrypt(&pending.private_key, &o).ok()) {
+        Some(bytes) => String::from_utf8_lossy(&bytes).into_owned(),
+        None => return,
+    };
+    let app2 = app.clone();
+    tauri::async_runtime::spawn(async move {
+        redeem_otp(&app2, &otp).await;
+    });
+}
+
+/// Redeem the one-time password for a `_t` session cookie in the engine webview.
+async fn redeem_otp(app: &AppHandle, otp: &str) {
+    let csrf_res = do_request(app, json!({ "path": "/session/csrf.json" }))
+        .await
+        .unwrap_or_else(|_| json!({}));
+    let csrf = csrf_res
+        .get("json")
+        .and_then(|j| j.get("csrf"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    let _ = do_request(
+        app,
+        json!({
+            "path": format!("/session/otp/{otp}"),
+            "method": "POST",
+            "headers": { "X-CSRF-Token": csrf, "X-Requested-With": "XMLHttpRequest" }
+        }),
+    )
+    .await;
+
+    if let Some(e) = app.get_webview_window("engine") {
+        let _ = e.eval(&format!("location.replace('{ORIGIN}/')"));
+    }
+    tokio::time::sleep(Duration::from_millis(700)).await;
+    let _ = refresh_auth(app).await;
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.set_focus();
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            for arg in args {
+                if arg.starts_with("discourse://") {
+                    handle_deep_link(app, &arg);
+                }
+            }
+        }))
+        .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
         .manage(AppState::new())
         .setup(|app| {
@@ -356,12 +536,24 @@ pub fn run() {
                     }
                 }
             });
+
+            // discourse:// auth-redirect callbacks (browser login).
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                let dl = handle.clone();
+                app.deep_link().on_open_url(move |event| {
+                    for u in event.urls() {
+                        handle_deep_link(&dl, u.as_str());
+                    }
+                });
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             discourse_request,
             auth_get_state,
             auth_show_login,
+            auth_show_login_webview,
             auth_logout,
             open_external
         ])
