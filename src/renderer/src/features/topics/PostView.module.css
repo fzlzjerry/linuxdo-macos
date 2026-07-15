@@ -185,3 +185,16 @@
     padding-left: 0;
   }
 }
+
+/* Optimistic (pending) post awaiting server confirmation. */
+.pending {
+  opacity: 0.65;
+}
+
+.pendingChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--accent);
+}

@@ -7,8 +7,6 @@ import {
   type DragEvent,
   type KeyboardEvent
 } from 'react'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 import {
   Bold,
   Code,
@@ -32,13 +30,12 @@ import { Segmented } from '../ui/Segmented'
 import { discourse } from '../../lib/discourse/client'
 import type { UploadResult } from '../../lib/discourse/client'
 import { absolutize } from '../../lib/discourse/urls'
+import { renderMarkdown } from '../../lib/markdown'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
 import { EmojiPicker } from './EmojiPicker'
 import { InlineAutocomplete, type InlineAutocompleteHandle } from './InlineAutocomplete'
 import styles from './Composer.module.css'
-
-marked.setOptions({ gfm: true, breaks: true })
 
 interface Props {
   onSubmit: (raw: string) => void | Promise<void>
@@ -255,13 +252,7 @@ export function Composer({
     }
   }
 
-  const renderPreview = (): string => {
-    let source = text
-    uploadMap.current.forEach((real, short) => {
-      source = source.split(short).join(real)
-    })
-    return DOMPurify.sanitize(marked.parse(source) as string)
-  }
+  const renderPreview = (): string => renderMarkdown(text, uploadMap.current)
 
   return (
     <div className={styles.composer}>

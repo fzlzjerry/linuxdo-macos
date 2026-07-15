@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bookmark, Link2, Pencil, Reply, Trash2 } from 'lucide-react'
+import { Bookmark, Link2, Loader2, Pencil, Reply, Trash2 } from 'lucide-react'
 import { Avatar } from '../../components/ui/Avatar'
 import { relativeTime } from '../../lib/format'
 import { discourse } from '../../lib/discourse/client'
@@ -139,7 +139,10 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
   }
 
   return (
-    <article className={styles.post} id={`post-${post.post_number}`}>
+    <article
+      className={`${styles.post} ${post.pending ? styles.pending : ''}`}
+      id={`post-${post.post_number}`}
+    >
       <header className={styles.header}>
         <Avatar template={post.avatar_template} username={post.username} name={post.name} size={40} />
         <div className={styles.identity}>
@@ -183,7 +186,13 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
                 <Pencil size={11} /> 已编辑
               </span>
             )}
-            <span className={styles.postNo}>#{post.post_number}</span>
+            {post.pending ? (
+              <span className={styles.pendingChip}>
+                <Loader2 size={11} className="spin" /> 发送中…
+              </span>
+            ) : (
+              <span className={styles.postNo}>#{post.post_number}</span>
+            )}
           </div>
         </div>
       </header>
@@ -193,6 +202,7 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
         <BoostSection post={post} />
       </div>
 
+      {post.pending ? null : (
       <footer className={styles.footer}>
         <ReactionBar post={post} />
 
@@ -249,6 +259,7 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
           </button>
         )}
       </footer>
+      )}
     </article>
   )
 }

@@ -14,6 +14,8 @@ import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { ErrorState, Spinner } from '../../components/ui/states'
 import { useTopic } from '../../lib/discourse/queries'
 import { useBackNav } from '../../lib/useBackNav'
+import { errorMessage } from '../../lib/errors'
+import { renderMarkdown } from '../../lib/markdown'
 import { discourse } from '../../lib/discourse/client'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
@@ -25,7 +27,7 @@ import { TopicDetailSkeleton } from './TopicDetailSkeleton'
 import styles from './TopicPage.module.css'
 
 type ComposerMode =
-  | { mode: 'reply'; post?: Post }
+  | { mode: 'reply'; post?: Post; draft?: string }
   | { mode: 'edit'; post: Post; raw: string }
 
 export function TopicPage(): JSX.Element {
@@ -107,26 +109,64 @@ export function TopicPage(): JSX.Element {
 
   async function submitComposer(raw: string): Promise<void> {
     if (!composer) return
-    setSubmitting(true)
-    try {
-      if (composer.mode === 'edit') {
+
+    if (composer.mode === 'edit') {
+      // Edits stay non-optimistic: server cooking (mentions/oneboxes) matters.
+      setSubmitting(true)
+      try {
         const updated = await discourse.editPost(composer.post.id, raw)
         setPatches((p) => new Map(p).set(updated.id, updated))
         toast.success('已保存')
-      } else {
-        const created = await discourse.reply({
-          topicId: id,
-          raw,
-          replyToPostNumber: composer.post?.post_number
-        })
-        setPatches((p) => new Map(p).set(created.id, created))
-        toast.success('回复已发布')
+        setComposer(null)
+      } catch (e) {
+        toast.error(errorMessage(e, '发布失败'))
+      } finally {
+        setSubmitting(false)
       }
-      setComposer(null)
+      return
+    }
+
+    // Replies are optimistic: show a pending post immediately, reconcile with
+    // the server response, restore the draft into the composer on failure.
+    const replyTo = composer.post
+    const tempId = -Date.now()
+    const temp = {
+      id: tempId,
+      post_number: (posts.at(-1)?.post_number ?? 0) + 1,
+      topic_id: id,
+      user_id: -1,
+      cooked: renderMarkdown(raw),
+      username: auth.username ?? '',
+      name: auth.name,
+      avatar_template: auth.avatarUrl,
+      created_at: new Date().toISOString(),
+      reply_to_post_number: replyTo?.post_number,
+      yours: true,
+      pending: true
+    } as Post
+    setComposer(null)
+    setExtraPosts((prev) => [...prev, temp])
+    requestAnimationFrame(() => {
+      document.getElementById(`post-${temp.post_number}`)?.scrollIntoView({ block: 'end' })
+    })
+    try {
+      const created = await discourse.reply({
+        topicId: id,
+        raw,
+        replyToPostNumber: replyTo?.post_number
+      })
+      setExtraPosts((prev) => prev.filter((p) => p.id !== tempId))
+      setPatches((p) => new Map(p).set(created.id, created))
+      toast.success('回复已发布')
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : '发布失败')
-    } finally {
-      setSubmitting(false)
+      setExtraPosts((prev) => prev.filter((p) => p.id !== tempId))
+      toast.error(errorMessage(e, '发布失败'), {
+        duration: 8000,
+        action: {
+          label: '恢复编辑',
+          onClick: () => setComposer({ mode: 'reply', post: replyTo, draft: raw })
+        }
+      })
     }
   }
 
@@ -230,7 +270,7 @@ export function TopicPage(): JSX.Element {
                 ? `edit-${composer.post.id}`
                 : `reply-${composer.post?.id ?? 'topic'}`
             }
-            initialValue={composer.mode === 'edit' ? composer.raw : ''}
+            initialValue={composer.mode === 'edit' ? composer.raw : (composer.draft ?? '')}
             submitting={submitting}
             submitLabel={composer.mode === 'edit' ? '保存' : '回复'}
             autoFocus

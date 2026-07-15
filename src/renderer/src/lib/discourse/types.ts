@@ -157,6 +157,8 @@ export interface Post {
   bookmark_id?: number
   boosts?: Boost[]
   can_boost?: boolean
+  /** Client-only: an optimistic post awaiting server confirmation. */
+  pending?: boolean
 }
 
 /** discourse-boosts: a short "boost" (🚀) comment attached to a post. */
