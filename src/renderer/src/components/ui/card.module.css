@@ -1,0 +1,19 @@
+/* Shared card surface, consumed via `composes`. */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.cardHover {
+  composes: card;
+  transition:
+    background var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out);
+}
+.cardHover:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}

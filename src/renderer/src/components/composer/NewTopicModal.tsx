@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Modal } from '../ui/Modal'
+import { Field } from '../ui/Field'
 import { Composer } from './Composer'
 import { useCategories } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
@@ -21,16 +22,14 @@ export function NewTopicModal({ open, onClose }: Props): JSX.Element {
   const [category, setCategory] = useState<number | ''>('')
   const [tags, setTags] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [errors, setErrors] = useState<{ title?: string; category?: string }>({})
 
   async function submit(raw: string): Promise<void> {
-    if (title.trim().length < 3) {
-      toast.error('标题太短了')
-      return
-    }
-    if (category === '') {
-      toast.error('请选择一个分类')
-      return
-    }
+    const next: typeof errors = {}
+    if (title.trim().length < 3) next.title = '标题至少需要 3 个字'
+    if (category === '') next.category = '请选择一个分类'
+    setErrors(next)
+    if (next.title || next.category) return
     setSubmitting(true)
     try {
       const post = await discourse.createTopic({
@@ -58,32 +57,45 @@ export function NewTopicModal({ open, onClose }: Props): JSX.Element {
   return (
     <Modal open={open} onClose={onClose} title="发布新话题" width={760}>
       <div className={styles.form}>
-        <input
-          className={styles.title}
-          placeholder="标题"
-          value={title}
-          autoFocus
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <div className={styles.row}>
-          <select
-            className={styles.select}
-            value={category}
-            onChange={(e) => setCategory(e.target.value === '' ? '' : Number(e.target.value))}
-          >
-            <option value="">选择分类…</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+        <Field label="标题" hideLabel error={errors.title} required>
           <input
-            className={styles.tags}
-            placeholder="标签（用逗号分隔，可选）"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
+            className={styles.title}
+            placeholder="标题"
+            value={title}
+            autoFocus
+            disabled={submitting}
+            onChange={(e) => {
+              setTitle(e.target.value)
+              if (errors.title) setErrors((p) => ({ ...p, title: undefined }))
+            }}
           />
+        </Field>
+        <div className={styles.row}>
+          <Field label="分类" hideLabel error={errors.category} required className={styles.selectField}>
+            <select
+              value={category}
+              disabled={submitting}
+              onChange={(e) => {
+                setCategory(e.target.value === '' ? '' : Number(e.target.value))
+                if (errors.category) setErrors((p) => ({ ...p, category: undefined }))
+              }}
+            >
+              <option value="">选择分类…</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="标签" hideLabel className={styles.tagsField}>
+            <input
+              placeholder="标签（用逗号分隔，可选）"
+              value={tags}
+              disabled={submitting}
+              onChange={(e) => setTags(e.target.value)}
+            />
+          </Field>
         </div>
         <Composer
           submitting={submitting}

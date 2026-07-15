@@ -5,6 +5,7 @@ import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { Avatar } from '../../components/ui/Avatar'
 import { Button } from '../../components/ui/Button'
+import { LoginGate } from '../../components/ui/LoginGate'
 import { EmptyState, ErrorState, TopicListSkeleton } from '../../components/ui/states'
 import { usePrivateMessages, mergeUsers } from '../../lib/discourse/queries'
 import { useAuth } from '../../store/auth'
@@ -28,15 +29,10 @@ export function MessagesPage(): JSX.Element {
   if (!auth.loggedIn) {
     return (
       <PageScaffold toolbar={<Toolbar title="私信" />}>
-        <EmptyState
+        <LoginGate
           icon={<Mail size={26} strokeWidth={1.6} />}
           title="登录后查看私信"
           description="登录 linux.do 后即可查看和发送私信。"
-          action={
-            <Button variant="primary" onClick={() => void auth.showLogin()}>
-              登录 linux.do
-            </Button>
-          }
         />
       </PageScaffold>
     )

@@ -1,0 +1,70 @@
+/* Shared full-bleed list-row shell, consumed via `composes` by every list
+   surface (topics, messages, notifications, search, bookmarks, drafts,
+   profile). Vertical padding is density-aware via --list-pad-y. */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  text-align: left;
+  padding: var(--list-pad-y) var(--sp-5);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.row:hover {
+  background: var(--surface-hover);
+}
+.row:active {
+  background: var(--surface-active);
+}
+/* Inset ring: full-bleed rows sit inside overflow containers, an outset ring
+   would be clipped. */
+.row:focus-visible {
+  outline-offset: calc(-1 * var(--ring-w));
+}
+
+/* Overlay pattern for rows with trailing action buttons: a <button> cannot
+   contain buttons, so the row is a plain div whose primary action is an
+   absolutely-positioned real button underneath, and actions sit above it. */
+.rowGroup {
+  composes: row;
+  position: relative;
+  cursor: pointer;
+}
+.rowGroup:focus-within {
+  background: var(--surface-hover);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+.overlay:focus-visible {
+  outline: var(--ring-w) solid var(--ring-color);
+  outline-offset: calc(-1 * var(--ring-w));
+}
+
+.actions {
+  position: relative;
+  z-index: 1;
+  flex: none;
+}
+
+/* Non-interactive variant: same shell, no hover affordance. */
+.rowStatic {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  text-align: left;
+  padding: var(--list-pad-y) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+}

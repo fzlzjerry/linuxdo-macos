@@ -9,9 +9,16 @@
   user-select: none;
 }
 
+/* Pastel tile + same-hue ink; adapts to both themes (hue via --avatar-h). */
 .fallback {
-  color: oklch(1 0 0 / 0.95);
+  background: oklch(0.87 0.055 var(--avatar-h, 250));
+  color: oklch(0.42 0.09 var(--avatar-h, 250));
   font-weight: 600;
   font-family: var(--font-ui);
   line-height: 1;
+}
+
+:global(:root[data-theme='dark']) .fallback {
+  background: oklch(0.36 0.06 var(--avatar-h, 250));
+  color: oklch(0.87 0.07 var(--avatar-h, 250));
 }

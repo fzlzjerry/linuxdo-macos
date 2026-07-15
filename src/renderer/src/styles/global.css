@@ -23,6 +23,7 @@ body {
   line-height: var(--lh-normal);
   color: var(--ink);
   background: var(--bg);
+  accent-color: var(--accent);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow: hidden; /* the app owns its own scroll regions */
@@ -65,9 +66,8 @@ img {
 }
 
 :focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-  border-radius: var(--r-sm);
+  outline: var(--ring-w) solid var(--ring-color);
+  outline-offset: var(--ring-offset);
 }
 
 @keyframes spin-rotate {

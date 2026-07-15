@@ -5,6 +5,7 @@ import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { Avatar } from '../../components/ui/Avatar'
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
+import { Tag } from '../../components/ui/Tag'
 import { EmptyState, ErrorState, Spinner } from '../../components/ui/states'
 import { useSearch } from '../../lib/discourse/queries'
 import { useAuth } from '../../store/auth'
@@ -128,9 +129,7 @@ export function SearchPage(): JSX.Element {
                     <div className={styles.metaLine}>
                       <CategoryBadge categoryId={t.category_id} />
                       {t.tags?.slice(0, 3).map((tag) => (
-                        <span key={tagKey(tag)} className={styles.tag}>
-                          {tagText(tag)}
-                        </span>
+                        <Tag key={tagKey(tag)}>{tagText(tag)}</Tag>
                       ))}
                       <span className={styles.time}>
                         {relativeTime(t.bumped_at || t.created_at)}

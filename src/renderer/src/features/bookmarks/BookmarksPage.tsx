@@ -3,9 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bookmark, Trash2 } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
-import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
+import { Tag } from '../../components/ui/Tag'
+import { LoginGate } from '../../components/ui/LoginGate'
 import { EmptyState, ErrorState, TopicListSkeleton } from '../../components/ui/states'
 import { useBookmarks } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
@@ -46,15 +47,7 @@ export function BookmarksPage(): JSX.Element {
   if (!auth.loggedIn) {
     return (
       <PageScaffold toolbar={<Toolbar title="书签" />}>
-        <EmptyState
-          icon={<Bookmark size={26} strokeWidth={1.6} />}
-          title="登录后查看书签"
-          action={
-            <Button variant="primary" onClick={() => void auth.showLogin()}>
-              登录 linux.do
-            </Button>
-          }
-        />
+        <LoginGate icon={<Bookmark size={26} strokeWidth={1.6} />} title="登录后查看书签" />
       </PageScaffold>
     )
   }
@@ -105,19 +98,11 @@ function BookmarkRow({
   const excerpt = toPlainText(bookmark.excerpt)
 
   return (
-    <div
-      className={styles.row}
-      role="button"
-      tabIndex={0}
-      aria-label={title}
-      onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onOpen()
-        }
-      }}
-    >
+    <div className={styles.row}>
+      {/* Primary action: a real button under the content (a button can't
+          contain the trailing IconButton, so the row itself is a div). */}
+      <button type="button" className={styles.overlay} aria-label={title} onClick={onOpen} />
+
       <div className={styles.main}>
         <div className={styles.titleLine}>
           <span className={styles.title}>{title}</span>
@@ -126,9 +111,7 @@ function BookmarkRow({
         <div className={styles.metaLine}>
           {bookmark.category_id != null && <CategoryBadge categoryId={bookmark.category_id} />}
           {bookmark.tags?.slice(0, 3).map((tag) => (
-            <span key={tagKey(tag)} className={styles.tag}>
-              {tagText(tag)}
-            </span>
+            <Tag key={tagKey(tag)}>{tagText(tag)}</Tag>
           ))}
           <span className={styles.time}>{relativeTime(bookmark.created_at)}</span>
         </div>
@@ -136,17 +119,11 @@ function BookmarkRow({
         {excerpt && <p className={styles.excerpt}>{excerpt}</p>}
       </div>
 
-      <IconButton
-        label="移除"
-        className={styles.remove}
-        disabled={removing}
-        onClick={(e) => {
-          e.stopPropagation()
-          onRemove()
-        }}
-      >
-        <Trash2 size={16} />
-      </IconButton>
+      <span className={styles.actions}>
+        <IconButton label="移除书签" className={styles.remove} disabled={removing} onClick={onRemove}>
+          <Trash2 size={16} />
+        </IconButton>
+      </span>
     </div>
   )
 }

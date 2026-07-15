@@ -83,7 +83,7 @@
 }
 
 .iconWrap.danger {
-  background: oklch(0.62 0.2 32 / 0.14);
+  background: var(--danger-soft);
   color: var(--danger);
 }
 
@@ -95,7 +95,7 @@
 
 .desc {
   font-size: var(--fs-sm);
-  color: var(--ink-3);
+  color: var(--ink-2);
   line-height: var(--lh-normal);
 }
 
@@ -105,30 +105,19 @@
   margin-top: var(--sp-3);
 }
 
-.primaryBtn {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border: none;
-  border-radius: var(--r-md);
-  padding: 8px 16px;
-  font-weight: 600;
-  font-size: var(--fs-sm);
-  transition: background var(--dur) var(--ease-out);
-}
-.primaryBtn:hover {
-  background: var(--accent-hover);
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--sp-4);
+  padding: var(--sp-5);
 }
 
-.ghostBtn {
-  background: var(--surface-2);
-  color: var(--ink);
+.skeletonCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  padding: 8px 16px;
-  font-weight: 500;
-  font-size: var(--fs-sm);
-  transition: background var(--dur) var(--ease-out);
-}
-.ghostBtn:hover {
-  background: var(--surface-hover);
+  border-radius: var(--r-lg);
+  background: var(--surface);
 }

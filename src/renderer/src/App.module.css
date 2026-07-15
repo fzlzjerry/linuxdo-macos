@@ -10,9 +10,3 @@
   height: 100%;
   overflow: hidden;
 }
-
-@media (max-width: 720px) {
-  .shell {
-    grid-template-columns: 68px minmax(0, 1fr);
-  }
-}

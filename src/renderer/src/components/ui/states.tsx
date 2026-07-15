@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { AlertTriangle, Inbox, Loader2, LogIn } from 'lucide-react'
 import { DiscourseApiError } from '../../lib/discourse/client'
+import { Button } from './Button'
 import styles from './states.module.css'
 
 export function Skeleton({
@@ -32,6 +33,21 @@ export function TopicListSkeleton({ rows = 8 }: { rows?: number }): JSX.Element 
             <Skeleton width={`${55 + ((i * 7) % 35)}%`} height={14} />
             <Skeleton width={`${30 + ((i * 11) % 25)}%`} height={11} />
           </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function CardGridSkeleton({ cards = 8 }: { cards?: number }): JSX.Element {
+  return (
+    <div className={styles.skeletonGrid} aria-hidden>
+      {Array.from({ length: cards }).map((_, i) => (
+        <div key={i} className={styles.skeletonCard}>
+          <Skeleton width={`${45 + ((i * 9) % 30)}%`} height={15} />
+          <Skeleton width="90%" height={11} />
+          <Skeleton width={`${55 + ((i * 13) % 30)}%`} height={11} />
+          <Skeleton width={64} height={11} />
         </div>
       ))}
     </div>
@@ -88,14 +104,14 @@ export function ErrorState({
       <p className={styles.desc}>{needsAuth ? '登录 linux.do 后即可查看此内容。' : message}</p>
       <div className={styles.action}>
         {needsAuth && onLogin && (
-          <button className={styles.primaryBtn} onClick={onLogin}>
+          <Button variant="primary" onClick={onLogin}>
             登录 linux.do
-          </button>
+          </Button>
         )}
         {onRetry && (
-          <button className={styles.ghostBtn} onClick={onRetry}>
+          <Button variant="secondary" onClick={onRetry}>
             重试
-          </button>
+          </Button>
         )}
       </div>
     </div>

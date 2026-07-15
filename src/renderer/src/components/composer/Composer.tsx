@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { IconButton } from '../ui/IconButton'
+import { Segmented } from '../ui/Segmented'
 import { discourse } from '../../lib/discourse/client'
 import type { UploadResult } from '../../lib/discourse/client'
 import { absolutize } from '../../lib/discourse/urls'
@@ -242,7 +243,7 @@ export function Composer({
   }
 
   const renderPreview = (): string => {
-    let source = text || '_（空）_'
+    let source = text
     uploadMap.current.forEach((real, short) => {
       source = source.split(short).join(real)
     })
@@ -252,22 +253,16 @@ export function Composer({
   return (
     <div className={styles.composer}>
       <div className={styles.tabsBar}>
-        <div className={styles.tabs}>
-          <button
-            type="button"
-            className={tab === 'write' ? styles.tabActive : styles.tab}
-            onClick={() => setTab('write')}
-          >
-            编辑
-          </button>
-          <button
-            type="button"
-            className={tab === 'preview' ? styles.tabActive : styles.tab}
-            onClick={() => setTab('preview')}
-          >
-            预览
-          </button>
-        </div>
+        <Segmented
+          options={[
+            { value: 'write', label: '编辑' },
+            { value: 'preview', label: '预览' }
+          ]}
+          value={tab}
+          onChange={setTab}
+          size="md"
+          aria-label="编辑模式"
+        />
       </div>
 
       {tab === 'write' && (
@@ -352,12 +347,16 @@ export function Composer({
           />
           <InlineAutocomplete ref={acRef} textareaRef={ref} value={text} onReplace={replaceRange} />
         </div>
-      ) : (
+      ) : text.trim() ? (
         <div
           className={`${styles.preview} cooked`}
           style={{ minHeight }}
           dangerouslySetInnerHTML={{ __html: renderPreview() }}
         />
+      ) : (
+        <div className={`${styles.preview} ${styles.previewEmpty}`} style={{ minHeight }}>
+          暂无内容
+        </div>
       )}
 
       <input
@@ -371,7 +370,7 @@ export function Composer({
 
       <div className={styles.actions}>
         <div className={styles.status}>
-          <span className={styles.hint}>⌘↵ 发布</span>
+          <span className={styles.hint}>⌘↵ {submitLabel}</span>
           {isUploading && (
             <span className={styles.uploadChip}>
               <Loader2 size={13} className="spin" />

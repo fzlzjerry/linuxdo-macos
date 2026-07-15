@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
 import { Composer } from '../../components/composer/Composer'
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
+import { Tag } from '../../components/ui/Tag'
 import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { ErrorState, Spinner } from '../../components/ui/states'
 import { useTopic } from '../../lib/discourse/queries'
@@ -171,9 +172,7 @@ export function TopicPage(): JSX.Element {
             <div className={styles.meta}>
               <CategoryBadge categoryId={topic.category_id} size="md" />
               {topic.tags?.map((t) => (
-                <span key={tagKey(t)} className={styles.tag}>
-                  {tagText(t)}
-                </span>
+                <Tag key={tagKey(t)}>{tagText(t)}</Tag>
               ))}
               <span className={styles.metaStat}>
                 <MessageSquare size={13} /> {compactNumber(topic.reply_count ?? topic.posts_count)}

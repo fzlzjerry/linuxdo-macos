@@ -63,7 +63,7 @@
 
   --ink: oklch(0.24 0.006 250);
   --ink-2: oklch(0.44 0.008 250);
-  --ink-3: oklch(0.58 0.01 250);
+  --ink-3: oklch(0.55 0.01 250); /* ≥4.5:1 on --bg; decorative/redundant meta only */
   --ink-inverse: oklch(0.99 0 0);
 
   --border: oklch(0.5 0.01 250 / 0.14);
@@ -76,16 +76,30 @@
 
   --success: oklch(0.64 0.16 152);
   --danger: oklch(0.62 0.2 32);
+  --danger-soft: color-mix(in oklch, var(--danger) 12%, transparent);
   --warning: oklch(0.75 0.15 75);
   --like: oklch(0.7 0.16 5);
+
+  --scrim: oklch(0 0 0 / 0.4);
 
   --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.08);
   --shadow-md: 0 6px 20px oklch(0 0 0 / 0.12);
   --shadow-pop: 0 12px 32px oklch(0 0 0 / 0.18);
 
-  --focus-ring: 0 0 0 3px oklch(0.63 0.132 233 / 0.4);
+  /* Focus ring geometry: a real outline (follows element radius, survives
+     forced-colors). Full-bleed list rows use the inset variant in listRow. */
+  --ring-color: var(--accent);
+  --ring-w: 2px;
+  --ring-offset: 2px;
+
+  /* List density — JS-driven like the theme: data-density on <html> */
+  --list-pad-y: var(--sp-3);
 
   color-scheme: light;
+}
+
+:root[data-density='compact'] {
+  --list-pad-y: var(--sp-2);
 }
 
 /* Dark palette. Theme is JS-driven: the app sets data-theme="dark|light" on
@@ -117,6 +131,8 @@
     --danger: oklch(0.68 0.19 32);
     --warning: oklch(0.8 0.14 75);
     --like: oklch(0.74 0.15 5);
+
+    --scrim: oklch(0 0 0 / 0.55);
 
     --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.3);
     --shadow-md: 0 8px 24px oklch(0 0 0 / 0.4);

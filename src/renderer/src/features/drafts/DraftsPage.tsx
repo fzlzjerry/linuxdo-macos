@@ -4,8 +4,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { FileText, Loader2, Trash2 } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
-import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
+import { Tag } from '../../components/ui/Tag'
+import { LoginGate } from '../../components/ui/LoginGate'
 import { EmptyState, ErrorState, TopicListSkeleton } from '../../components/ui/states'
 import { useDrafts } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
@@ -62,15 +63,10 @@ export function DraftsPage(): JSX.Element {
   if (!auth.loggedIn) {
     return (
       <PageScaffold toolbar={<Toolbar title="草稿" />}>
-        <EmptyState
+        <LoginGate
           icon={<FileText size={26} strokeWidth={1.6} />}
           title="登录后查看草稿"
           description="草稿会同步到你的 linux.do 账号。"
-          action={
-            <Button variant="primary" onClick={() => void auth.showLogin()}>
-              登录 linux.do
-            </Button>
-          }
         />
       </PageScaffold>
     )
@@ -125,47 +121,34 @@ function DraftRow({
   const time = relativeTime(draft.created_at || draft.updated_at)
 
   return (
-    <div
-      className={`${styles.row} ${clickable ? styles.clickable : ''}`}
-      onClick={clickable ? onOpen : undefined}
-      onKeyDown={
-        clickable
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onOpen()
-              }
-            }
-          : undefined
-      }
-      role={clickable ? 'button' : undefined}
-      tabIndex={clickable ? 0 : undefined}
-      aria-label={clickable ? title || label : undefined}
-    >
+    <div className={clickable ? styles.row : styles.rowStatic}>
+      {clickable && (
+        <button
+          type="button"
+          className={styles.overlay}
+          aria-label={title || label}
+          onClick={onOpen}
+        />
+      )}
+
       <span className={styles.icon} aria-hidden>
         <FileText size={18} strokeWidth={1.7} />
       </span>
 
       <div className={styles.main}>
         <div className={styles.titleLine}>
-          <span className={styles.badge}>{label}</span>
+          <Tag>{label}</Tag>
           {title && <span className={styles.title}>{title}</span>}
         </div>
         {excerpt && <p className={styles.excerpt}>{excerpt}</p>}
         {time && <span className={styles.time}>{time}</span>}
       </div>
 
-      <IconButton
-        label="删除"
-        className={styles.delete}
-        disabled={deleting}
-        onClick={(e) => {
-          e.stopPropagation()
-          onDelete()
-        }}
-      >
-        {deleting ? <Loader2 size={16} className="spin" /> : <Trash2 size={16} />}
-      </IconButton>
+      <span className={styles.actions}>
+        <IconButton label="删除草稿" className={styles.delete} disabled={deleting} onClick={onDelete}>
+          {deleting ? <Loader2 size={16} className="spin" /> : <Trash2 size={16} />}
+        </IconButton>
+      </span>
     </div>
   )
 }

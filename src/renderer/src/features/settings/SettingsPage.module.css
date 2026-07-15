@@ -18,15 +18,12 @@
   padding: 0 var(--sp-1);
   font-size: var(--fs-sm);
   font-weight: 650;
-  color: var(--ink-3);
+  color: var(--ink-2);
   letter-spacing: 0.01em;
 }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  overflow: hidden;
+  composes: card from '../../components/ui/card.module.css';
 }
 
 /* 1px dividers between every direct child of the card */
@@ -58,7 +55,7 @@
 
 .rowDesc {
   font-size: var(--fs-xs);
-  color: var(--ink-3);
+  color: var(--ink-2);
   line-height: var(--lh-normal);
 }
 
@@ -77,7 +74,7 @@
 .note {
   padding: var(--sp-3) var(--sp-4);
   font-size: var(--fs-sm);
-  color: var(--ink-3);
+  color: var(--ink-2);
   line-height: var(--lh-relaxed);
 }
 

@@ -3,24 +3,16 @@
 }
 
 .row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  text-align: left;
-  padding: var(--sp-3) var(--sp-5);
-  border-bottom: 1px solid var(--border);
-  transition: background var(--dur-fast) var(--ease-out);
+  composes: rowGroup from '../../components/ui/listRow.module.css';
 }
-
-.clickable {
-  cursor: pointer;
+.rowStatic {
+  composes: rowStatic from '../../components/ui/listRow.module.css';
 }
-.clickable:hover {
-  background: var(--surface-hover);
+.overlay {
+  composes: overlay from '../../components/ui/listRow.module.css';
 }
-.clickable:active {
-  background: var(--surface-active);
+.actions {
+  composes: actions from '../../components/ui/listRow.module.css';
 }
 
 .icon {
@@ -50,16 +42,6 @@
   min-width: 0;
 }
 
-.badge {
-  flex: none;
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-  background: var(--surface-2);
-  padding: 1px 7px;
-  border-radius: var(--r-full);
-  white-space: nowrap;
-}
-
 .title {
   font-size: var(--fs-base);
   font-weight: 600;
@@ -72,7 +54,7 @@
 
 .excerpt {
   font-size: var(--fs-sm);
-  color: var(--ink-3);
+  color: var(--ink-2);
   line-height: var(--lh-normal);
   display: -webkit-box;
   -webkit-line-clamp: 2;

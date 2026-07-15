@@ -6,19 +6,9 @@
 }
 
 .card {
+  composes: cardHover from '../../components/ui/card.module.css';
   display: flex;
   flex-direction: column;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  transition:
-    background var(--dur) var(--ease-out),
-    border-color var(--dur) var(--ease-out);
-}
-.card:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-strong);
 }
 
 .main {
@@ -47,7 +37,7 @@
 
 .desc {
   font-size: var(--fs-sm);
-  color: var(--ink-3);
+  color: var(--ink-2);
   line-height: var(--lh-normal);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -97,15 +87,6 @@
 .subDot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--r-full);
   flex-shrink: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .main {
-    transition: none;
-  }
-  .main:active {
-    transform: none;
-  }
 }

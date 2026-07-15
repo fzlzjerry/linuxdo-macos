@@ -9,13 +9,11 @@
 
 /* ---- Header card ---- */
 .headerCard {
+  composes: card from '../../components/ui/card.module.css';
   display: flex;
   align-items: flex-start;
   gap: var(--sp-4);
   padding: var(--sp-5);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
 }
 
 .avatar {
@@ -66,7 +64,7 @@
   flex-wrap: wrap;
   margin-top: var(--sp-2);
   font-size: var(--fs-sm);
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 .metaItem {
@@ -121,13 +119,11 @@
 }
 
 .statTile {
+  composes: card from '../../components/ui/card.module.css';
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
   padding: var(--sp-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
 }
 
 .statValue {
@@ -140,7 +136,7 @@
 
 .statLabel {
   font-size: var(--fs-xs);
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 /* ---- Sections ---- */
@@ -187,34 +183,18 @@
 
 /* ---- Recent topics ---- */
 .topics {
+  composes: card from '../../components/ui/card.module.css';
   display: flex;
   flex-direction: column;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  overflow: hidden;
 }
 
 .topicRow {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  text-align: left;
-  padding: var(--sp-3) var(--sp-4);
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border);
-  transition: background var(--dur-fast) var(--ease-out);
+  composes: row from '../../components/ui/listRow.module.css';
+  padding-left: var(--sp-4);
+  padding-right: var(--sp-4);
 }
 .topicRow:last-child {
   border-bottom: none;
-}
-.topicRow:hover {
-  background: var(--surface-hover);
-}
-.topicRow:active {
-  background: var(--surface-active);
 }
 
 .topicTitle {

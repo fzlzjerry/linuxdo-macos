@@ -71,16 +71,19 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
       <input
         className={styles.search}
         placeholder="搜索表情"
+        aria-label="搜索表情"
         value={q}
         autoFocus
         onChange={(e) => setQ(e.target.value)}
       />
       {!q && (
-        <div className={styles.tabs}>
+        <div className={styles.tabs} role="radiogroup" aria-label="表情分组">
           {GROUPS.map((g) => (
             <button
               key={g.key}
               type="button"
+              role="radio"
+              aria-checked={g.key === group}
               className={g.key === group ? styles.tabActive : styles.tab}
               title={g.label}
               aria-label={g.label}

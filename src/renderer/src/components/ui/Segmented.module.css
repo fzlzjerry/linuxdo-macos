@@ -12,9 +12,18 @@
   background: transparent;
   color: var(--ink-2);
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
   white-space: nowrap;
+}
+
+.seg:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.seg:not(.active):not(:disabled):active {
+  background: var(--surface-active);
 }
 
 .sm .seg {
@@ -26,7 +35,7 @@
   font-size: var(--fs-sm);
 }
 
-.seg:hover {
+.seg:not(:disabled):hover {
   color: var(--ink);
 }
 

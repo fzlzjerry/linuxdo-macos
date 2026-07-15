@@ -16,23 +16,9 @@
   padding: 0 var(--sp-3) var(--sp-2);
 }
 
-.compose {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-2);
+/* Width helper for Button inside the sidebar (compose / login). */
+.fullWidth {
   width: 100%;
-  padding: 8px var(--sp-3);
-  border: none;
-  border-radius: var(--r-md);
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-weight: 600;
-  font-size: var(--fs-sm);
-  transition: background var(--dur) var(--ease-out);
-}
-.compose:hover {
-  background: var(--accent-hover);
 }
 
 .nav {
@@ -106,7 +92,7 @@
   border-radius: var(--r-full);
   background: var(--accent);
   color: var(--accent-ink);
-  font-size: 11px;
+  font-size: 0.6875rem; /* 11px at default, scales with the font-size setting */
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -155,17 +141,3 @@
   text-overflow: ellipsis;
 }
 
-.loginBtn {
-  width: 100%;
-  background: var(--accent);
-  color: var(--accent-ink);
-  border: none;
-  border-radius: var(--r-md);
-  padding: 9px var(--sp-3);
-  font-weight: 600;
-  font-size: var(--fs-sm);
-  transition: background var(--dur) var(--ease-out);
-}
-.loginBtn:hover {
-  background: var(--accent-hover);
-}

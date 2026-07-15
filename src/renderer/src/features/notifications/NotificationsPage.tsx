@@ -6,6 +6,7 @@ import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { Button } from '../../components/ui/Button'
 import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
+import { LoginGate } from '../../components/ui/LoginGate'
 import { EmptyState, ErrorState, Spinner, TopicListSkeleton } from '../../components/ui/states'
 import { useNotifications } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
@@ -155,15 +156,10 @@ export function NotificationsPage(): JSX.Element {
   if (!auth.loggedIn) {
     return (
       <PageScaffold toolbar={<Toolbar title="通知" />}>
-        <EmptyState
+        <LoginGate
           icon={<Bell size={26} strokeWidth={1.6} />}
           title="登录后查看通知"
           description="登录 linux.do 账号，随时接收提及、回复和私信提醒。"
-          action={
-            <Button variant="primary" onClick={() => void auth.showLogin()}>
-              登录 linux.do
-            </Button>
-          }
         />
       </PageScaffold>
     )

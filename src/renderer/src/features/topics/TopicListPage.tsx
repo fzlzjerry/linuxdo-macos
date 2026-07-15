@@ -53,7 +53,7 @@ export function TopicListPage({ filter }: { filter: ListingFilter }): JSX.Elemen
   const right = (
     <>
       {filter === 'top' && (
-        <Segmented options={PERIODS} value={period} onChange={setPeriod} />
+        <Segmented options={PERIODS} value={period} onChange={setPeriod} aria-label="时间范围" />
       )}
       <IconButton label="刷新" onClick={() => void refetch()} disabled={isRefetching}>
         <RefreshCw size={16} className={isRefetching ? 'spin' : undefined} />

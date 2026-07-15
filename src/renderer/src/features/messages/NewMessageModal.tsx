@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Modal } from '../../components/ui/Modal'
+import { Field } from '../../components/ui/Field'
 import { Composer } from '../../components/composer/Composer'
 import { discourse } from '../../lib/discourse/client'
 import { toast } from '../../store/toast'
@@ -15,16 +16,14 @@ export function NewMessageModal({ open, onClose, onCreated }: Props): JSX.Elemen
   const [recipients, setRecipients] = useState('')
   const [title, setTitle] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [errors, setErrors] = useState<{ recipients?: string; title?: string }>({})
 
   async function submit(raw: string): Promise<void> {
-    if (!recipients.trim()) {
-      toast.error('请填写收件人')
-      return
-    }
-    if (!title.trim()) {
-      toast.error('请填写标题')
-      return
-    }
+    const next: typeof errors = {}
+    if (!recipients.trim()) next.recipients = '请填写收件人'
+    if (!title.trim()) next.title = '请填写标题'
+    setErrors(next)
+    if (next.recipients || next.title) return
     setSubmitting(true)
     try {
       const result = await discourse.createMessage({
@@ -47,29 +46,31 @@ export function NewMessageModal({ open, onClose, onCreated }: Props): JSX.Elemen
   return (
     <Modal open={open} onClose={onClose} title="写私信" width={720}>
       <div className={styles.fields}>
-        <label className={styles.field}>
-          <span className={styles.label}>收件人</span>
+        <Field label="收件人" error={errors.recipients} required>
           <input
-            className={styles.input}
             type="text"
             value={recipients}
             placeholder="用户名，用逗号分隔"
             autoFocus
             disabled={submitting}
-            onChange={(e) => setRecipients(e.target.value)}
+            onChange={(e) => {
+              setRecipients(e.target.value)
+              if (errors.recipients) setErrors((p) => ({ ...p, recipients: undefined }))
+            }}
           />
-        </label>
-        <label className={styles.field}>
-          <span className={styles.label}>标题</span>
+        </Field>
+        <Field label="标题" error={errors.title} required>
           <input
-            className={styles.input}
             type="text"
             value={title}
             placeholder="私信标题"
             disabled={submitting}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value)
+              if (errors.title) setErrors((p) => ({ ...p, title: undefined }))
+            }}
           />
-        </label>
+        </Field>
       </div>
 
       <Composer

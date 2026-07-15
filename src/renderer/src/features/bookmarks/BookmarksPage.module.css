@@ -1,24 +1,11 @@
 .row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  text-align: left;
-  padding: var(--sp-3) var(--sp-5);
-  background: transparent;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-out);
+  composes: rowGroup from '../../components/ui/listRow.module.css';
 }
-.row:hover {
-  background: var(--surface-hover);
+.overlay {
+  composes: overlay from '../../components/ui/listRow.module.css';
 }
-.row:active {
-  background: var(--surface-active);
-}
-.row:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+.actions {
+  composes: actions from '../../components/ui/listRow.module.css';
 }
 
 .main {
@@ -52,15 +39,6 @@
   min-width: 0;
 }
 
-.tag {
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-  background: var(--surface-2);
-  padding: 1px 7px;
-  border-radius: var(--r-full);
-  white-space: nowrap;
-}
-
 .time {
   font-size: var(--fs-xs);
   color: var(--ink-3);
@@ -70,7 +48,7 @@
 
 .excerpt {
   font-size: var(--fs-sm);
-  color: var(--ink-3);
+  color: var(--ink-2);
   line-height: var(--lh-normal);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -98,11 +76,4 @@
 .remove:disabled {
   opacity: 0.5;
   cursor: default;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .row,
-  .remove {
-    transition: none;
-  }
 }

@@ -22,10 +22,11 @@
   font-family: var(--font-ui);
   font-size: var(--fs-sm);
   padding: 6px 10px;
-  outline: none;
 }
-.search:focus {
+.search:focus-visible {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: 2px solid transparent;
 }
 .search::placeholder {
   color: var(--ink-3);
@@ -86,14 +87,6 @@
   grid-column: 1 / -1;
   padding: var(--sp-4);
   text-align: center;
-  color: var(--ink-3);
+  color: var(--ink-2);
   font-size: var(--fs-sm);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tab,
-  .tabActive,
-  .cell {
-    transition: none;
-  }
 }

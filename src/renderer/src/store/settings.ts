@@ -52,6 +52,10 @@ function applyFont(scale: number): void {
   document.documentElement.style.fontSize = `${16 * scale}px`
 }
 
+function applyDensity(compact: boolean): void {
+  document.documentElement.dataset.density = compact ? 'compact' : 'comfortable'
+}
+
 const initial = load()
 
 export const useSettings = create<SettingsState>((set, get) => {
@@ -72,6 +76,7 @@ export const useSettings = create<SettingsState>((set, get) => {
       set({ fontScale })
     },
     setCompactList: (compactList) => {
+      applyDensity(compactList)
       persistPatch({ compactList })
       set({ compactList })
     }
@@ -82,6 +87,7 @@ export const useSettings = create<SettingsState>((set, get) => {
 export function initSettings(): void {
   applyTheme(initial.theme)
   applyFont(initial.fontScale)
+  applyDensity(initial.compactList)
   window
     .matchMedia('(prefers-color-scheme: dark)')
     .addEventListener('change', () => {

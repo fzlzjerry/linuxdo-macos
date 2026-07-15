@@ -8,7 +8,7 @@
   overflow: visible;
 }
 .dialog::backdrop {
-  background: oklch(0 0 0 / 0.4);
+  background: var(--scrim, oklch(0 0 0 / 0.4));
   backdrop-filter: blur(3px);
 }
 

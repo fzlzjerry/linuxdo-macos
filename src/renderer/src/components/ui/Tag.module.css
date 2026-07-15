@@ -1,0 +1,9 @@
+.tag {
+  font-size: var(--fs-xs);
+  color: var(--ink-2); /* sits on surface-2 — needs the stronger ink tier for AA */
+  background: var(--surface-2);
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  white-space: nowrap;
+  flex: none;
+}

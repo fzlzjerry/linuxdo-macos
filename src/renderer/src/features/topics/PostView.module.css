@@ -172,7 +172,7 @@
 }
 .action.danger {
   color: var(--danger);
-  background: oklch(0.62 0.2 32 / 0.12);
+  background: var(--danger-soft);
 }
 
 .spacer {

@@ -106,25 +106,7 @@
 }
 
 .input {
-  width: 100%;
-  padding: var(--sp-2) var(--sp-3);
-  font-size: var(--fs-base);
-  font-family: var(--font-ui);
+  composes: input from '../../components/ui/Field.module.css';
   line-height: var(--lh-normal);
-  color: var(--ink);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  outline: none;
   resize: vertical;
-  transition:
-    border-color var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out);
-}
-.input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-.input::placeholder {
-  color: var(--ink-3);
 }

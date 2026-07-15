@@ -16,6 +16,7 @@ import {
   TrendingUp
 } from 'lucide-react'
 import { Avatar } from '../ui/Avatar'
+import { Button } from '../ui/Button'
 import { NewTopicModal } from '../composer/NewTopicModal'
 import { useAuth } from '../../store/auth'
 import styles from './Sidebar.module.css'
@@ -65,10 +66,14 @@ export function Sidebar(): JSX.Element {
       <div className={styles.dragTop} data-tauri-drag-region />
 
       <div className={styles.composeWrap}>
-        <button className={styles.compose} onClick={compose}>
-          <PenSquare size={16} />
+        <Button
+          variant="primary"
+          className={styles.fullWidth}
+          icon={<PenSquare size={16} />}
+          onClick={compose}
+        >
           发帖
-        </button>
+        </Button>
       </div>
 
       <nav className={styles.nav}>
@@ -87,9 +92,13 @@ export function Sidebar(): JSX.Element {
             </span>
           </NavLink>
         ) : (
-          <button className={styles.loginBtn} onClick={() => void auth.showLogin()}>
+          <Button
+            variant="primary"
+            className={styles.fullWidth}
+            onClick={() => void auth.showLogin()}
+          >
             登录 linux.do
-          </button>
+          </Button>
         )}
       </div>
 

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
-import { ErrorState, TopicListSkeleton } from '../../components/ui/states'
+import { CardGridSkeleton, ErrorState } from '../../components/ui/states'
 import { useCategories } from '../../lib/discourse/queries'
 import { useAuth } from '../../store/auth'
 import { compactNumber } from '../../lib/format'
@@ -20,7 +20,7 @@ export function CategoriesPage(): JSX.Element {
   return (
     <PageScaffold toolbar={<Toolbar title="分类" />}>
       {isLoading ? (
-        <TopicListSkeleton />
+        <CardGridSkeleton />
       ) : isError ? (
         <ErrorState error={error} onRetry={() => void refetch()} onLogin={() => void auth.showLogin()} />
       ) : (

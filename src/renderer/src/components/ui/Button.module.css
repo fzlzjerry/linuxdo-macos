@@ -37,6 +37,9 @@
 .primary:not(:disabled):hover {
   background: var(--accent-hover);
 }
+.primary:not(:disabled):active {
+  background: color-mix(in oklch, var(--accent-hover) 88%, oklch(0 0 0));
+}
 
 .secondary {
   background: var(--surface-2);
@@ -45,6 +48,9 @@
 }
 .secondary:not(:disabled):hover {
   background: var(--surface-hover);
+}
+.secondary:not(:disabled):active {
+  background: var(--surface-active);
 }
 
 .ghost {
@@ -55,6 +61,9 @@
   background: var(--surface-hover);
   color: var(--ink);
 }
+.ghost:not(:disabled):active {
+  background: var(--surface-active);
+}
 
 .danger {
   background: transparent;
@@ -62,5 +71,8 @@
   border-color: var(--border);
 }
 .danger:not(:disabled):hover {
-  background: oklch(0.62 0.2 32 / 0.12);
+  background: var(--danger-soft);
+}
+.danger:not(:disabled):active {
+  background: color-mix(in oklch, var(--danger) 20%, transparent);
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { avatarUrl } from '../../lib/discourse/urls'
 import styles from './Avatar.module.css'
 
@@ -30,11 +31,13 @@ export function Avatar({ template, username, name, size = 40, className }: Avata
     return (
       <span
         className={`${styles.avatar} ${styles.fallback} ${className ?? ''}`}
-        style={{
-          ...style,
-          background: `oklch(0.7 0.12 ${hue})`,
-          fontSize: Math.round(size * 0.42)
-        }}
+        style={
+          {
+            ...style,
+            fontSize: Math.round(size * 0.42),
+            '--avatar-h': String(hue)
+          } as CSSProperties
+        }
         aria-hidden
       >
         {initial}

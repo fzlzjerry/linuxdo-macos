@@ -48,20 +48,22 @@ export function SettingsPage(): JSX.Element {
           <h2 className={styles.sectionTitle}>外观</h2>
           <div className={styles.card}>
             <Row label="主题" description="选择浅色、深色或跟随系统外观">
-              <Segmented options={THEME_OPTIONS} value={theme} onChange={setTheme} />
+              <Segmented options={THEME_OPTIONS} value={theme} onChange={setTheme} aria-label="主题" />
             </Row>
             <Row label="字体大小" description="调整界面文字的整体大小">
               <Segmented
                 options={FONT_OPTIONS}
                 value={String(fontScale)}
                 onChange={(v) => setFontScale(Number(v))}
+                aria-label="字体大小"
               />
             </Row>
-            <Row label="列表密度" description="话题列表的行高与间距">
+            <Row label="列表密度" description="列表行高与间距，立即生效">
               <Segmented
                 options={DENSITY_OPTIONS}
                 value={compactList ? 'compact' : 'comfortable'}
                 onChange={(v) => setCompactList(v === 'compact')}
+                aria-label="列表密度"
               />
             </Row>
           </div>

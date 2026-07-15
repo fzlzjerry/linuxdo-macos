@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Eye, MessageSquare, Pin } from 'lucide-react'
 import { Avatar } from '../../components/ui/Avatar'
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
+import { Tag } from '../../components/ui/Tag'
 import { relativeTime, compactNumber } from '../../lib/format'
 import { tagKey, tagText, type DiscourseUser, type TopicListItem } from '../../lib/discourse/types'
 import styles from './TopicRow.module.css'
@@ -36,9 +37,7 @@ export function TopicRow({ topic, users }: Props): JSX.Element {
         <div className={styles.metaLine}>
           <CategoryBadge categoryId={topic.category_id} />
           {topic.tags?.slice(0, 3).map((tag) => (
-            <span key={tagKey(tag)} className={styles.tag}>
-              {tagText(tag)}
-            </span>
+            <Tag key={tagKey(tag)}>{tagText(tag)}</Tag>
           ))}
           <span className={styles.author}>{op?.name || op?.username}</span>
         </div>

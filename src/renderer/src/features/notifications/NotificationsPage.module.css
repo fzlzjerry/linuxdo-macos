@@ -1,20 +1,5 @@
 .row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  text-align: left;
-  padding: var(--sp-3) var(--sp-5);
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border);
-  transition: background var(--dur-fast) var(--ease-out);
-}
-.row:hover {
-  background: var(--surface-hover);
-}
-.row:active {
-  background: var(--surface-active);
+  composes: row from '../../components/ui/listRow.module.css';
 }
 
 .unread {
@@ -60,9 +45,11 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
+/* Read rows stay AA-legible; the read/unread distinction is carried by
+   weight, the unread row tint, and the trailing dot — not by fading text. */
 .read .text {
-  font-weight: 450;
-  color: var(--ink-3);
+  font-weight: 400;
+  color: var(--ink-2);
 }
 
 .time {

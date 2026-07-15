@@ -1,20 +1,5 @@
 .row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  text-align: left;
-  padding: var(--sp-3) var(--sp-5);
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border);
-  transition: background var(--dur-fast) var(--ease-out);
-}
-.row:hover {
-  background: var(--surface-hover);
-}
-.row:active {
-  background: var(--surface-active);
+  composes: row from '../../components/ui/listRow.module.css';
 }
 
 .indicator {
@@ -67,15 +52,6 @@
   gap: var(--sp-2);
   min-width: 0;
   overflow: hidden;
-}
-
-.tag {
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-  background: var(--surface-2);
-  padding: 1px 7px;
-  border-radius: var(--r-full);
-  white-space: nowrap;
 }
 
 .author {

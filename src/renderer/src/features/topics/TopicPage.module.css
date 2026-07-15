@@ -29,14 +29,6 @@
   color: var(--ink-3);
 }
 
-.tag {
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-  background: var(--surface-2);
-  padding: 2px 8px;
-  border-radius: var(--r-full);
-}
-
 .metaStat {
   display: inline-flex;
   align-items: center;
