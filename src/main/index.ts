@@ -15,8 +15,10 @@ app.commandLine.appendSwitch(
   'EncryptedClientHello,UseDnsHttpsSvcb,UseDnsHttpsSvcbAlpn'
 )
 
-// Dev-only: expose CDP so the app can be driven for automated verification.
-if (process.env['ELECTRON_RENDERER_URL']) {
+// Opt-in only: expose CDP for automated verification. OFF by default — an active
+// remote-debugging connection makes Cloudflare's bot challenge (Turnstile) loop
+// forever and refuse to pass. Enable with LINUXDO_CDP=1 only for headless testing.
+if (process.env['ELECTRON_RENDERER_URL'] && process.env['LINUXDO_CDP']) {
   app.commandLine.appendSwitch('remote-debugging-port', '9222')
 }
 
