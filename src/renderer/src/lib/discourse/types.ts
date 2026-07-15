@@ -167,7 +167,8 @@ export interface Boost {
   cooked: string
   can_delete?: boolean
   can_flag?: boolean
-  user: DiscourseUser
+  /** Null for deleted/anonymized accounts — always render defensively. */
+  user: DiscourseUser | null
 }
 
 export interface TopicPostStream {

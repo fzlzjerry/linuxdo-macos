@@ -130,9 +130,9 @@ export function BoostSection({ post }: { post: Post }): JSX.Element | null {
             {boosts.map((boost) => (
               <li key={boost.id} className={styles.item}>
                 <Avatar
-                  template={boost.user.avatar_template}
-                  username={boost.user.username}
-                  name={boost.user.name}
+                  template={boost.user?.avatar_template}
+                  username={boost.user?.username}
+                  name={boost.user?.name}
                   size={20}
                 />
                 <div className={styles.boostBody}>

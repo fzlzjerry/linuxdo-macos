@@ -1,0 +1,38 @@
+.fallback {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-3) var(--sp-5);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--danger);
+  border-radius: var(--r-md);
+  background: var(--danger-soft);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+}
+.fallback svg {
+  color: var(--danger);
+  flex: none;
+}
+
+.msg {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.retry {
+  flex: none;
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+}
+.retry:hover {
+  background: var(--accent-soft);
+}

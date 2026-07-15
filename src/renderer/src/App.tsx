@@ -15,6 +15,7 @@ import { SettingsPage } from './features/settings/SettingsPage'
 import { DraftsPage } from './features/drafts/DraftsPage'
 import { Toaster } from './components/ui/Toaster'
 import { LightboxHost } from './components/ui/Lightbox'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { initAuthBridge } from './store/auth'
 import { initSettings } from './store/settings'
 import { useGlobalShortcuts } from './lib/shortcuts'
@@ -87,6 +88,7 @@ export function App(): JSX.Element {
       <AppShortcuts />
       <Sidebar />
       <main className={styles.content}>
+        <ErrorBoundary label="页面">
         <Routes>
           <Route path="/" element={<Navigate to="/latest" replace />} />
           <Route path="/latest" element={<TopicListPage filter="latest" />} />
@@ -106,6 +108,7 @@ export function App(): JSX.Element {
           <Route path="/u/:username" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/latest" replace />} />
         </Routes>
+        </ErrorBoundary>
       </main>
       <Toaster />
       <LightboxHost />

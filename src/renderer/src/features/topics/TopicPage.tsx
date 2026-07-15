@@ -12,6 +12,7 @@ import { CategoryBadge } from '../../components/ui/CategoryBadge'
 import { Tag } from '../../components/ui/Tag'
 import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { ErrorState, Spinner } from '../../components/ui/states'
+import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
 import { useTopic } from '../../lib/discourse/queries'
 import { useBackNav } from '../../lib/useBackNav'
 import { errorMessage } from '../../lib/errors'
@@ -346,12 +347,14 @@ export function TopicPage(): JSX.Element {
                     还有 {gapsBefore.get(p.id)?.length} 条回复 · 点击加载
                   </button>
                 )}
-                <PostView
-                  post={p}
-                  onReply={canPost ? openReply : undefined}
-                  onEdit={(post) => void openEdit(post)}
-                  onDeleted={() => setDeleted((s) => new Set(s).add(p.id))}
-                />
+                <ErrorBoundary label={`#${p.post_number} 楼`}>
+                  <PostView
+                    post={p}
+                    onReply={canPost ? openReply : undefined}
+                    onEdit={(post) => void openEdit(post)}
+                    onDeleted={() => setDeleted((s) => new Set(s).add(p.id))}
+                  />
+                </ErrorBoundary>
               </Fragment>
             ))}
           </div>
