@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "remote-bridge",
+  "description": "Allow the hidden linux.do engine webview to emit fetch results back to Rust",
+  "windows": ["engine"],
+  "remote": {
+    "urls": ["https://linux.do", "https://*.linux.do"]
+  },
+  "permissions": ["core:event:allow-emit"]
+}

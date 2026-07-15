@@ -3,7 +3,7 @@ import type {
   DiscourseRequest,
   DiscourseResponse,
   WindowControlAction
-} from '../shared/api'
+} from '../../shared/api'
 
 export interface LinuxDoApi {
   discourse: {
