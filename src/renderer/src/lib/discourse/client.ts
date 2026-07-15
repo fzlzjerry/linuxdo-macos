@@ -59,13 +59,25 @@ function ensureBridge(): void {
   }
 }
 
+/** Discourse returns `{ errors: [...] }` (or `{ error }`) on a failed write. Pull
+ *  out the human message so callers surface the real reason, not a status code. */
+function serverError(json: unknown): string | undefined {
+  if (!json || typeof json !== 'object') return undefined
+  const o = json as Record<string, unknown>
+  if (Array.isArray(o.errors)) {
+    const msgs = o.errors.filter((e): e is string => typeof e === 'string' && e.length > 0)
+    if (msgs.length) return msgs.join('；')
+  }
+  return typeof o.error === 'string' && o.error ? o.error : undefined
+}
+
 async function request<T>(req: DiscourseRequest): Promise<T> {
   ensureBridge()
   const res = await window.api.discourse.request<T>(req)
   if (res.error) throw new DiscourseApiError(res.error, res.status, !!res.needsAuth)
   if (!res.ok) {
     throw new DiscourseApiError(
-      `请求失败 (${res.status})`,
+      serverError(res.json) ?? `请求失败 (${res.status})`,
       res.status,
       !!res.needsAuth || res.status === 401 || res.status === 403
     )
@@ -178,13 +190,19 @@ export const discourse = {
     })
   },
 
-  // discourse-boosts plugin. Endpoint inferred from the RestModel convention; verify live.
+  // discourse-boosts plugin. Routes are namespaced under /discourse-boosts/; the
+  // frontend posts { raw } to /posts/:id/boosts (post id lives in the URL path).
   createBoost(postId: number, raw: string): Promise<unknown> {
-    return request({ path: '/boosts', method: 'POST', form: true, body: { post_id: postId, raw } })
+    return request({
+      path: `/discourse-boosts/posts/${postId}/boosts.json`,
+      method: 'POST',
+      form: true,
+      body: { raw }
+    })
   },
 
   deleteBoost(boostId: number): Promise<unknown> {
-    return request({ path: `/boosts/${boostId}`, method: 'DELETE' })
+    return request({ path: `/discourse-boosts/boosts/${boostId}.json`, method: 'DELETE' })
   },
 
   reply(params: { topicId: number; raw: string; replyToPostNumber?: number }): Promise<Post> {

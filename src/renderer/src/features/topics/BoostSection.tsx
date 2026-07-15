@@ -51,8 +51,10 @@ export function BoostSection({ post }: { post: Post }): JSX.Element | null {
   const [open, setOpen] = useState(false)
   const [raw, setRaw] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [boosted, setBoosted] = useState(false)
 
-  const canBoost = post.can_boost !== false
+  // One boost per user per post; hide the trigger once the server accepts ours.
+  const canBoost = post.can_boost !== false && !boosted
 
   function guard(): boolean {
     if (!auth.loggedIn) {
@@ -88,11 +90,12 @@ export function BoostSection({ post }: { post: Post }): JSX.Element | null {
       }
       const created = boostFromResponse(resp) ?? fallback
       setBoosts((prev) => [...prev, created])
+      setBoosted(true)
       toast.success('已助推 🚀')
       setOpen(false)
       setRaw('')
-    } catch {
-      toast.error('助推失败（该功能可能需要更高信任等级）')
+    } catch (e) {
+      toast.error(e instanceof Error && e.message ? e.message : '助推失败')
     } finally {
       setSubmitting(false)
     }
@@ -105,10 +108,11 @@ export function BoostSection({ post }: { post: Post }): JSX.Element | null {
     if (boost.id <= 0) return
     try {
       await discourse.deleteBoost(boost.id)
+      setBoosted(false)
       toast.info('已移除助推')
-    } catch {
+    } catch (e) {
       setBoosts(prev)
-      toast.error('操作失败')
+      toast.error(e instanceof Error && e.message ? e.message : '操作失败')
     }
   }
 
