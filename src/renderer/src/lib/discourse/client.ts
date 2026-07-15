@@ -478,10 +478,11 @@ export const discourse = {
     return r.user?.user_option ?? {}
   },
 
-  /** Update a single preference. The user drives this from the Settings UI. */
+  /** Update a single preference. The user drives this from the Settings UI.
+      Discourse routes user updates by username_lower, so lowercase it. */
   updatePreference(username: string, field: string, value: boolean): Promise<unknown> {
     return request({
-      path: `/u/${encodeURIComponent(username)}.json`,
+      path: `/u/${encodeURIComponent(username.toLowerCase())}.json`,
       method: 'PUT',
       form: true,
       body: { [field]: value }

@@ -1,12 +1,13 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Hash, MessagesSquare, RefreshCw, Send } from 'lucide-react'
+import { Hash, MessagesSquare, RefreshCw, Send, Smile } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { Avatar } from '../../components/ui/Avatar'
 import { IconButton } from '../../components/ui/IconButton'
 import { LoginGate } from '../../components/ui/LoginGate'
 import { EmptyState, ErrorState, Spinner } from '../../components/ui/states'
+import { EmojiPicker } from '../../components/composer/EmojiPicker'
 import { CookedContent } from '../topics/CookedContent'
 import { useChatChannels, useChatMessages } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
@@ -171,9 +172,46 @@ function ChatThread({ channel }: { channel: ChatChannel }): JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null)
   const nearBottomRef = useRef(true)
   const lastChannelRef = useRef(channel.id)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const emojiBtnRef = useRef<HTMLSpanElement>(null)
   const messages = data?.messages ?? []
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [emojiOpen, setEmojiOpen] = useState(false)
+  const [emojiAnchor, setEmojiAnchor] = useState({ left: 0, top: 0 })
+
+  function toggleEmoji(): void {
+    if (emojiOpen) {
+      setEmojiOpen(false)
+      return
+    }
+    const r = emojiBtnRef.current?.getBoundingClientRect()
+    if (!r) return
+    const W = 312
+    const H = 332
+    setEmojiAnchor({
+      left: Math.max(8, Math.min(r.left, window.innerWidth - W - 8)),
+      top: Math.max(8, r.top - H) // open above — the composer is at the bottom
+    })
+    setEmojiOpen(true)
+  }
+
+  function insertEmoji(char: string): void {
+    setEmojiOpen(false)
+    const el = textareaRef.current
+    if (!el) {
+      setText((t) => t + char)
+      return
+    }
+    const start = el.selectionStart ?? text.length
+    const end = el.selectionEnd ?? text.length
+    setText(text.slice(0, start) + char + text.slice(end))
+    requestAnimationFrame(() => {
+      el.focus()
+      const pos = start + char.length
+      el.setSelectionRange(pos, pos)
+    })
+  }
 
   function onScroll(): void {
     const el = scrollRef.current
@@ -272,7 +310,13 @@ function ChatThread({ channel }: { channel: ChatChannel }): JSX.Element {
           void send()
         }}
       >
+        <span ref={emojiBtnRef} className={styles.emojiWrap}>
+          <IconButton label="表情" type="button" active={emojiOpen} onClick={toggleEmoji}>
+            <Smile size={18} />
+          </IconButton>
+        </span>
         <textarea
+          ref={textareaRef}
           className={styles.composerInput}
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -286,6 +330,15 @@ function ChatThread({ channel }: { channel: ChatChannel }): JSX.Element {
           <Send size={16} />
         </IconButton>
       </form>
+
+      {emojiOpen && (
+        <EmojiPicker
+          anchor={emojiAnchor}
+          triggerRef={emojiBtnRef}
+          onClose={() => setEmojiOpen(false)}
+          onPick={insertEmoji}
+        />
+      )}
     </>
   )
 }
