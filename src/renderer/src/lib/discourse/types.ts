@@ -154,6 +154,7 @@ export interface Post {
   current_user_reaction?: CurrentUserReaction | null
   reaction_users_count?: number
   bookmarked?: boolean
+  bookmark_id?: number
   boosts?: Boost[]
   can_boost?: boolean
 }

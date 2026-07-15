@@ -7,6 +7,7 @@ import { compactNumber } from '../../lib/format'
 import { ENABLED_REACTIONS, reactionEmoji } from '../../lib/discourse/reactions'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
+import { errorMessage } from '../../lib/errors'
 import styles from './ReactionBar.module.css'
 
 interface Props {
@@ -25,6 +26,7 @@ export function ReactionBar({ post }: Props): JSX.Element {
     (post.reactions ?? []).map((r) => ({ ...r }))
   )
   const [current, setCurrent] = useState<string | null>(post.current_user_reaction?.id ?? null)
+  const [reacting, setReacting] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [anchor, setAnchor] = useState<{ left: number; top: number } | null>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -84,8 +86,9 @@ export function ReactionBar({ post }: Props): JSX.Element {
   }
 
   async function toggle(id: string): Promise<void> {
-    if (!guard()) return
+    if (!guard() || reacting) return
     setPickerOpen(false)
+    setReacting(true)
     const prevReactions = reactions
     const prevCurrent = current
     const next = nextState(id)
@@ -93,10 +96,12 @@ export function ReactionBar({ post }: Props): JSX.Element {
     setCurrent(next.current)
     try {
       await discourse.toggleReaction(post.id, id)
-    } catch {
+    } catch (e) {
       setReactions(prevReactions)
       setCurrent(prevCurrent)
-      toast.error('操作失败')
+      toast.error(errorMessage(e))
+    } finally {
+      setReacting(false)
     }
   }
 

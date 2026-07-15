@@ -8,6 +8,7 @@ import { reactionEmoji } from '../../lib/discourse/reactions'
 import { absolutize, LINUXDO_ORIGIN } from '../../lib/discourse/urls'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
+import { errorMessage } from '../../lib/errors'
 import { CookedContent } from './CookedContent'
 import { BoostSection } from './BoostSection'
 import { ReactionBar } from './ReactionBar'
@@ -50,7 +51,8 @@ interface Props {
 export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Element {
   const auth = useAuth()
   const [bookmarked, setBookmarked] = useState(!!post.bookmarked)
-  const [bookmarkId, setBookmarkId] = useState<number | null>(null)
+  const [bookmarkId, setBookmarkId] = useState<number | null>(post.bookmark_id ?? null)
+  const [bookmarkBusy, setBookmarkBusy] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -70,21 +72,44 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
   }
 
   async function toggleBookmark(): Promise<void> {
-    if (!guard()) return
+    if (!guard() || bookmarkBusy) return
     const willAdd = !bookmarked
+    if (!willAdd && bookmarkId == null) {
+      // Bookmarked on the server but the id never reached us — don't fake it.
+      toast.warning('请在书签页移除该书签')
+      return
+    }
+    setBookmarkBusy(true)
     setBookmarked(willAdd)
     try {
       if (willAdd) {
         const r = await discourse.bookmark(post.id, 'Post')
         setBookmarkId(r.id)
         toast.success('已加入书签')
-      } else if (bookmarkId != null) {
-        await discourse.unbookmark(bookmarkId)
-        toast.info('已移除书签')
+      } else {
+        const removedId = bookmarkId as number
+        await discourse.unbookmark(removedId)
+        setBookmarkId(null)
+        toast.info('已移除书签', {
+          action: {
+            label: '撤销',
+            onClick: () => {
+              void discourse
+                .bookmark(post.id, 'Post')
+                .then((r) => {
+                  setBookmarked(true)
+                  setBookmarkId(r.id)
+                })
+                .catch((e) => toast.error(errorMessage(e)))
+            }
+          }
+        })
       }
-    } catch {
+    } catch (e) {
       setBookmarked(!willAdd)
-      toast.error('操作失败')
+      toast.error(errorMessage(e))
+    } finally {
+      setBookmarkBusy(false)
     }
   }
 
@@ -100,8 +125,8 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
       await discourse.deletePost(post.id)
       toast.success('已删除')
       onDeleted?.()
-    } catch {
-      toast.error('删除失败')
+    } catch (e) {
+      toast.error(errorMessage(e, '删除失败'))
     } finally {
       setBusy(false)
       setConfirmDel(false)
@@ -186,6 +211,8 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
         <button
           className={`${styles.action} ${bookmarked ? styles.bookmarked : ''}`}
           onClick={() => void toggleBookmark()}
+          disabled={bookmarkBusy}
+          aria-busy={bookmarkBusy}
           title={bookmarked ? '移除书签' : '加入书签'}
           aria-label={bookmarked ? '移除书签' : '加入书签'}
           aria-pressed={bookmarked}

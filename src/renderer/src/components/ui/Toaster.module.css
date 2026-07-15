@@ -25,6 +25,15 @@
   pointer-events: auto;
   max-width: 420px;
   animation: rise var(--dur-slow) var(--ease-out);
+  transition:
+    opacity 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
+}
+
+.leaving {
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
 }
 
 @keyframes rise {
@@ -44,11 +53,40 @@
 .error .icon {
   color: var(--danger);
 }
+.warning .icon {
+  color: var(--warning);
+}
 .info .icon {
   color: var(--accent);
 }
 
+/* The message area doubles as the dismiss button. */
+.body {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  min-width: 0;
+}
+
 .msg {
+  display: block;
   text-align: left;
+}
+
+.actionBtn {
+  flex: none;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.actionBtn:hover {
+  background: var(--accent-soft);
 }
 
