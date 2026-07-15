@@ -1,6 +1,7 @@
-import { session } from 'electron'
+import { BrowserWindow, session } from 'electron'
 import { engine } from '../network/engine'
 import { MessageBus } from '../network/messagebus'
+import { LoginWindow } from './loginWindow'
 import type { AuthState } from '../../shared/api'
 
 const ORIGIN = 'https://linux.do'
@@ -32,9 +33,15 @@ export class AuthManager {
   private polling = false
   private userId: number | null = null
   private bus: MessageBus | null = null
+  private readonly loginWindow = new LoginWindow()
+  private getParent: (() => BrowserWindow | null) | null = null
 
   onChanged(cb: (s: AuthState) => void): void {
     this.notify = cb
+  }
+
+  setParentProvider(fn: () => BrowserWindow | null): void {
+    this.getParent = fn
   }
 
   getCached(): AuthState {
@@ -84,9 +91,9 @@ export class AuthManager {
     }
   }
 
-  /** Show the linux.do window for interactive login and poll until authenticated. */
+  /** Open a focused login sheet and poll until the session becomes authenticated. */
   async showLogin(): Promise<AuthState> {
-    await engine.showForLogin()
+    this.loginWindow.open(this.getParent?.() ?? null)
     if (!this.polling) void this.pollUntilLoggedIn()
     return this.state
   }
@@ -96,9 +103,13 @@ export class AuthManager {
     const started = Date.now()
     try {
       while (Date.now() - started < 5 * 60 * 1000) {
+        // Stop if the user dismissed the login sheet without signing in.
+        if (!this.loginWindow.isOpen()) return
         const s = await this.refresh()
         if (s.loggedIn) {
-          engine.hideLogin()
+          this.loginWindow.close()
+          // Reload the engine on the freshly authenticated (and CF-cleared) session.
+          void engine.resetToOrigin()
           return
         }
         await new Promise((r) => setTimeout(r, 1500))

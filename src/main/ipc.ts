@@ -7,6 +7,9 @@ import { auth } from './auth/session'
 const ORIGIN = 'https://linux.do'
 
 export function registerIpc(getMainWindow: () => BrowserWindow | null): void {
+  // The login sheet parents itself to the main window.
+  auth.setParentProvider(getMainWindow)
+
   // Push auth changes to the renderer.
   auth.onChanged((state) => {
     getMainWindow()?.webContents.send(IPC.authChanged, state)

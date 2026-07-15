@@ -96,29 +96,10 @@ export class DiscourseEngine {
     return this.win.webContents
   }
 
-  /** Bring the linux.do window forward so the user can log in / solve a challenge. */
-  async showForLogin(): Promise<void> {
-    await this.ensureReady()
-    const wc = this.webContents
-    const url = wc.getURL()
-    if (!url.startsWith(ORIGIN)) await wc.loadURL(ORIGIN + '/login')
-    this.win!.setTitle('登录 linux.do')
-    this.win!.show()
-    this.win!.focus()
-  }
-
-  hideLogin(): void {
-    if (this.win && !this.win.isDestroyed()) this.win.hide()
-  }
-
   /** Return the linux.do window to the origin root (used after logout etc.). */
   async resetToOrigin(): Promise<void> {
     await this.ensureReady()
     await this.webContents.loadURL(ORIGIN + '/')
-  }
-
-  onLoginWindowClosed(cb: () => void): void {
-    this.win?.on('hide', cb)
   }
 
   /** Perform one Discourse request, with cold-start recovery + 429 back-off. */
