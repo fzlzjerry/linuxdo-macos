@@ -23,6 +23,7 @@
 
 .nav {
   flex: 1;
+  min-height: 0; /* let the nav shrink + scroll instead of pushing the footer off-screen */
   overflow-y: auto;
   padding: var(--sp-2) var(--sp-3) var(--sp-4);
   display: flex;

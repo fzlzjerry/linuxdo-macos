@@ -17,6 +17,7 @@
 .channels {
   flex: none;
   width: 260px;
+  min-height: 0;
   border-right: 1px solid var(--border);
   overflow-y: auto;
   padding: var(--sp-2);
@@ -99,6 +100,7 @@
 .thread {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -126,6 +128,7 @@
 
 .messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: var(--sp-3) var(--sp-4);
   display: flex;
