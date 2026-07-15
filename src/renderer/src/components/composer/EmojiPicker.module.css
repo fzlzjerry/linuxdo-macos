@@ -95,6 +95,18 @@
   object-fit: contain;
 }
 
+/* Shown when an emoji image ultimately fails to load — still clickable. */
+.fallback {
+  font-size: 9px;
+  line-height: 1.1;
+  color: var(--ink-3);
+  padding: 0 2px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+}
+
 .empty {
   grid-column: 1 / -1;
   padding: var(--sp-4);

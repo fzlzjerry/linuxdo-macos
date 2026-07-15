@@ -19,6 +19,84 @@ const GROUP_LABELS: Record<string, string> = {
 }
 const groupLabel = (g: string): string => GROUP_LABELS[g] ?? g
 
+// linux.do is behind Cloudflare; a burst of cross-origin image requests trips its
+// bot protection and most fail. Gate emoji image loads to a small concurrency so
+// they trickle in instead of firing ~60 at once.
+const MAX_CONCURRENT = 5
+let running = 0
+const queue: Array<{ run: () => void; cancelled: boolean }> = []
+function pump(): void {
+  while (running < MAX_CONCURRENT && queue.length > 0) {
+    const t = queue.shift()!
+    if (t.cancelled) continue
+    running++
+    t.run()
+  }
+}
+function enqueue(run: () => void): { run: () => void; cancelled: boolean } {
+  const task = { run, cancelled: false }
+  queue.push(task)
+  pump()
+  return task
+}
+function complete(): void {
+  running = Math.max(0, running - 1)
+  pump()
+}
+
+/** An emoji image whose network load is scheduled through the shared concurrency
+ *  gate. Falls back to the shortcode text if the image ultimately fails. */
+function EmojiImg({ emoji, size }: { emoji: DiscourseEmoji; size: number }): JSX.Element {
+  const abs = absolutize(emoji.url)
+  const [src, setSrc] = useState<string | undefined>(undefined)
+  const [failed, setFailed] = useState(false)
+  const doneRef = useRef(false)
+
+  useEffect(() => {
+    doneRef.current = false
+    setSrc(undefined)
+    setFailed(false)
+    let started = false
+    const task = enqueue(() => {
+      started = true
+      setSrc(abs)
+    })
+    return () => {
+      task.cancelled = true
+      if (started && !doneRef.current) {
+        doneRef.current = true
+        complete()
+      }
+    }
+  }, [abs])
+
+  const finish = (): void => {
+    if (!doneRef.current) {
+      doneRef.current = true
+      complete()
+    }
+  }
+
+  if (failed) {
+    return <span className={styles.fallback}>:{emoji.name}:</span>
+  }
+  return (
+    <img
+      className={styles.cellImg}
+      style={{ width: size, height: size }}
+      src={src}
+      alt={emoji.name}
+      loading="lazy"
+      decoding="async"
+      onLoad={finish}
+      onError={() => {
+        finish()
+        setFailed(true)
+      }}
+    />
+  )
+}
+
 interface Props {
   anchor: { left: number; top: number }
   /** The toolbar trigger — clicks inside it must not count as "outside". */
@@ -28,6 +106,8 @@ interface Props {
   onPick: (text: string) => void
 }
 
+const PAGE = 60
+
 /** linux.do (Discourse) emoji picker: renders the site's own emoji images
  *  (twemoji + custom packs) and inserts the `:shortcode:` so sent content
  *  renders identically to the web. */
@@ -35,7 +115,9 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
   const { data, isLoading } = useEmojis()
   const [q, setQ] = useState('')
   const [group, setGroup] = useState<string | null>(null)
+  const [limit, setLimit] = useState(PAGE)
   const rootRef = useRef<HTMLDivElement>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const onDown = (e: MouseEvent): void => {
@@ -43,8 +125,6 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
       if (rootRef.current?.contains(t) || triggerRef.current?.contains(t)) return
       onClose()
     }
-    // Capture + preventDefault: Escape closes ONLY the picker, not the enclosing
-    // native <dialog>.
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         e.preventDefault()
@@ -91,6 +171,19 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
     return data[activeGroup] ?? []
   }, [data, q, activeGroup])
 
+  // Reset the render window whenever the visible set changes (group/search).
+  useEffect(() => setLimit(PAGE), [q, activeGroup])
+
+  const shown = list.slice(0, limit)
+
+  function onGridScroll(): void {
+    const el = gridRef.current
+    if (!el) return
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 60 && limit < list.length) {
+      setLimit((n) => n + PAGE)
+    }
+  }
+
   return (
     <div ref={rootRef} className={styles.popover} style={{ left: anchor.left, top: anchor.top }}>
       <input
@@ -116,23 +209,19 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
                 aria-label={groupLabel(g)}
                 onClick={() => setGroup(g)}
               >
-                {icon ? (
-                  <img className={styles.tabImg} src={absolutize(icon.url)} alt="" loading="lazy" />
-                ) : (
-                  groupLabel(g).slice(0, 1)
-                )}
+                {icon ? <EmojiImg emoji={icon} size={18} /> : groupLabel(g).slice(0, 1)}
               </button>
             )
           })}
         </div>
       )}
-      <div className={styles.grid}>
+      <div className={styles.grid} ref={gridRef} onScroll={onGridScroll}>
         {isLoading ? (
           <div className={styles.empty}>加载表情…</div>
-        ) : list.length === 0 ? (
+        ) : shown.length === 0 ? (
           <div className={styles.empty}>没有找到表情</div>
         ) : (
-          list.map((e) => (
+          shown.map((e) => (
             <button
               key={e.name}
               type="button"
@@ -140,7 +229,7 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
               title={`:${e.name}:`}
               onClick={() => onPick(`:${e.name}:`)}
             >
-              <img className={styles.cellImg} src={absolutize(e.url)} alt={e.name} loading="lazy" />
+              <EmojiImg emoji={e} size={22} />
             </button>
           ))
         )}
