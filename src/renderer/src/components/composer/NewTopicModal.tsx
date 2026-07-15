@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Modal } from '../ui/Modal'
 import { Field } from '../ui/Field'
 import { Composer } from './Composer'
+import { TagsInput } from './TagsInput'
 import { DiscardBar, useDiscardGuard } from './useDiscardGuard'
 import { useCategories } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
@@ -115,14 +116,14 @@ export function NewTopicModal({ open, onClose }: Props): JSX.Element {
               ))}
             </select>
           </Field>
-          <Field label="标签" hideLabel className={styles.tagsField}>
-            <input
-              placeholder="标签（用逗号分隔，可选）"
-              value={tags}
-              disabled={submitting}
-              onChange={(e) => setTags(e.target.value)}
-            />
-          </Field>
+          <TagsInput
+            className={styles.tagsField}
+            value={tags}
+            onChange={setTags}
+            disabled={submitting}
+            placeholder="标签（输入匹配已有标签，可选）"
+            aria-label="标签"
+          />
         </div>
         <Composer
           key={session}

@@ -190,6 +190,20 @@ export const discourse = {
     })
   },
 
+  /** Existing-tag lookup (same endpoint the Discourse composer uses).
+      Empty q returns the most-used tags, sorted by topic count. */
+  searchTags(q: string, limit = 5): Promise<{ name: string; count: number }[]> {
+    return request<{
+      results?: { id?: string | number; name?: string; text?: string; count?: number }[]
+    }>({
+      path: `/tags/filter/search.json?q=${encodeURIComponent(q)}&limit=${limit}`
+    }).then((r) =>
+      (r.results ?? [])
+        .map((t) => ({ name: String(t.name ?? t.text ?? t.id ?? ''), count: t.count ?? 0 }))
+        .filter((t) => t.name)
+    )
+  },
+
   // discourse-boosts plugin. Routes are namespaced under /discourse-boosts/; the
   // frontend posts { raw } to /posts/:id/boosts (post id lives in the URL path).
   createBoost(postId: number, raw: string): Promise<unknown> {

@@ -1,0 +1,57 @@
+.wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.input {
+  composes: input from '../ui/Field.module.css';
+}
+
+/* Fixed popover — stays inside the dialog top layer, escapes the modal's
+   overflow clipping. Shadow-only elevation, no paired border. */
+.pop {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  margin: 0;
+  padding: var(--sp-1);
+  list-style: none;
+  background: var(--surface);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 6px var(--sp-3);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.itemActive {
+  background: var(--surface-hover);
+}
+
+.name {
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
