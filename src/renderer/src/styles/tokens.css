@@ -1,0 +1,126 @@
+/* Design tokens — native-macOS product palette anchored on linux.do's own
+   accent (#099dd7) and semantic colors, expressed in OKLCH. Light is default;
+   dark follows the system and can be forced via [data-theme]. */
+
+:root {
+  /* ---- Type ---- */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  --fs-xs: 0.75rem; /* 12 */
+  --fs-sm: 0.8125rem; /* 13 */
+  --fs-base: 0.9375rem; /* 15 */
+  --fs-md: 1rem; /* 16 */
+  --fs-lg: 1.125rem; /* 18 */
+  --fs-xl: 1.375rem; /* 22 */
+  --fs-2xl: 1.75rem; /* 28 */
+
+  --lh-tight: 1.25;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.7;
+
+  /* ---- Space ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* ---- Radius ---- */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-full: 999px;
+
+  /* ---- Z scale ---- */
+  --z-base: 1;
+  --z-sticky: 200;
+  --z-dropdown: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-toast: 600;
+  --z-tooltip: 700;
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur: 180ms;
+  --dur-slow: 240ms;
+
+  /* ---- Light palette ---- */
+  --bg: oklch(0.995 0 0);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.965 0.002 250);
+  --surface-hover: oklch(0.955 0.004 250);
+  --surface-active: oklch(0.93 0.006 250);
+  --sidebar-bg: oklch(0.975 0.002 250); /* second neutral layer */
+  --sidebar-item-hover: oklch(0.5 0.01 250 / 0.1);
+  --sidebar-item-active: oklch(0.66 0.132 233 / 0.16);
+
+  --ink: oklch(0.24 0.006 250);
+  --ink-2: oklch(0.44 0.008 250);
+  --ink-3: oklch(0.58 0.01 250);
+  --ink-inverse: oklch(0.99 0 0);
+
+  --border: oklch(0.5 0.01 250 / 0.14);
+  --border-strong: oklch(0.5 0.01 250 / 0.24);
+
+  --accent: oklch(0.63 0.132 233);
+  --accent-hover: oklch(0.58 0.14 233);
+  --accent-ink: oklch(0.99 0 0);
+  --accent-soft: oklch(0.63 0.132 233 / 0.12);
+
+  --success: oklch(0.64 0.16 152);
+  --danger: oklch(0.62 0.2 32);
+  --warning: oklch(0.75 0.15 75);
+  --like: oklch(0.7 0.16 5);
+
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.08);
+  --shadow-md: 0 6px 20px oklch(0 0 0 / 0.12);
+  --shadow-pop: 0 12px 32px oklch(0 0 0 / 0.18);
+
+  --focus-ring: 0 0 0 3px oklch(0.63 0.132 233 / 0.4);
+
+  color-scheme: light;
+}
+
+/* Dark palette. Theme is JS-driven: the app sets data-theme="dark|light" on
+   <html> (resolving "system" via matchMedia), so there is a single dark block. */
+:root[data-theme='dark'] {
+  --bg: oklch(0.205 0.006 260);
+    --surface: oklch(0.245 0.007 260);
+    --surface-2: oklch(0.275 0.008 260);
+    --surface-hover: oklch(0.3 0.009 260);
+    --surface-active: oklch(0.33 0.01 260);
+    --sidebar-bg: oklch(0.185 0.006 260); /* second neutral layer */
+    --sidebar-item-hover: oklch(0.9 0.01 250 / 0.08);
+    --sidebar-item-active: oklch(0.66 0.14 233 / 0.24);
+
+    --ink: oklch(0.94 0.004 250);
+    --ink-2: oklch(0.76 0.008 250);
+    --ink-3: oklch(0.62 0.01 250);
+    --ink-inverse: oklch(0.2 0.006 260);
+
+    --border: oklch(0.85 0.01 250 / 0.12);
+    --border-strong: oklch(0.85 0.01 250 / 0.2);
+
+    --accent: oklch(0.72 0.13 233);
+    --accent-hover: oklch(0.78 0.13 233);
+    --accent-ink: oklch(0.16 0.01 260);
+    --accent-soft: oklch(0.72 0.13 233 / 0.18);
+
+    --success: oklch(0.72 0.15 152);
+    --danger: oklch(0.68 0.19 32);
+    --warning: oklch(0.8 0.14 75);
+    --like: oklch(0.74 0.15 5);
+
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.3);
+    --shadow-md: 0 8px 24px oklch(0 0 0 / 0.4);
+    --shadow-pop: 0 14px 36px oklch(0 0 0 / 0.5);
+
+    color-scheme: dark;
+}

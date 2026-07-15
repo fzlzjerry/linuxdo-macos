@@ -1,0 +1,18 @@
+.shell {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  height: 100%;
+  width: 100%;
+}
+
+.content {
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+}

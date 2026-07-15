@@ -1,0 +1,50 @@
+.toolbar {
+  height: 52px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-5);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklch, var(--bg) 72%, transparent);
+  backdrop-filter: saturate(1.4) blur(20px);
+  -webkit-backdrop-filter: saturate(1.4) blur(20px);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+.titleWrap {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  min-width: 0;
+  flex: 1;
+}
+
+.title {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  white-space: nowrap;
+  flex: none;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+}

@@ -1,0 +1,304 @@
+/* Typography for Discourse `cooked` post HTML. Targets global .cooked. */
+
+.cooked {
+  font-size: var(--fs-md);
+  line-height: var(--lh-relaxed);
+  color: var(--ink);
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.cooked > *:first-child {
+  margin-top: 0;
+}
+.cooked > *:last-child {
+  margin-bottom: 0;
+}
+
+.cooked p {
+  margin: 0 0 var(--sp-4);
+}
+
+.cooked h1,
+.cooked h2,
+.cooked h3,
+.cooked h4 {
+  margin: var(--sp-6) 0 var(--sp-3);
+  line-height: var(--lh-tight);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.cooked h1 {
+  font-size: 1.5em;
+}
+.cooked h2 {
+  font-size: 1.3em;
+}
+.cooked h3 {
+  font-size: 1.15em;
+}
+.cooked h4 {
+  font-size: 1em;
+}
+
+.cooked ul,
+.cooked ol {
+  margin: 0 0 var(--sp-4);
+  padding-left: 1.5em;
+}
+.cooked li {
+  margin: var(--sp-1) 0;
+}
+.cooked li > ul,
+.cooked li > ol {
+  margin: var(--sp-1) 0;
+}
+
+.cooked a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.cooked a:hover {
+  text-decoration: underline;
+}
+
+.cooked img:not(.emoji):not(.avatar) {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--r-md);
+  margin: var(--sp-2) 0;
+}
+.cooked img.emoji {
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.25em;
+  margin: 0 1px;
+}
+.cooked .lightbox-wrapper {
+  display: inline-block;
+  max-width: 100%;
+}
+.cooked .lightbox {
+  position: relative;
+  display: inline-block;
+  cursor: zoom-in;
+}
+.cooked .lightbox .meta {
+  display: none;
+}
+
+.cooked blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-1) var(--sp-4);
+  border-left: 3px solid var(--border-strong);
+  color: var(--ink-2);
+}
+
+.cooked aside.quote {
+  margin: 0 0 var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.cooked aside.quote .title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  background: color-mix(in oklch, var(--ink) 4%, transparent);
+  font-weight: 500;
+}
+.cooked aside.quote .title img.avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-full);
+}
+.cooked aside.quote blockquote {
+  margin: 0;
+  padding: var(--sp-3);
+  border: none;
+  color: var(--ink);
+}
+
+.cooked code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--surface-2);
+  padding: 0.12em 0.4em;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+}
+
+.cooked pre {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow-x: auto;
+  line-height: 1.55;
+}
+.cooked pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.85em;
+  color: var(--ink);
+}
+
+.cooked table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-sm);
+  display: block;
+  overflow-x: auto;
+}
+.cooked th,
+.cooked td {
+  border: 1px solid var(--border);
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+}
+.cooked th {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.cooked hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--sp-5) 0;
+}
+
+.cooked .mention,
+.cooked .hashtag-cooked,
+.cooked .hashtag {
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 0.05em 0.4em;
+  border-radius: var(--r-full);
+  font-weight: 500;
+  font-size: 0.92em;
+  text-decoration: none;
+}
+
+.cooked kbd {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 0.1em 0.4em;
+}
+
+.cooked .onebox,
+.cooked .onebox-body {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  margin: 0 0 var(--sp-4);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+}
+.cooked .onebox img {
+  border-radius: var(--r-sm);
+}
+
+.cooked details {
+  margin: 0 0 var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-2);
+}
+.cooked summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.cooked .spoiler:not(:hover) {
+  filter: blur(5px);
+  transition: filter var(--dur) var(--ease-out);
+}
+
+/* ---- highlight.js tokens (theme-aware, no external stylesheet) ---- */
+.hljs-comment,
+.hljs-quote {
+  color: var(--ink-3);
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-doctag,
+.hljs-name {
+  color: oklch(0.62 0.19 0);
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-meta-string {
+  color: oklch(0.6 0.15 150);
+}
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-attr {
+  color: oklch(0.65 0.15 55);
+}
+.hljs-title,
+.hljs-section,
+.hljs-title.function_,
+.hljs-built_in {
+  color: oklch(0.6 0.14 250);
+}
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-type,
+.hljs-selector-class {
+  color: oklch(0.62 0.16 300);
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 700;
+}
+
+:root[data-theme='dark'] .hljs-keyword,
+:root[data-theme='dark'] .hljs-selector-tag,
+:root[data-theme='dark'] .hljs-literal,
+:root[data-theme='dark'] .hljs-doctag,
+:root[data-theme='dark'] .hljs-name {
+  color: oklch(0.72 0.16 5);
+}
+:root[data-theme='dark'] .hljs-string,
+:root[data-theme='dark'] .hljs-regexp,
+:root[data-theme='dark'] .hljs-addition {
+  color: oklch(0.75 0.14 150);
+}
+:root[data-theme='dark'] .hljs-number,
+:root[data-theme='dark'] .hljs-symbol,
+:root[data-theme='dark'] .hljs-bullet,
+:root[data-theme='dark'] .hljs-attr {
+  color: oklch(0.78 0.13 60);
+}
+:root[data-theme='dark'] .hljs-title,
+:root[data-theme='dark'] .hljs-section,
+:root[data-theme='dark'] .hljs-built_in {
+  color: oklch(0.74 0.12 250);
+}
+:root[data-theme='dark'] .hljs-attribute,
+:root[data-theme='dark'] .hljs-variable,
+:root[data-theme='dark'] .hljs-type,
+:root[data-theme='dark'] .hljs-selector-class {
+  color: oklch(0.74 0.14 300);
+}

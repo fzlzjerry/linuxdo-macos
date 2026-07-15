@@ -1,0 +1,27 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-md);
+  border: none;
+  background: transparent;
+  color: var(--ink-2);
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.btn:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.btn:active {
+  background: var(--surface-active);
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.btn.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}

@@ -1,0 +1,37 @@
+.group {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+}
+
+.seg {
+  border: none;
+  background: transparent;
+  color: var(--ink-2);
+  font-weight: 500;
+  border-radius: 6px;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+  white-space: nowrap;
+}
+
+.sm .seg {
+  padding: 3px 10px;
+  font-size: var(--fs-xs);
+}
+.md .seg {
+  padding: 5px 14px;
+  font-size: var(--fs-sm);
+}
+
+.seg:hover {
+  color: var(--ink);
+}
+
+.seg.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}

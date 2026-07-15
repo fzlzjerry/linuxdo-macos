@@ -1,0 +1,22 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-2);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sm {
+  font-size: var(--fs-xs);
+}
+.md {
+  font-size: var(--fs-sm);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
+}

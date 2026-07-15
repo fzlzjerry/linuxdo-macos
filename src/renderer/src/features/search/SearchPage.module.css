@@ -1,0 +1,217 @@
+.searchBar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.inputWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  transition:
+    border-color var(--dur) var(--ease-out),
+    background var(--dur) var(--ease-out);
+}
+.inputWrap:focus-within {
+  background: var(--surface-2);
+  border-color: var(--accent);
+}
+
+.searchIcon {
+  flex: none;
+  color: var(--ink-3);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
+}
+.input::placeholder {
+  color: var(--ink-3);
+}
+
+.clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--ink-3);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.clear:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+.results {
+  padding-bottom: var(--sp-6);
+}
+
+.section {
+  padding-top: var(--sp-2);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-5) var(--sp-2);
+}
+
+.sectionTitle {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+
+.sectionCount {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  text-align: left;
+  padding: var(--sp-3) var(--sp-5);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.row:hover {
+  background: var(--surface-hover);
+}
+.row:active {
+  background: var(--surface-active);
+}
+.rowTop {
+  align-items: flex-start;
+}
+
+/* --- 话题 --- */
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.title {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: var(--lh-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metaLine {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tag {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  background: var(--surface-2);
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  white-space: nowrap;
+}
+
+.time {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- 帖子 --- */
+.postMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.postHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.username {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.blurb {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  line-height: var(--lh-normal);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- 用户 --- */
+.userMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userName {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userHandle {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}

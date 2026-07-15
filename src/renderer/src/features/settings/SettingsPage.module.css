@@ -1,0 +1,125 @@
+.wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+  padding: var(--sp-6) var(--sp-5) var(--sp-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.sectionTitle {
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--ink-3);
+  letter-spacing: 0.01em;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+/* 1px dividers between every direct child of the card */
+.card > * + * {
+  border-top: 1px solid var(--border);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  min-height: 54px;
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rowLabel {
+  font-size: var(--fs-sm);
+  font-weight: 550;
+  color: var(--ink);
+}
+
+.rowDesc {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: var(--lh-normal);
+}
+
+.rowControl {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.value {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  line-height: var(--lh-relaxed);
+}
+
+.buttonRow {
+  display: flex;
+  padding: var(--sp-3) var(--sp-4);
+}
+
+/* Account row: identity on the left, action on the right */
+.account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  min-height: 54px;
+}
+
+.accountUser {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.accountMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.accountName {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.accountHandle {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}

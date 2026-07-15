@@ -1,0 +1,17 @@
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-full);
+  object-fit: cover;
+  flex: none;
+  background: var(--surface-2);
+  user-select: none;
+}
+
+.fallback {
+  color: oklch(1 0 0 / 0.95);
+  font-weight: 600;
+  font-family: var(--font-ui);
+  line-height: 1;
+}

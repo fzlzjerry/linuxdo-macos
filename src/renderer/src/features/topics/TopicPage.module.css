@@ -1,0 +1,61 @@
+.reader {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--sp-6) var(--sp-6) var(--sp-10);
+}
+
+.head {
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--sp-2);
+}
+
+.title {
+  font-size: var(--fs-2xl);
+  font-weight: 750;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-top: var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+
+.tag {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  background: var(--surface-2);
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+}
+
+.metaStat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.metaTime {
+  color: var(--ink-3);
+}
+
+.posts {
+  display: flex;
+  flex-direction: column;
+}
+
+.end {
+  text-align: center;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  padding: var(--sp-6) 0;
+}

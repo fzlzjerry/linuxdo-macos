@@ -1,0 +1,102 @@
+.composer {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+}
+.tab,
+.tabActive {
+  border: none;
+  background: transparent;
+  padding: 4px 12px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.tab:hover {
+  color: var(--ink);
+}
+.tabActive {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.tools {
+  display: flex;
+  gap: 1px;
+}
+.tools button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  border-radius: var(--r-sm);
+}
+.tools button:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+.textarea {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
+  line-height: var(--lh-normal);
+  padding: var(--sp-4);
+  resize: vertical;
+  outline: none;
+}
+.textarea::placeholder {
+  color: var(--ink-3);
+}
+
+.preview {
+  padding: var(--sp-4);
+  font-size: var(--fs-base);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.hint {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.actionButtons {
+  display: flex;
+  gap: var(--sp-2);
+}
