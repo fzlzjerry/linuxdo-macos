@@ -40,16 +40,20 @@ export function ReactionBar({ post }: Props): JSX.Element {
       setPickerOpen(false)
     }
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setPickerOpen(false)
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        setPickerOpen(false)
+      }
     }
     const close = (): void => setPickerOpen(false)
     document.addEventListener('mousedown', onDown)
-    document.addEventListener('keydown', onKey)
+    document.addEventListener('keydown', onKey, true)
     window.addEventListener('scroll', close, true)
     window.addEventListener('resize', close)
     return () => {
       document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('keydown', onKey, true)
       window.removeEventListener('scroll', close, true)
       window.removeEventListener('resize', close)
     }

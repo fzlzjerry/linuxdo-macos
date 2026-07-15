@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Modal } from '../ui/Modal'
 import { Field } from '../ui/Field'
 import { Composer } from './Composer'
+import { DiscardBar, useDiscardGuard } from './useDiscardGuard'
 import { useCategories } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
 import { toast } from '../../store/toast'
@@ -23,6 +24,26 @@ export function NewTopicModal({ open, onClose }: Props): JSX.Element {
   const [tags, setTags] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<{ title?: string; category?: string }>({})
+  const [bodyDirty, setBodyDirty] = useState(false)
+  const [session, setSession] = useState(0)
+  const guard = useDiscardGuard(open, onClose)
+
+  // Fresh form every open — discarded/submitted content doesn't linger.
+  useEffect(() => {
+    if (!open) return
+    setSession((s) => s + 1)
+    setTitle('')
+    setCategory('')
+    setTags('')
+    setErrors({})
+    setBodyDirty(false)
+  }, [open])
+
+  // The guard protects the whole form, not just the composer body.
+  const { setDirty } = guard
+  useEffect(() => {
+    setDirty(bodyDirty || title.trim().length > 0 || tags.trim().length > 0)
+  }, [bodyDirty, title, tags, setDirty])
 
   async function submit(raw: string): Promise<void> {
     const next: typeof errors = {}
@@ -55,7 +76,13 @@ export function NewTopicModal({ open, onClose }: Props): JSX.Element {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="发布新话题" width={760}>
+    <Modal
+      open={open}
+      onClose={guard.requestClose}
+      attention={guard.attention}
+      title="发布新话题"
+      width={760}
+    >
       <div className={styles.form}>
         <Field label="标题" hideLabel error={errors.title} required>
           <input
@@ -98,13 +125,18 @@ export function NewTopicModal({ open, onClose }: Props): JSX.Element {
           </Field>
         </div>
         <Composer
+          key={session}
           submitting={submitting}
           submitLabel="发布"
           minHeight={220}
           placeholder="正文…（支持 Markdown）"
-          onCancel={onClose}
+          onCancel={guard.requestClose}
+          onDirtyChange={setBodyDirty}
           onSubmit={(raw) => void submit(raw)}
         />
+        {guard.confirming && (
+          <DiscardBar onKeep={guard.keepEditing} onDiscard={guard.confirmDiscard} />
+        )}
       </div>
     </Modal>
   )

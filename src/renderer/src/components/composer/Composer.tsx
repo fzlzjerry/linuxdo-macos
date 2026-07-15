@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -42,6 +43,8 @@ marked.setOptions({ gfm: true, breaks: true })
 interface Props {
   onSubmit: (raw: string) => void | Promise<void>
   onCancel?: () => void
+  /** Fires when the content diverges from / returns to initialValue. */
+  onDirtyChange?: (dirty: boolean) => void
   submitting?: boolean
   placeholder?: string
   submitLabel?: string
@@ -55,6 +58,7 @@ type Tab = 'write' | 'preview'
 export function Composer({
   onSubmit,
   onCancel,
+  onDirtyChange,
   submitting = false,
   placeholder = '写点什么…（支持 Markdown）',
   submitLabel = '发布',
@@ -64,6 +68,15 @@ export function Composer({
 }: Props): JSX.Element {
   const auth = useAuth()
   const [text, setText] = useState(initialValue)
+  const dirtyRef = useRef(false)
+
+  useEffect(() => {
+    const dirty = text.trim() !== initialValue.trim()
+    if (dirty !== dirtyRef.current) {
+      dirtyRef.current = dirty
+      onDirtyChange?.(dirty)
+    }
+  }, [text, initialValue, onDirtyChange])
   const [tab, setTab] = useState<Tab>('write')
   const [uploading, setUploading] = useState(0)
   const [dragging, setDragging] = useState(false)
@@ -399,7 +412,10 @@ export function Composer({
         <EmojiPicker
           anchor={emojiAnchor}
           triggerRef={emojiBtnRef}
-          onClose={() => setEmojiOpen(false)}
+          onClose={() => {
+            setEmojiOpen(false)
+            ref.current?.focus()
+          }}
           onPick={pickEmoji}
         />
       )}

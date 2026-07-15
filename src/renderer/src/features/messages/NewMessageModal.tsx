@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Modal } from '../../components/ui/Modal'
 import { Field } from '../../components/ui/Field'
 import { Composer } from '../../components/composer/Composer'
+import { DiscardBar, useDiscardGuard } from '../../components/composer/useDiscardGuard'
 import { discourse } from '../../lib/discourse/client'
 import { toast } from '../../store/toast'
 import styles from './MessagesPage.module.css'
@@ -17,6 +18,13 @@ export function NewMessageModal({ open, onClose, onCreated }: Props): JSX.Elemen
   const [title, setTitle] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<{ recipients?: string; title?: string }>({})
+  const [bodyDirty, setBodyDirty] = useState(false)
+  const guard = useDiscardGuard(open, onClose)
+
+  const { setDirty } = guard
+  useEffect(() => {
+    setDirty(bodyDirty || recipients.trim().length > 0 || title.trim().length > 0)
+  }, [bodyDirty, recipients, title, setDirty])
 
   async function submit(raw: string): Promise<void> {
     const next: typeof errors = {}
@@ -44,7 +52,13 @@ export function NewMessageModal({ open, onClose, onCreated }: Props): JSX.Elemen
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="写私信" width={720}>
+    <Modal
+      open={open}
+      onClose={guard.requestClose}
+      attention={guard.attention}
+      title="写私信"
+      width={720}
+    >
       <div className={styles.fields}>
         <Field label="收件人" error={errors.recipients} required>
           <input
@@ -78,9 +92,13 @@ export function NewMessageModal({ open, onClose, onCreated }: Props): JSX.Elemen
         submitLabel="发送"
         placeholder="写点什么…（支持 Markdown）"
         minHeight={200}
-        onCancel={onClose}
+        onCancel={guard.requestClose}
+        onDirtyChange={setBodyDirty}
         onSubmit={(raw) => void submit(raw)}
       />
+      {guard.confirming && (
+        <DiscardBar onKeep={guard.keepEditing} onDiscard={guard.confirmDiscard} />
+      )}
     </Modal>
   )
 }

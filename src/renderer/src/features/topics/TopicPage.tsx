@@ -7,6 +7,7 @@ import { IconButton } from '../../components/ui/IconButton'
 import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
 import { Composer } from '../../components/composer/Composer'
+import { DiscardBar, useDiscardGuard } from '../../components/composer/useDiscardGuard'
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
 import { Tag } from '../../components/ui/Tag'
 import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
@@ -42,6 +43,7 @@ export function TopicPage(): JSX.Element {
   const [loadingMore, setLoadingMore] = useState(false)
   const [composer, setComposer] = useState<ComposerMode | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const guard = useDiscardGuard(composer != null, () => setComposer(null))
 
   useEffect(() => {
     setExtraPosts([])
@@ -211,7 +213,8 @@ export function TopicPage(): JSX.Element {
       {composer && (
         <Modal
           open
-          onClose={() => setComposer(null)}
+          onClose={guard.requestClose}
+          attention={guard.attention}
           title={
             composer.mode === 'edit'
               ? '编辑'
@@ -222,14 +225,23 @@ export function TopicPage(): JSX.Element {
           width={720}
         >
           <Composer
+            key={
+              composer.mode === 'edit'
+                ? `edit-${composer.post.id}`
+                : `reply-${composer.post?.id ?? 'topic'}`
+            }
             initialValue={composer.mode === 'edit' ? composer.raw : ''}
             submitting={submitting}
             submitLabel={composer.mode === 'edit' ? '保存' : '回复'}
             autoFocus
             minHeight={200}
-            onCancel={() => setComposer(null)}
+            onCancel={guard.requestClose}
+            onDirtyChange={guard.setDirty}
             onSubmit={(raw) => void submitComposer(raw)}
           />
+          {guard.confirming && (
+            <DiscardBar onKeep={guard.keepEditing} onDiscard={guard.confirmDiscard} />
+          )}
         </Modal>
       )}
     </PageScaffold>

@@ -67,3 +67,19 @@
     }
   }
 }
+
+@keyframes modal-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+.shake {
+  animation: modal-shake 240ms var(--ease-out);
+}

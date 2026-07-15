@@ -35,8 +35,14 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
       if (rootRef.current?.contains(t) || triggerRef.current?.contains(t)) return
       onClose()
     }
+    // Capture + preventDefault: Escape must close ONLY the picker, not also
+    // cancel the enclosing native <dialog> (which would drop composer content).
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        onClose()
+      }
     }
     // Capture-phase scroll fires for inner scroll containers too — ignore scrolls
     // that originate inside the grid, else browsing the emoji list closes it.
@@ -45,12 +51,12 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
       onClose()
     }
     document.addEventListener('mousedown', onDown)
-    document.addEventListener('keydown', onKey)
+    document.addEventListener('keydown', onKey, true)
     window.addEventListener('scroll', onScroll, true)
     window.addEventListener('resize', onClose)
     return () => {
       document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('keydown', onKey, true)
       window.removeEventListener('scroll', onScroll, true)
       window.removeEventListener('resize', onClose)
     }
