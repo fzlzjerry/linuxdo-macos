@@ -175,3 +175,21 @@ export function useGroups() {
     staleTime: 10 * 60_000
   })
 }
+
+export function useChatChannels(enabled: boolean) {
+  return useQuery({
+    queryKey: ['chat-channels'],
+    queryFn: () => discourse.chatChannels(),
+    enabled,
+    staleTime: 30_000
+  })
+}
+
+export function useChatMessages(channelId: number) {
+  return useQuery({
+    queryKey: ['chat-messages', channelId],
+    queryFn: () => discourse.chatMessages(channelId),
+    enabled: channelId > 0,
+    staleTime: 5_000
+  })
+}

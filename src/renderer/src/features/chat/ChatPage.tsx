@@ -1,0 +1,228 @@
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Hash, MessagesSquare, RefreshCw, User } from 'lucide-react'
+import { Toolbar } from '../../components/window/Toolbar'
+import { Avatar } from '../../components/ui/Avatar'
+import { IconButton } from '../../components/ui/IconButton'
+import { LoginGate } from '../../components/ui/LoginGate'
+import { EmptyState, ErrorState, Spinner } from '../../components/ui/states'
+import { CookedContent } from '../topics/CookedContent'
+import { useChatChannels, useChatMessages } from '../../lib/discourse/queries'
+import { useAuth } from '../../store/auth'
+import { relativeTime } from '../../lib/format'
+import type { ChatChannel } from '../../lib/discourse/types'
+import styles from './ChatPage.module.css'
+
+function channelName(c: ChatChannel): string {
+  if (c.title) return c.title
+  const users = c.chatable?.users ?? []
+  if (users.length) return users.map((u) => u.name || u.username).join('、')
+  return `频道 ${c.id}`
+}
+
+function isUnread(c: ChatChannel): boolean {
+  const last = c.last_message?.id
+  const read = c.current_user_membership?.last_read_message_id ?? 0
+  return last != null && read != null && last > read
+}
+
+export function ChatPage(): JSX.Element {
+  const auth = useAuth()
+  const queryClient = useQueryClient()
+  const [channelId, setChannelId] = useState(0)
+  const channelsQ = useChatChannels(auth.loggedIn)
+
+  const pub = channelsQ.data?.public_channels ?? []
+  const dm = channelsQ.data?.direct_message_channels ?? []
+  const all = useMemo(() => [...pub, ...dm], [pub, dm])
+  const selected = all.find((c) => c.id === channelId)
+
+  useEffect(() => {
+    if (!channelId && all.length) setChannelId(all[0].id)
+  }, [channelId, all])
+
+  function refresh(): void {
+    void channelsQ.refetch()
+    if (channelId) void queryClient.invalidateQueries({ queryKey: ['chat-messages', channelId] })
+  }
+
+  if (!auth.loggedIn) {
+    return (
+      <div className={styles.page}>
+        <Toolbar title="聊天" />
+        <LoginGate
+          icon={<MessagesSquare size={26} strokeWidth={1.6} />}
+          title="登录后使用聊天"
+          description="登录 linux.do 后即可查看聊天频道与私信。"
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.page}>
+      <Toolbar
+        title="聊天"
+        right={
+          <IconButton label="刷新" onClick={refresh} disabled={channelsQ.isRefetching}>
+            <RefreshCw size={16} className={channelsQ.isRefetching ? 'spin' : undefined} />
+          </IconButton>
+        }
+      />
+      <div className={styles.layout}>
+        <aside className={styles.channels}>
+          {channelsQ.isLoading ? (
+            <Spinner label="加载频道…" />
+          ) : channelsQ.isError ? (
+            <ErrorState error={channelsQ.error} onRetry={() => void channelsQ.refetch()} />
+          ) : (
+            <>
+              <ChannelGroup
+                title="频道"
+                channels={pub}
+                current={channelId}
+                onPick={setChannelId}
+                kind="public"
+              />
+              <ChannelGroup
+                title="私信"
+                channels={dm}
+                current={channelId}
+                onPick={setChannelId}
+                kind="dm"
+              />
+            </>
+          )}
+        </aside>
+        <section className={styles.thread}>
+          {selected ? (
+            <ChatThread channel={selected} />
+          ) : (
+            <EmptyState
+              icon={<MessagesSquare size={26} strokeWidth={1.6} />}
+              title="选择一个频道"
+            />
+          )}
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function ChannelGroup({
+  title,
+  channels,
+  current,
+  onPick,
+  kind
+}: {
+  title: string
+  channels: ChatChannel[]
+  current: number
+  onPick: (id: number) => void
+  kind: 'public' | 'dm'
+}): JSX.Element | null {
+  if (channels.length === 0) return null
+  return (
+    <div className={styles.group}>
+      <div className={styles.groupTitle}>{title}</div>
+      {channels.map((c) => {
+        const dmUser = kind === 'dm' ? c.chatable?.users?.[0] : undefined
+        return (
+          <button
+            key={c.id}
+            type="button"
+            className={`${styles.channel} ${c.id === current ? styles.channelActive : ''}`}
+            onClick={() => onPick(c.id)}
+          >
+            <span className={styles.channelIcon}>
+              {kind === 'dm' ? (
+                <Avatar
+                  template={dmUser?.avatar_template}
+                  username={dmUser?.username}
+                  name={dmUser?.name}
+                  size={26}
+                />
+              ) : (
+                <Hash size={16} />
+              )}
+            </span>
+            <span className={styles.channelMeta}>
+              <span className={styles.channelName}>{channelName(c)}</span>
+              {c.last_message?.excerpt && (
+                <span className={styles.channelExcerpt}>{c.last_message.excerpt}</span>
+              )}
+            </span>
+            {isUnread(c) && <span className={styles.unreadDot} aria-label="未读" />}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function ChatThread({ channel }: { channel: ChatChannel }): JSX.Element {
+  const { data, isLoading, isError, error, refetch } = useChatMessages(channel.id)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const messages = data?.messages ?? []
+
+  // Jump to the newest message whenever the channel or message set changes.
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [channel.id, messages.length])
+
+  return (
+    <>
+      <header className={styles.threadHead}>
+        <span className={styles.threadTitle}>{channelName(channel)}</span>
+        {channel.description && <span className={styles.threadDesc}>{channel.description}</span>}
+      </header>
+
+      <div className={styles.messages} ref={scrollRef}>
+        {isLoading ? (
+          <Spinner label="加载消息…" />
+        ) : isError ? (
+          <ErrorState error={error} onRetry={() => void refetch()} />
+        ) : messages.length === 0 ? (
+          <EmptyState icon={<MessagesSquare size={24} strokeWidth={1.6} />} title="还没有消息" />
+        ) : (
+          messages.map((m, i) => {
+            const prev = messages[i - 1]
+            const grouped = prev && prev.user.id === m.user.id
+            return (
+              <div key={m.id} className={`${styles.msg} ${grouped ? styles.msgGrouped : ''}`}>
+                <span className={styles.msgAvatar}>
+                  {!grouped && (
+                    <Avatar
+                      template={m.user.avatar_template}
+                      username={m.user.username}
+                      name={m.user.name}
+                      size={32}
+                    />
+                  )}
+                </span>
+                <div className={styles.msgBody}>
+                  {!grouped && (
+                    <div className={styles.msgHead}>
+                      <span className={styles.msgUser}>{m.user.name || m.user.username}</span>
+                      <time className={styles.msgTime}>{relativeTime(m.created_at)}</time>
+                    </div>
+                  )}
+                  <div className={styles.msgText}>
+                    <CookedContent html={m.cooked ?? m.message ?? ''} />
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      <div className={styles.composerNote}>
+        <User size={13} />
+        发送消息与实时更新即将支持
+      </div>
+    </>
+  )
+}

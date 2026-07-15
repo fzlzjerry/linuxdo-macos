@@ -11,6 +11,7 @@ import {
   Flame,
   LayoutGrid,
   Mail,
+  MessageCircle,
   MessagesSquare,
   Newspaper,
   PenSquare,
@@ -54,6 +55,7 @@ export function Sidebar(): JSX.Element {
   ]
 
   const community: NavItem[] = [
+    { to: '/chat', label: '聊天', icon: <MessageCircle size={17} /> },
     { to: '/leaderboard', label: '积分榜', icon: <Trophy size={17} /> },
     { to: '/events', label: '活动', icon: <CalendarDays size={17} /> },
     { to: '/groups', label: '群组', icon: <Users size={17} /> },

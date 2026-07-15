@@ -10,6 +10,7 @@ import { LeaderboardPage } from './features/leaderboard/LeaderboardPage'
 import { EventsPage } from './features/events/EventsPage'
 import { BadgesPage } from './features/badges/BadgesPage'
 import { GroupsPage } from './features/groups/GroupsPage'
+import { ChatPage } from './features/chat/ChatPage'
 import { NotificationsPage } from './features/notifications/NotificationsPage'
 import { SearchPage } from './features/search/SearchPage'
 import { ProfilePage } from './features/users/ProfilePage'
@@ -110,6 +111,7 @@ export function App(): JSX.Element {
           <Route path="/events" element={<EventsPage />} />
           <Route path="/badges" element={<BadgesPage />} />
           <Route path="/groups" element={<GroupsPage />} />
+          <Route path="/chat" element={<ChatPage />} />
           <Route path="/t/:id" element={<TopicPage />} />
           <Route path="/bookmarks" element={<BookmarksPage />} />
           <Route path="/search" element={<SearchPage />} />

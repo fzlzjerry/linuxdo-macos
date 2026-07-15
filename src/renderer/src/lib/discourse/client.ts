@@ -3,6 +3,8 @@ import type {
   BadgesResponse,
   BookmarksResponse,
   CategoryListResponse,
+  ChatChannelsResponse,
+  ChatMessagesResponse,
   DraftsResponse,
   EventsResponse,
   FlagType,
@@ -499,6 +501,17 @@ export const discourse = {
 
   groups(): Promise<GroupsResponse> {
     return request<GroupsResponse>({ path: '/groups.json' })
+  },
+
+  // discourse-chat
+  chatChannels(): Promise<ChatChannelsResponse> {
+    return request<ChatChannelsResponse>({ path: '/chat/api/me/channels' })
+  },
+
+  chatMessages(channelId: number, pageSize = 50): Promise<ChatMessagesResponse> {
+    return request<ChatMessagesResponse>({
+      path: `/chat/api/channels/${channelId}/messages?page_size=${pageSize}`
+    })
   },
 
   deleteDraft(key: string, sequence: number): Promise<unknown> {

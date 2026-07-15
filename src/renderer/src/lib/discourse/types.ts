@@ -468,6 +468,43 @@ export interface DraftsResponse {
 
 export type NotificationLevel = 0 | 1 | 2 | 3 // muted / regular / tracking / watching
 
+// ---- Chat (discourse-chat) ----
+export interface ChatUser {
+  id: number
+  username: string
+  name?: string
+  avatar_template?: string
+}
+export interface ChatChannel {
+  id: number
+  title?: string
+  slug?: string
+  description?: string
+  chatable_type?: string
+  status?: string
+  memberships_count?: number
+  last_message?: { id?: number; excerpt?: string; created_at?: string; user?: ChatUser }
+  chatable?: { users?: ChatUser[] }
+  current_user_membership?: { last_read_message_id?: number | null; muted?: boolean }
+}
+export interface ChatChannelsResponse {
+  public_channels: ChatChannel[]
+  direct_message_channels: ChatChannel[]
+}
+export interface ChatMessage {
+  id: number
+  message?: string
+  cooked?: string
+  created_at: string
+  excerpt?: string
+  chat_channel_id?: number
+  user: ChatUser
+}
+export interface ChatMessagesResponse {
+  messages: ChatMessage[]
+  meta?: { can_load_more_future?: boolean; can_load_more_past?: boolean; target_message_id?: number }
+}
+
 // ---- Leaderboard (discourse-gamification) ----
 export interface LeaderboardUser {
   id: number
