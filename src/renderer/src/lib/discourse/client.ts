@@ -545,12 +545,13 @@ export const discourse = {
     })
   },
 
-  // The /chat/api/ surface expects JSON, and the create endpoint requires a
-  // client-generated staged_id (used to echo the message back).
+  // Verified against the web chat-api service: sendMessage posts FORM data to
+  // the legacy route POST /chat/:channel_id (the /chat/api/ path is GET-only).
   sendChatMessage(channelId: number, message: string, stagedId: string): Promise<unknown> {
     return request({
-      path: `/chat/api/channels/${channelId}/messages`,
+      path: `/chat/${channelId}`,
       method: 'POST',
+      form: true,
       body: { message, staged_id: stagedId }
     })
   },
