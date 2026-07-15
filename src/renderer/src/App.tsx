@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Sidebar } from './components/window/Sidebar'
 import { TopicListPage } from './features/topics/TopicListPage'
 import { TopicPage } from './features/topics/TopicPage'
@@ -16,7 +17,64 @@ import { Toaster } from './components/ui/Toaster'
 import { LightboxHost } from './components/ui/Lightbox'
 import { initAuthBridge } from './store/auth'
 import { initSettings } from './store/settings'
+import { useGlobalShortcuts } from './lib/shortcuts'
+import { useBackNav } from './lib/useBackNav'
 import styles from './App.module.css'
+
+/** App-wide keyboard shortcuts (macOS conventions; Esc stays "cancel"-only). */
+function AppShortcuts(): null {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const queryClient = useQueryClient()
+  const goBack = useBackNav()
+
+  const gotoSearch = (e: KeyboardEvent): void => {
+    e.preventDefault()
+    if (location.pathname === '/search') {
+      document.querySelector<HTMLInputElement>('[data-search-input]')?.focus()
+    } else {
+      navigate('/search')
+    }
+  }
+
+  useGlobalShortcuts([
+    { key: 'k', meta: true, run: gotoSearch },
+    { key: '/', run: gotoSearch },
+    {
+      key: 'r',
+      meta: true,
+      allowInDialog: true,
+      run: (e) => {
+        e.preventDefault()
+        void queryClient.refetchQueries({ type: 'active' })
+      }
+    },
+    {
+      key: '[',
+      meta: true,
+      run: (e) => {
+        e.preventDefault()
+        goBack()
+      }
+    },
+    {
+      key: ']',
+      meta: true,
+      run: (e) => {
+        e.preventDefault()
+        navigate(1)
+      }
+    },
+    {
+      key: 'u',
+      run: (e) => {
+        e.preventDefault()
+        goBack()
+      }
+    }
+  ])
+  return null
+}
 
 export function App(): JSX.Element {
   useEffect(() => {
@@ -26,6 +84,7 @@ export function App(): JSX.Element {
 
   return (
     <div className={styles.shell}>
+      <AppShortcuts />
       <Sidebar />
       <main className={styles.content}>
         <Routes>

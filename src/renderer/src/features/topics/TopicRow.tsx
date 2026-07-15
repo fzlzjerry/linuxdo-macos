@@ -20,6 +20,7 @@ export function TopicRow({ topic, users }: Props): JSX.Element {
   return (
     <button
       className={styles.row}
+      data-row
       onClick={() => navigate(`/t/${topic.id}`)}
       aria-label={topic.title}
     >

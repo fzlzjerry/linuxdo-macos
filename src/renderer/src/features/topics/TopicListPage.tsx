@@ -8,6 +8,7 @@ import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { EmptyState, ErrorState, Spinner, TopicListSkeleton } from '../../components/ui/states'
 import { useTopicList, mergeUsers } from '../../lib/discourse/queries'
 import { useScrollMemory } from '../../lib/useScrollMemory'
+import { useListNav } from '../../lib/useListNav'
 import { useAuth } from '../../store/auth'
 import type { ListingFilter, TopPeriod, TopicListItem } from '../../lib/discourse/types'
 import { TopicRow } from './TopicRow'
@@ -41,6 +42,7 @@ export function TopicListPage({ filter }: { filter: ListingFilter }): JSX.Elemen
     filter === 'top' ? `list:top:${period}` : `list:${filter}`,
     !isLoading && !!data
   )
+  useListNav(scrollRef)
 
   const users = useMemo(() => mergeUsers(data?.pages), [data])
   const topics = useMemo(() => {

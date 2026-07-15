@@ -81,6 +81,7 @@ export function SearchPage(): JSX.Element {
             autoFocus
             spellCheck={false}
             aria-label="搜索"
+            data-search-input
           />
           {input && (
             <button

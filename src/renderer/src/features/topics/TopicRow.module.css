@@ -1,6 +1,12 @@
 .row {
   composes: row from '../../components/ui/listRow.module.css';
 }
+/* j/k moves DOM focus programmatically; Safari doesn't always grant
+   :focus-visible there, so plain :focus carries the inset ring here. */
+.row:focus {
+  outline: var(--ring-w) solid var(--ring-color);
+  outline-offset: calc(-1 * var(--ring-w));
+}
 
 .indicator {
   width: 8px;
