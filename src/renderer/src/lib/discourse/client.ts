@@ -236,6 +236,20 @@ export const discourse = {
     return request({ path: '/solution/unaccept', method: 'POST', form: true, body: { id: postId } })
   },
 
+  // discourse-poll: cast a vote. Response echoes the updated poll with counts.
+  votePoll(
+    postId: number,
+    pollName: string,
+    optionIds: string[]
+  ): Promise<{ poll?: import('./types').Poll; vote?: string[] }> {
+    return request({
+      path: '/polls/vote',
+      method: 'PUT',
+      form: true,
+      body: { post_id: postId, poll_name: pollName, 'options[]': optionIds }
+    })
+  },
+
   toggleReaction(postId: number, reactionId: string): Promise<unknown> {
     return request({
       path: `/discourse-reactions/posts/${postId}/custom-reactions/${reactionId}/toggle.json`,

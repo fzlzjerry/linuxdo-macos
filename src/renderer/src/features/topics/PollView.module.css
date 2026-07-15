@@ -1,0 +1,171 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0;
+}
+
+.poll {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-3);
+  background: var(--surface);
+}
+
+.title {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: var(--sp-3);
+  line-height: var(--lh-tight);
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.option {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.option:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+.option:disabled {
+  cursor: default;
+}
+.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.mine {
+  border-color: var(--accent);
+}
+
+/* Result bar sits behind the option text. */
+.bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent-soft);
+  z-index: 0;
+  transition: width var(--dur) var(--ease-out);
+}
+.mine .bar {
+  background: color-mix(in oklab, var(--accent) 22%, transparent);
+}
+
+.optionInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 8px var(--sp-3);
+}
+
+.marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-full);
+  color: var(--surface);
+  background: transparent;
+}
+.marker[data-multiple='true'] {
+  border-radius: var(--r-sm);
+}
+.mine .marker,
+.selected .marker {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.optionText {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+}
+
+.pct {
+  flex: none;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.pctCount {
+  margin-left: 4px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.voters {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.voteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  border-radius: var(--r-md);
+  background: var(--accent);
+  color: var(--accent-ink, #fff);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.voteBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+.voteBtn:disabled {
+  opacity: 0.5;
+}
+
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.linkBtn:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}

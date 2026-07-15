@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -27,6 +27,9 @@ import { CookedContent } from './CookedContent'
 import { BoostSection } from './BoostSection'
 import { ReactionBar } from './ReactionBar'
 import { FlagModal } from './FlagModal'
+import { PollView } from './PollView'
+import { parsePolls } from './parsePolls'
+import { UserCard } from '../users/UserCard'
 import styles from './PostView.module.css'
 
 /** Discourse trust levels 0–4 → a subtle pill accent. */
@@ -193,6 +196,8 @@ export function PostView({ post, onReply, onQuote, onEdit, onDeleted }: Props): 
     }
   }
 
+  const polls = useMemo(() => parsePolls(post.cooked), [post.cooked])
+
   const moreItems: MenuItem[] = [
     ...(onQuote
       ? [{ key: 'quote', label: '引用回复', icon: <Quote size={15} />, onSelect: quote }]
@@ -217,14 +222,13 @@ export function PostView({ post, onReply, onQuote, onEdit, onDeleted }: Props): 
     >
       <header className={styles.header}>
         {canVisitProfile ? (
-          <button
-            type="button"
+          <UserCard
+            username={post.username}
             className={styles.userBtn}
-            onClick={visitProfile}
-            aria-label={`查看 @${post.username} 的主页`}
+            ariaLabel={`@${post.username} 的资料卡`}
           >
             <Avatar template={post.avatar_template} username={post.username} name={post.name} size={40} />
-          </button>
+          </UserCard>
         ) : (
           <Avatar template={post.avatar_template} username={post.username} name={post.name} size={40} />
         )}
@@ -287,7 +291,8 @@ export function PostView({ post, onReply, onQuote, onEdit, onDeleted }: Props): 
       </header>
 
       <div className={styles.body}>
-        <CookedContent html={post.cooked} />
+        <CookedContent html={post.cooked} hidePolls={polls.length > 0} />
+        {polls.length > 0 && <PollView post={post} polls={polls} />}
         <BoostSection post={post} />
       </div>
 

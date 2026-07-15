@@ -18,8 +18,16 @@ const TOPIC_LINK = /^https?:\/\/linux\.do\/t\/(?:[^/]+\/)?(\d+)/i
 const USER_LINK = /^https?:\/\/linux\.do\/u\/([^/?#]+)/i
 
 /** Renders Discourse `cooked` HTML: sanitized, absolutized, syntax-highlighted,
- *  with in-app routing for linux.do topic links and external links opened natively. */
-export function CookedContent({ html }: { html: string }): JSX.Element {
+ *  with in-app routing for linux.do topic links and external links opened natively.
+ *  `hidePolls` removes the static `.poll` markup so an interactive PollView can
+ *  render it from structured data instead. */
+export function CookedContent({
+  html,
+  hidePolls
+}: {
+  html: string
+  hidePolls?: boolean
+}): JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const clean = useMemo(() => sanitize(html), [html])
@@ -27,6 +35,7 @@ export function CookedContent({ html }: { html: string }): JSX.Element {
   useEffect(() => {
     const root = ref.current
     if (!root) return
+    if (hidePolls) root.querySelectorAll('.poll').forEach((el) => el.remove())
     enhanceAdmonitions(root)
     root.querySelectorAll('img').forEach((img) => {
       const src = img.getAttribute('src')
@@ -45,7 +54,7 @@ export function CookedContent({ html }: { html: string }): JSX.Element {
         /* highlight is best-effort */
       }
     })
-  }, [clean])
+  }, [clean, hidePolls])
 
   const onClick = (e: MouseEvent<HTMLDivElement>): void => {
     const target = e.target as HTMLElement

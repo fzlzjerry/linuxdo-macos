@@ -162,8 +162,31 @@ export interface Post {
   can_accept_answer?: boolean
   can_unaccept_answer?: boolean
   accepted_answer?: boolean
+  // discourse-poll plugin
+  polls?: Poll[]
+  polls_votes?: Record<string, string[]>
+  can_vote?: boolean
   /** Client-only: an optimistic post awaiting server confirmation. */
   pending?: boolean
+}
+
+// ---- Polls (discourse-poll) ----
+export interface PollOption {
+  id: string
+  html: string
+  votes?: number
+}
+export interface Poll {
+  name: string
+  type: 'regular' | 'multiple' | 'number' | string
+  status: 'open' | 'closed' | string
+  results: 'always' | 'on_vote' | 'on_close' | 'staff_only' | string
+  public?: boolean
+  chart_type?: string
+  min?: number
+  max?: number
+  options: PollOption[]
+  voters?: number
 }
 
 /** discourse-boosts: a short "boost" (🚀) comment attached to a post. */
