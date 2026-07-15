@@ -13,6 +13,7 @@ import { BookmarksPage } from './features/bookmarks/BookmarksPage'
 import { SettingsPage } from './features/settings/SettingsPage'
 import { DraftsPage } from './features/drafts/DraftsPage'
 import { Toaster } from './components/ui/Toaster'
+import { LightboxHost } from './components/ui/Lightbox'
 import { initAuthBridge } from './store/auth'
 import { initSettings } from './store/settings'
 import styles from './App.module.css'
@@ -48,6 +49,7 @@ export function App(): JSX.Element {
         </Routes>
       </main>
       <Toaster />
+      <LightboxHost />
     </div>
   )
 }
