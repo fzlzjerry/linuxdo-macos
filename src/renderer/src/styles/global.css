@@ -70,14 +70,6 @@ img {
   border-radius: var(--r-sm);
 }
 
-/* Draggable window regions for the frameless titlebar */
-.drag {
-  -webkit-app-region: drag;
-}
-.no-drag {
-  -webkit-app-region: no-drag;
-}
-
 @keyframes spin-rotate {
   to {
     transform: rotate(360deg);

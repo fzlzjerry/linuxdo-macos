@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Eye, MessageSquare, Reply, RefreshCw } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
@@ -11,6 +11,7 @@ import { CategoryBadge } from '../../components/ui/CategoryBadge'
 import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { ErrorState, Spinner } from '../../components/ui/states'
 import { useTopic } from '../../lib/discourse/queries'
+import { useBackNav } from '../../lib/useBackNav'
 import { discourse } from '../../lib/discourse/client'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
@@ -28,7 +29,7 @@ type ComposerMode =
 export function TopicPage(): JSX.Element {
   const { id: idParam } = useParams()
   const id = Number(idParam)
-  const navigate = useNavigate()
+  const goBack = useBackNav()
   const auth = useAuth()
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -131,7 +132,7 @@ export function TopicPage(): JSX.Element {
   const toolbar = (
     <Toolbar
       left={
-        <IconButton label="返回" onClick={() => navigate(-1)}>
+        <IconButton label="返回" onClick={goBack}>
           <ArrowLeft size={18} />
         </IconButton>
       }

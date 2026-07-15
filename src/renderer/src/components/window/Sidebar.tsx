@@ -62,9 +62,9 @@ export function Sidebar(): JSX.Element {
 
   return (
     <aside className={styles.sidebar}>
-      <div className={`${styles.dragTop} drag`} />
+      <div className={styles.dragTop} data-tauri-drag-region />
 
-      <div className={`${styles.composeWrap} no-drag`}>
+      <div className={styles.composeWrap}>
         <button className={styles.compose} onClick={compose}>
           <PenSquare size={16} />
           发帖
@@ -77,7 +77,7 @@ export function Sidebar(): JSX.Element {
         <Section title="我的" items={me} />
       </nav>
 
-      <div className={`${styles.footer} no-drag`}>
+      <div className={styles.footer}>
         {auth.loggedIn ? (
           <NavLink to={auth.username ? `/u/${auth.username}` : '/latest'} className={styles.user}>
             <Avatar template={auth.avatarUrl} username={auth.username} name={auth.name} size={30} />
@@ -106,7 +106,7 @@ function Section({ title, items }: { title?: string; items: NavItem[] }): JSX.El
         <NavLink
           key={item.to}
           to={item.to}
-          className={({ isActive }) => `${styles.item} no-drag ${isActive ? styles.active : ''}`}
+          className={({ isActive }) => `${styles.item} ${isActive ? styles.active : ''}`}
         >
           <span className={styles.itemIcon}>{item.icon}</span>
           <span className={styles.itemLabel}>{item.label}</span>
