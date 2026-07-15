@@ -23,11 +23,9 @@ export function Toolbar({ title, subtitle, left, right }: ToolbarProps): JSX.Ele
   }, [title])
 
   return (
-    <header className={styles.toolbar}>
-      {/* WKWebView has no -webkit-app-region; Tauri only starts a drag when the
-          mousedown target itself carries data-tauri-drag-region, so an overlay
-          layer covers the bar and controls sit above it. */}
-      <div className={styles.dragLayer} data-tauri-drag-region aria-hidden />
+    // "deep": any non-interactive spot in the bar drags the window; buttons
+    // and other clickables are exempted by Tauri's drag script automatically.
+    <header className={styles.toolbar} data-tauri-drag-region="deep">
       {left && <div className={styles.left}>{left}</div>}
       <div className={styles.titleWrap}>
         <h1 className={styles.title}>{title}</h1>

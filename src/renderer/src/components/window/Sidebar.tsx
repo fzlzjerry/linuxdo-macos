@@ -62,8 +62,10 @@ export function Sidebar(): JSX.Element {
   }
 
   return (
-    <aside className={styles.sidebar}>
-      <div className={styles.dragTop} data-tauri-drag-region />
+    // "deep": empty sidebar background drags the window (macOS convention);
+    // nav links / buttons block it automatically via Tauri's drag script.
+    <aside className={styles.sidebar} data-tauri-drag-region="deep">
+      <div className={styles.dragTop} />
 
       <div className={styles.composeWrap}>
         <Button
