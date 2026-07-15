@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Bookmark, Link2, Loader2, Pencil, Reply, Trash2 } from 'lucide-react'
 import { Avatar } from '../../components/ui/Avatar'
 import { relativeTime } from '../../lib/format'
@@ -50,6 +51,11 @@ interface Props {
 
 export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Element {
   const auth = useAuth()
+  const navigate = useNavigate()
+  const canVisitProfile = !!post.username && !post.pending
+  const visitProfile = (): void => {
+    if (canVisitProfile) navigate(`/u/${post.username}`)
+  }
   const [bookmarked, setBookmarked] = useState(!!post.bookmarked)
   const [bookmarkId, setBookmarkId] = useState<number | null>(post.bookmark_id ?? null)
   const [bookmarkBusy, setBookmarkBusy] = useState(false)
@@ -144,10 +150,27 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
       id={`post-${post.post_number}`}
     >
       <header className={styles.header}>
-        <Avatar template={post.avatar_template} username={post.username} name={post.name} size={40} />
+        {canVisitProfile ? (
+          <button
+            type="button"
+            className={styles.userBtn}
+            onClick={visitProfile}
+            aria-label={`查看 @${post.username} 的主页`}
+          >
+            <Avatar template={post.avatar_template} username={post.username} name={post.name} size={40} />
+          </button>
+        ) : (
+          <Avatar template={post.avatar_template} username={post.username} name={post.name} size={40} />
+        )}
         <div className={styles.identity}>
           <div className={styles.nameLine}>
-            <span className={styles.name}>{post.name || post.username}</span>
+            {canVisitProfile ? (
+              <button type="button" className={styles.nameBtn} onClick={visitProfile}>
+                <span className={styles.name}>{post.name || post.username}</span>
+              </button>
+            ) : (
+              <span className={styles.name}>{post.name || post.username}</span>
+            )}
             {post.user_status && <StatusEmoji status={post.user_status} />}
             {post.username && post.name && <span className={styles.handle}>@{post.username}</span>}
             {post.trust_level != null && (

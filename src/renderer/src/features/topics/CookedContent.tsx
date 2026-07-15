@@ -15,6 +15,7 @@ function sanitize(html: string): string {
 }
 
 const TOPIC_LINK = /^https?:\/\/linux\.do\/t\/(?:[^/]+\/)?(\d+)/i
+const USER_LINK = /^https?:\/\/linux\.do\/u\/([^/?#]+)/i
 
 /** Renders Discourse `cooked` HTML: sanitized, absolutized, syntax-highlighted,
  *  with in-app routing for linux.do topic links and external links opened natively. */
@@ -70,9 +71,14 @@ export function CookedContent({ html }: { html: string }): JSX.Element {
     const href = anchor.getAttribute('href')
     if (!href) return
     const topic = href.match(TOPIC_LINK)
+    const user = href.match(USER_LINK)
     if (topic) {
       e.preventDefault()
       navigate(`/t/${topic[1]}`)
+    } else if (user) {
+      // @mentions and profile links open the in-app profile page.
+      e.preventDefault()
+      navigate(`/u/${decodeURIComponent(user[1])}`)
     } else if (/^https?:/i.test(href)) {
       e.preventDefault()
       void window.api?.openExternal(href)

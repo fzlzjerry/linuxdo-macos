@@ -11,9 +11,15 @@
 .headerCard {
   composes: card from '../../components/ui/card.module.css';
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   gap: var(--sp-4);
   padding: var(--sp-5);
+}
+
+.headerTop {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
 }
 
 .avatar {
@@ -98,45 +104,55 @@
   flex: none;
 }
 
-/* ---- Bio ---- */
+/* ---- Bio (inside the header card) ---- */
 .bio {
   font-size: var(--fs-base);
   line-height: var(--lh-relaxed);
   color: var(--ink-2);
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-4);
 }
 
 .bioExcerpt {
   font-size: var(--fs-base);
   line-height: var(--lh-relaxed);
   color: var(--ink-2);
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-4);
 }
 
-/* ---- Stats ---- */
-.statGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: var(--sp-3);
-}
-
-.statTile {
+/* ---- Stats: one compact strip, hairline dividers ---- */
+.statStrip {
   composes: card from '../../components/ui/card.module.css';
   display: flex;
+  flex-wrap: wrap;
+}
+
+.stat {
+  flex: 1 1 auto;
+  min-width: 104px;
+  display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
-  padding: var(--sp-4);
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-4);
+}
+.stat + .stat {
+  border-left: 1px solid var(--border);
 }
 
 .statValue {
-  font-size: var(--fs-xl);
+  font-size: var(--fs-lg);
   font-weight: 700;
   color: var(--ink);
   line-height: var(--lh-tight);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .statLabel {
   font-size: var(--fs-xs);
   color: var(--ink-2);
+  white-space: nowrap;
 }
 
 /* ---- Sections ---- */
@@ -197,8 +213,18 @@
   border-bottom: none;
 }
 
-.topicTitle {
+.topicMain {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.topicTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
   font-size: var(--fs-base);
   font-weight: 600;
@@ -209,29 +235,34 @@
   white-space: nowrap;
 }
 
-.topicMeta {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
+.replyIcon {
   flex: none;
   color: var(--ink-3);
 }
 
-.topicTime {
-  font-size: var(--fs-xs);
-  white-space: nowrap;
+.topicSub {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+  color: var(--ink-2);
 }
 
-.topicReplies {
+.subStat {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
-  min-width: 34px;
 }
-.topicReplies svg {
+.subStat svg {
   opacity: 0.7;
+}
+
+.topicTime {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  white-space: nowrap;
 }
 
 @media (max-width: 720px) {

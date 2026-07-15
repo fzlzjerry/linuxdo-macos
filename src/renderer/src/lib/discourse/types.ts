@@ -327,6 +327,24 @@ export interface Badge {
   badge_type_id?: number
   slug?: string
 }
+/** /u/:username/summary.json topics carry posts_count/like_count — NOT
+    reply_count/bumped_at like list topics. */
+export interface SummaryTopic {
+  id: number
+  title: string
+  fancy_title?: string
+  slug?: string
+  posts_count?: number
+  like_count?: number
+  category_id?: number
+  created_at?: string
+}
+export interface SummaryReply {
+  topic_id: number
+  post_number?: number
+  like_count?: number
+  created_at?: string
+}
 export interface UserSummaryResponse {
   user_summary: {
     likes_given?: number
@@ -340,10 +358,11 @@ export interface UserSummaryResponse {
     recent_time_read?: number
     bookmark_count?: number
     solved_count?: number
+    replies?: SummaryReply[]
     top_categories?: Array<{ id: number; name: string; color: string; topic_count: number; post_count: number }>
   }
   badges?: Badge[]
-  topics?: TopicListItem[]
+  topics?: SummaryTopic[]
   users?: DiscourseUser[]
 }
 

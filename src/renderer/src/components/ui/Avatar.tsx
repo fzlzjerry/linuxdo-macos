@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { avatarUrl } from '../../lib/discourse/urls'
 import styles from './Avatar.module.css'
@@ -20,13 +20,21 @@ interface AvatarProps {
 }
 
 export function Avatar({ template, username, name, size = 40, className }: AvatarProps): JSX.Element {
-  const [failed, setFailed] = useState(false)
-  const url = avatarUrl(template, size)
+  // 0: retina (2x) size, 1: retry at 1x (some sizes can transiently fail), 2: letter tile.
+  const [attempt, setAttempt] = useState(0)
+  useEffect(() => setAttempt(0), [template])
+
+  const url =
+    attempt === 0
+      ? avatarUrl(template, size)
+      : attempt === 1
+        ? avatarUrl(template, Math.max(1, Math.round(size / 2)))
+        : null
   const label = (name || username || '?').trim()
   const initial = label ? Array.from(label)[0].toUpperCase() : '?'
   const style = { width: size, height: size } as const
 
-  if (!url || failed) {
+  if (!url) {
     const hue = hueFor(username || label)
     return (
       <span
@@ -54,7 +62,7 @@ export function Avatar({ template, username, name, size = 40, className }: Avata
       height={size}
       alt=""
       loading="lazy"
-      onError={() => setFailed(true)}
+      onError={() => setAttempt((a) => a + 1)}
     />
   )
 }

@@ -198,3 +198,26 @@
   font-size: var(--fs-xs);
   color: var(--accent);
 }
+
+/* Clickable identity → profile page. */
+.userBtn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  border-radius: var(--r-full);
+  cursor: pointer;
+  flex: none;
+  display: inline-flex;
+}
+
+.nameBtn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  min-width: 0;
+}
+.nameBtn:hover .name {
+  text-decoration: underline;
+}
