@@ -13,7 +13,7 @@ interface ToolbarProps {
 export function Toolbar({ title, subtitle, left, right }: ToolbarProps): JSX.Element {
   useEffect(() => {
     if (typeof title !== 'string' || !title) return
-    const full = `${title} — LinuxDO`
+    const full = `${title} — Oh My LinuxDo`
     document.title = full
     try {
       void getCurrentWindow().setTitle(full)

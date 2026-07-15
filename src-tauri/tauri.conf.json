@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "LinuxDO",
+  "productName": "Oh My LinuxDo",
   "version": "0.1.0",
   "identifier": "do.linux.macos",
   "build": {
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "LinuxDO",
+        "title": "Oh My LinuxDo",
         "width": 1180,
         "height": 820,
         "minWidth": 900,

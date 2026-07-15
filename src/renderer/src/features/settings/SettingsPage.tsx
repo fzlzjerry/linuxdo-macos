@@ -101,7 +101,7 @@ const DENSITY_OPTIONS: { value: string; label: string }[] = [
   { value: 'compact', label: '紧凑' }
 ]
 
-const APP_NAME = 'LinuxDO'
+const APP_NAME = 'Oh My LinuxDo'
 const APP_VERSION = '0.1.0'
 
 export function SettingsPage(): JSX.Element {
