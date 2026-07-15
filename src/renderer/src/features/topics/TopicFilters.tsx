@@ -235,7 +235,7 @@ function TagFilter({ value, onChange }: Props): JSX.Element {
     const t = setTimeout(
       () => {
         discourse
-          .searchTags(q.trim(), q.trim() ? 10 : 8)
+          .searchTags(q.trim())
           .then((list) => {
             if (seq.current === id) setItems(list)
           })

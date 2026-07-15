@@ -237,12 +237,15 @@ export const discourse = {
   },
 
   /** Existing-tag lookup (same endpoint the Discourse composer uses).
-      Empty q returns the most-used tags, sorted by topic count. */
+      Empty q returns the most-used tags, sorted by topic count.
+      NOTE: limit is server-capped by max_tag_search_results (default 5) —
+      anything above it fails the request contract with a 400. */
   searchTags(q: string, limit = 5): Promise<{ name: string; count: number }[]> {
+    const capped = Math.min(limit, 5)
     return request<{
       results?: { id?: string | number; name?: string; text?: string; count?: number }[]
     }>({
-      path: `/tags/filter/search.json?q=${encodeURIComponent(q)}&limit=${limit}`
+      path: `/tags/filter/search.json?q=${encodeURIComponent(q)}&limit=${capped}`
     }).then((r) =>
       (r.results ?? [])
         .map((t) => ({ name: String(t.name ?? t.text ?? t.id ?? ''), count: t.count ?? 0 }))

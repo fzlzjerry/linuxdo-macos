@@ -60,7 +60,7 @@ export function TagsInput({
     const t = setTimeout(
       () => {
         discourse
-          .searchTags(term, term ? 8 : 5)
+          .searchTags(term)
           .then((list) => {
             if (seq.current !== id) return
             setItems(list.filter((s) => !chosen.includes(s.name.toLowerCase())))
