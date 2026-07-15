@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
@@ -8,6 +8,7 @@ import { CategoryBadge } from '../../components/ui/CategoryBadge'
 import { Tag } from '../../components/ui/Tag'
 import { EmptyState, ErrorState, Spinner } from '../../components/ui/states'
 import { useSearch } from '../../lib/discourse/queries'
+import { useScrollMemory } from '../../lib/useScrollMemory'
 import { useAuth } from '../../store/auth'
 import { relativeTime } from '../../lib/format'
 import { tagKey, tagText } from '../../lib/discourse/types'
@@ -39,14 +40,19 @@ function toPlainText(html: string | undefined): string {
     .trim()
 }
 
+// Survives unmount so returning to /search restores the last search session.
+let lastSearchInput = ''
+
 export function SearchPage(): JSX.Element {
-  const [input, setInput] = useState('')
-  const [term, setTerm] = useState('')
+  const [input, setInput] = useState(lastSearchInput)
+  const [term, setTerm] = useState(lastSearchInput)
   const navigate = useNavigate()
   const auth = useAuth()
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   // Debounce the raw input into the query term (~350ms).
   useEffect(() => {
+    lastSearchInput = input
     const id = setTimeout(() => setTerm(input), 350)
     return () => clearTimeout(id)
   }, [input])
@@ -54,13 +60,15 @@ export function SearchPage(): JSX.Element {
   const active = term.trim().length > 1
   const { data, isLoading, isError, error, refetch } = useSearch(term, active)
 
+  useScrollMemory(scrollRef, `search:${term}`, active && !isLoading && !!data)
+
   const topics = data?.topics ?? []
   const posts = data?.posts ?? []
   const users = data?.users ?? []
   const hasResults = topics.length > 0 || posts.length > 0 || users.length > 0
 
   return (
-    <PageScaffold toolbar={<Toolbar title="搜索" />}>
+    <PageScaffold ref={scrollRef} toolbar={<Toolbar title="搜索" />}>
       <div className={styles.searchBar}>
         <div className={styles.inputWrap}>
           <Search size={16} className={styles.searchIcon} aria-hidden />

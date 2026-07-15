@@ -6,6 +6,7 @@ import { PageScaffold } from '../../components/window/PageScaffold'
 import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { EmptyState, ErrorState, Spinner, TopicListSkeleton } from '../../components/ui/states'
 import { useCategoryTopics, mergeUsers } from '../../lib/discourse/queries'
+import { useScrollMemory } from '../../lib/useScrollMemory'
 import { useCategory } from '../../lib/discourse/CategoriesContext'
 import { useAuth } from '../../store/auth'
 import type { TopicListItem } from '../../lib/discourse/types'
@@ -20,6 +21,8 @@ export function CategoryTopicsPage(): JSX.Element {
 
   const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useCategoryTopics(slug, id)
+
+  useScrollMemory(scrollRef, `category:${id}`, !isLoading && !!data)
 
   const users = useMemo(() => mergeUsers(data?.pages), [data])
   const topics = useMemo(() => {
