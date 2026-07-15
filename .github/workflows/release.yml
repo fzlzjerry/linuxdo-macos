@@ -1,0 +1,106 @@
+name: Release
+
+# Fires on every push to main, but only actually builds a release when the
+# head commit's message contains a marker like:  [RELEASE] v0.2.0
+# You can also trigger it by hand from the Actions tab (workflow_dispatch).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag to release, e.g. v0.2.0"
+        required: true
+
+# Never run two release builds for the same ref at once.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # --- Gate: decide whether this push should produce a release -------------
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.detect.outputs.release }}
+      version: ${{ steps.detect.outputs.version }}
+    steps:
+      - name: Detect release marker
+        id: detect
+        # Commit message / dispatch input come in via env, never inlined into
+        # the script, so a crafted commit message can't inject shell.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          set -euo pipefail
+          version=""
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            version="$INPUT_VERSION"
+          else
+            # Look at the first line only, case-insensitive:
+            #   [RELEASE] vX.Y.Z   (optional -beta.1 / .1 style suffix)
+            first_line="$(printf '%s\n' "$COMMIT_MSG" | head -n1)"
+            if printf '%s' "$first_line" | grep -qiE '\[RELEASE\][[:space:]]+v[0-9]+\.[0-9]+\.[0-9]+'; then
+              version="$(printf '%s' "$first_line" \
+                | grep -oiE 'v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.]+)?' \
+                | head -n1)"
+            fi
+          fi
+
+          if [ -n "$version" ]; then
+            echo "release=true"      >> "$GITHUB_OUTPUT"
+            echo "version=$version"  >> "$GITHUB_OUTPUT"
+            echo "::notice::Release requested: $version"
+          else
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "No [RELEASE] vX.Y.Z marker in the head commit; skipping the build."
+          fi
+
+  # --- Build the macOS app and publish a GitHub Release --------------------
+  build:
+    needs: check
+    if: needs.check.outputs.release == 'true'
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build & publish release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ needs.check.outputs.version }}
+          releaseName: Oh My LinuxDo ${{ needs.check.outputs.version }}
+          releaseBody: |
+            Automated build for ${{ needs.check.outputs.version }}.
+
+            Download the `.dmg` from the assets below to install. The build is
+            not code-signed, so on first launch right-click the app and choose
+            **Open** (or allow it under System Settings → Privacy & Security).
+          releaseDraft: false
+          prerelease: false
+          # Universal binary so it runs on both Apple Silicon and Intel Macs.
+          args: --target universal-apple-darwin
