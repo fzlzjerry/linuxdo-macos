@@ -7,10 +7,24 @@ import type {
   TopPeriod
 } from './types'
 
-export function useTopicList(filter: ListingFilter, period: TopPeriod = 'weekly') {
+export function useTopicList(
+  filter: ListingFilter,
+  period: TopPeriod = 'weekly',
+  category?: { slug: string; id: number },
+  tag?: string
+) {
   return useInfiniteQuery({
-    queryKey: ['topics', filter, filter === 'top' ? period : null],
-    queryFn: ({ pageParam }) => discourse.listing(filter, pageParam, period),
+    queryKey: [
+      'topics',
+      filter,
+      filter === 'top' ? period : null,
+      category?.id ?? null,
+      tag ?? null
+    ],
+    queryFn: ({ pageParam }) =>
+      category || tag
+        ? discourse.filteredListing(filter, pageParam, period, category, tag)
+        : discourse.listing(filter, pageParam, period),
     initialPageParam: 0,
     getNextPageParam: (lastPage: TopicListResponse, allPages) =>
       nextPage(lastPage, allPages.length - 1),

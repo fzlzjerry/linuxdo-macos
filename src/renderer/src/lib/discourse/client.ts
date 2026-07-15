@@ -120,6 +120,30 @@ export const discourse = {
     return request<TopicListResponse>({ path: `${base}?page=${page}` })
   },
 
+  /** Listing narrowed by category and/or tag (the site's 类别/标签 filters). */
+  filteredListing(
+    filter: ListingFilter,
+    page: number,
+    period: TopPeriod,
+    category?: { slug: string; id: number },
+    tag?: string
+  ): Promise<TopicListResponse> {
+    const l = filter === 'latest' ? '' : `/l/${filter}`
+    let base: string
+    if (category && tag) {
+      base = `/tags/c/${category.slug}/${category.id}/${encodeURIComponent(tag)}${l}.json`
+    } else if (category) {
+      base = `/c/${category.slug}/${category.id}${l}.json`
+    } else if (tag) {
+      base = `/tag/${encodeURIComponent(tag)}${l}.json`
+    } else {
+      return request<TopicListResponse>({ path: listingPath(filter, page, period) })
+    }
+    let path = `${base}?page=${page}`
+    if (filter === 'top') path += `&period=${period}`
+    return request<TopicListResponse>({ path })
+  },
+
   categories(): Promise<CategoryListResponse> {
     return request<CategoryListResponse>({
       path: '/categories.json?include_subcategories=true'

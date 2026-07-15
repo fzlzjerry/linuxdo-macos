@@ -12,6 +12,7 @@ import { useListNav } from '../../lib/useListNav'
 import { useAuth } from '../../store/auth'
 import type { ListingFilter, TopPeriod, TopicListItem } from '../../lib/discourse/types'
 import { TopicRow } from './TopicRow'
+import { TopicFilters, type TopicFilterState } from './TopicFilters'
 
 const TITLES: Record<ListingFilter, string> = {
   latest: '最新',
@@ -31,15 +32,19 @@ const PERIODS: { value: TopPeriod; label: string }[] = [
 
 export function TopicListPage({ filter }: { filter: ListingFilter }): JSX.Element {
   const [period, setPeriod] = useState<TopPeriod>('weekly')
+  const [filters, setFilters] = useState<TopicFilterState>({})
   const scrollRef = useRef<HTMLDivElement>(null)
   const auth = useAuth()
 
-  const query = useTopicList(filter, period)
+  const categoryParam = filters.category
+    ? { slug: filters.category.slug, id: filters.category.id }
+    : undefined
+  const query = useTopicList(filter, period, categoryParam, filters.tag)
   const { data, isLoading, isError, error, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage } = query
 
   useScrollMemory(
     scrollRef,
-    filter === 'top' ? `list:top:${period}` : `list:${filter}`,
+    `list:${filter}:${filter === 'top' ? period : ''}:${filters.category?.id ?? ''}:${filters.tag ?? ''}`,
     !isLoading && !!data
   )
   useListNav(scrollRef)
@@ -71,7 +76,16 @@ export function TopicListPage({ filter }: { filter: ListingFilter }): JSX.Elemen
   )
 
   return (
-    <PageScaffold ref={scrollRef} toolbar={<Toolbar title={TITLES[filter]} right={right} />}>
+    <PageScaffold
+      ref={scrollRef}
+      toolbar={
+        <Toolbar
+          title={TITLES[filter]}
+          left={<TopicFilters value={filters} onChange={setFilters} />}
+          right={right}
+        />
+      }
+    >
       {isLoading ? (
         <TopicListSkeleton />
       ) : isError ? (

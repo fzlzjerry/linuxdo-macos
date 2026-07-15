@@ -1,0 +1,122 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: var(--r-md);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.trigger:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.triggerActive {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.chevron {
+  color: var(--ink-3);
+  flex: none;
+}
+
+.clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--r-full);
+  color: var(--ink-2);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.clear:hover {
+  background: var(--surface-active);
+  color: var(--ink);
+}
+
+/* Fixed popover under the trigger (escapes the draggable toolbar). */
+.pop {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  width: 288px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+}
+
+.search {
+  composes: input from '../../components/ui/Field.module.css';
+  font-size: var(--fs-sm);
+  padding: 6px 10px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  padding: 6px var(--sp-3);
+  border-radius: var(--r-sm);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.item:hover {
+  background: var(--surface-hover);
+}
+
+.itemSub {
+  padding-left: var(--sp-6);
+}
+
+.itemActive {
+  background: var(--accent-soft);
+}
+
+.itemCount {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.tagName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
