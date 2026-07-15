@@ -48,6 +48,10 @@ const api = {
   openExternal(url: string): Promise<void> {
     return invoke<void>('open_external', { url })
   },
+  /** Load a linux.do asset through the engine (trusted session) as a data URL. */
+  fetchImage(url: string): Promise<string> {
+    return invoke<string>('fetch_image', { url })
+  },
   svgSprite(): Promise<string> {
     return invoke<string>('svg_sprite')
   },

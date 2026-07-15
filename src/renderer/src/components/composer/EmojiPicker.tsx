@@ -19,10 +19,11 @@ const GROUP_LABELS: Record<string, string> = {
 }
 const groupLabel = (g: string): string => GROUP_LABELS[g] ?? g
 
-// linux.do is behind Cloudflare; a burst of cross-origin image requests trips its
-// bot protection and most fail. Gate emoji image loads to a small concurrency so
-// they trickle in instead of firing ~60 at once.
-const MAX_CONCURRENT = 5
+// linux.do is behind Cloudflare and the renderer is cross-origin, so a burst of
+// direct emoji-image requests gets rate-limited (most fail). Load them through
+// the engine (trusted same-origin session) as data URLs, gated to a small
+// concurrency and cached for the session so each emoji is fetched at most once.
+const MAX_CONCURRENT = 6
 let running = 0
 const queue: Array<{ run: () => void; cancelled: boolean }> = []
 function pump(): void {
@@ -44,41 +45,53 @@ function complete(): void {
   pump()
 }
 
-/** An emoji image whose network load is scheduled through the shared concurrency
- *  gate. Falls back to the shortcode text if the image ultimately fails. */
+// url -> data URL ('' marks a permanent failure so we don't retry it)
+const imageCache = new Map<string, string>()
+
+/** An emoji image loaded via the engine proxy (data URL), scheduled through the
+ *  shared concurrency gate. Falls back to the shortcode text if it fails. */
 function EmojiImg({ emoji, size }: { emoji: DiscourseEmoji; size: number }): JSX.Element {
   const abs = absolutize(emoji.url)
-  const [src, setSrc] = useState<string | undefined>(undefined)
-  const [failed, setFailed] = useState(false)
-  const doneRef = useRef(false)
+  const cached = imageCache.get(abs)
+  const [src, setSrc] = useState<string | undefined>(cached && cached !== '' ? cached : undefined)
+  const [failed, setFailed] = useState(cached === '')
 
   useEffect(() => {
-    doneRef.current = false
+    const hit = imageCache.get(abs)
+    if (hit !== undefined) {
+      if (hit) setSrc(hit)
+      else setFailed(true)
+      return
+    }
     setSrc(undefined)
     setFailed(false)
-    let started = false
-    const task = enqueue(() => {
-      started = true
-      setSrc(abs)
-    })
-    return () => {
-      task.cancelled = true
-      if (started && !doneRef.current) {
-        doneRef.current = true
+    let cancelled = false
+    const task = enqueue(async () => {
+      try {
+        const dataUrl = (await window.api?.fetchImage(abs)) ?? ''
+        imageCache.set(abs, dataUrl)
+        if (!cancelled) {
+          if (dataUrl) setSrc(dataUrl)
+          else setFailed(true)
+        }
+      } catch {
+        imageCache.set(abs, '')
+        if (!cancelled) setFailed(true)
+      } finally {
         complete()
       }
+    })
+    return () => {
+      cancelled = true
+      task.cancelled = true
     }
   }, [abs])
 
-  const finish = (): void => {
-    if (!doneRef.current) {
-      doneRef.current = true
-      complete()
-    }
-  }
-
   if (failed) {
     return <span className={styles.fallback}>:{emoji.name}:</span>
+  }
+  if (!src) {
+    return <span className={styles.cellImg} style={{ width: size, height: size }} aria-hidden />
   }
   return (
     <img
@@ -86,13 +99,7 @@ function EmojiImg({ emoji, size }: { emoji: DiscourseEmoji; size: number }): JSX
       style={{ width: size, height: size }}
       src={src}
       alt={emoji.name}
-      loading="lazy"
       decoding="async"
-      onLoad={finish}
-      onError={() => {
-        finish()
-        setFailed(true)
-      }}
     />
   )
 }

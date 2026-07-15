@@ -18,6 +18,8 @@ export interface LinuxDoApi {
     onNotice(cb: (n: AuthNotice) => void): () => void
   }
   openExternal(url: string): Promise<void>
+  /** Load a linux.do asset (e.g. emoji image) through the engine as a data URL. */
+  fetchImage(url: string): Promise<string>
   /** The site's svg icon sprite markup, extracted from the engine webview. */
   svgSprite(): Promise<string>
   window: {

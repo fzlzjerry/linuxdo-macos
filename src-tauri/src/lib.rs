@@ -133,11 +133,14 @@ async function __linuxdoFetch(id, reqJson) {
     const r = await fetch(req.path, { method: method, headers: headers, body: body, credentials: 'include' });
     const ct = r.headers.get('content-type') || '';
     const isJson = ct.indexOf('json') !== -1;
-    let json = undefined, text = undefined;
-    if (isJson) { json = await r.json(); } else { text = (await r.text()).slice(0, 4000); }
-    const challenge = !isJson && /just a moment|checking your browser|attention required|cf-browser-verification|请稍候|verify you are human/i.test(text || '');
+    let json = undefined, text = undefined, dataUrl = undefined;
+    if (req.binary) {
+      const blob = await r.blob();
+      dataUrl = await new Promise(function (res) { var fr = new FileReader(); fr.onload = function () { res(String(fr.result)); }; fr.onerror = function () { res(''); }; fr.readAsDataURL(blob); });
+    } else if (isJson) { json = await r.json(); } else { text = (await r.text()).slice(0, 4000); }
+    const challenge = !req.binary && !isJson && /just a moment|checking your browser|attention required|cf-browser-verification|请稍候|verify you are human/i.test(text || '');
     const needsAuth = r.status === 401 || r.status === 403 || challenge;
-    payload = { id: id, ok: r.ok, status: r.status, isJson: isJson, json: json, text: text, needsAuth: needsAuth, challenge: challenge };
+    payload = { id: id, ok: r.ok, status: r.status, isJson: isJson, json: json, text: text, dataUrl: dataUrl, needsAuth: needsAuth, challenge: challenge };
   } catch (e) {
     payload = { id: id, ok: false, status: 0, error: String((e && e.message) || e) };
   }
@@ -530,6 +533,35 @@ async fn svg_sprite(app: AppHandle) -> Result<String, String> {
     }
 }
 
+/// Fetch a linux.do asset (e.g. an emoji image) through the engine — which holds
+/// the trusted same-origin session — and return it as a data URL. The renderer is
+/// cross-origin, so a burst of its direct image requests gets rate-limited by
+/// Cloudflare; proxying through the engine sidesteps that. Runs off the serialized
+/// scheduler so it never blocks API calls.
+#[tauri::command]
+async fn fetch_image(app: AppHandle, url: String) -> Result<String, String> {
+    ensure_engine(&app)?;
+    let path = if let Some(rest) = url.strip_prefix(ORIGIN) {
+        rest.to_string()
+    } else if url.starts_with('/') {
+        url.clone()
+    } else {
+        return Err("only linux.do assets can be proxied".into());
+    };
+    let raw = eval_fetch(&app, &json!({ "path": path, "binary": true })).await?;
+    if raw.get("ok").and_then(|v| v.as_bool()).unwrap_or(false) {
+        if let Some(d) = raw.get("dataUrl").and_then(|v| v.as_str()) {
+            if !d.is_empty() {
+                return Ok(d.to_string());
+            }
+        }
+    }
+    Err(format!(
+        "status {}",
+        raw.get("status").and_then(|v| v.as_u64()).unwrap_or(0)
+    ))
+}
+
 #[tauri::command]
 async fn open_external(app: AppHandle, url: String) -> Result<(), String> {
     if url.starts_with("http://") || url.starts_with("https://") {
@@ -711,7 +743,8 @@ pub fn run() {
             auth_show_login_webview,
             auth_logout,
             svg_sprite,
-            open_external
+            open_external,
+            fetch_image
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
