@@ -105,10 +105,3 @@
   background: var(--accent-soft);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .chip,
-  .add,
-  .pick {
-    transition: none;
-  }
-}

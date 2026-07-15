@@ -123,7 +123,11 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
             {post.user_status && <StatusEmoji status={post.user_status} />}
             {post.username && post.name && <span className={styles.handle}>@{post.username}</span>}
             {post.trust_level != null && (
-              <span className={`${styles.trust} ${trustClass(post.trust_level)}`}>
+              <span
+                className={`${styles.trust} ${trustClass(post.trust_level)}`}
+                title={`信任等级 ${post.trust_level}`}
+                aria-label={`信任等级 ${post.trust_level}`}
+              >
                 Lv{post.trust_level}
               </span>
             )}
@@ -168,7 +172,12 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
         <ReactionBar post={post} />
 
         {onReply && (
-          <button className={styles.action} onClick={() => onReply(post)} title="回复">
+          <button
+            className={styles.action}
+            onClick={() => onReply(post)}
+            title="回复"
+            aria-label="回复"
+          >
             <Reply size={15} />
             {!!post.reply_count && post.reply_count > 0 && <span>{post.reply_count}</span>}
           </button>
@@ -177,19 +186,26 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
         <button
           className={`${styles.action} ${bookmarked ? styles.bookmarked : ''}`}
           onClick={() => void toggleBookmark()}
-          title={bookmarked ? '移除书签' : '书签'}
+          title={bookmarked ? '移除书签' : '加入书签'}
+          aria-label={bookmarked ? '移除书签' : '加入书签'}
+          aria-pressed={bookmarked}
         >
           <Bookmark size={15} fill={bookmarked ? 'currentColor' : 'none'} />
         </button>
 
-        <button className={styles.action} onClick={copyLink} title="复制链接">
+        <button className={styles.action} onClick={copyLink} title="复制链接" aria-label="复制链接">
           <Link2 size={15} />
         </button>
 
         <span className={styles.spacer} />
 
         {(post.yours || post.can_edit) && onEdit && (
-          <button className={styles.action} onClick={() => onEdit(post)} title="编辑">
+          <button
+            className={styles.action}
+            onClick={() => onEdit(post)}
+            title="编辑"
+            aria-label="编辑"
+          >
             <Pencil size={15} />
           </button>
         )}
@@ -199,6 +215,7 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
             onClick={() => void del()}
             disabled={busy}
             title="删除"
+            aria-label={confirmDel ? '确认删除' : '删除'}
           >
             <Trash2 size={15} />
             {confirmDel && <span>确定？</span>}

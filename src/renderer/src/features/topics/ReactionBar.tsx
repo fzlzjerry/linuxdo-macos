@@ -118,6 +118,8 @@ export function ReactionBar({ post }: Props): JSX.Element {
           className={`${styles.chip} ${current === r.id ? styles.active : ''}`}
           onClick={() => void toggle(r.id)}
           title={r.id}
+          aria-label={`回应 ${r.id}`}
+          aria-pressed={current === r.id}
         >
           <Emoji id={r.id} />
           {r.count > 0 && <span className={styles.count}>{compactNumber(r.count)}</span>}
@@ -129,9 +131,9 @@ export function ReactionBar({ post }: Props): JSX.Element {
         type="button"
         className={styles.add}
         onClick={openPicker}
-        aria-haspopup="menu"
         aria-expanded={pickerOpen}
-        title="添加表情"
+        title="添加回应"
+        aria-label="添加回应"
       >
         <Plus size={14} />
         <span>表情</span>
@@ -144,7 +146,8 @@ export function ReactionBar({ post }: Props): JSX.Element {
             ref={pickerRef}
             className={styles.picker}
             style={{ left: anchor.left, top: anchor.top }}
-            role="menu"
+            role="group"
+            aria-label="选择回应"
           >
             {ENABLED_REACTIONS.map((id) => (
               <button
@@ -153,7 +156,8 @@ export function ReactionBar({ post }: Props): JSX.Element {
                 className={`${styles.pick} ${current === id ? styles.pickActive : ''}`}
                 onClick={() => void toggle(id)}
                 title={id}
-                role="menuitem"
+                aria-label={id}
+                aria-pressed={current === id}
               >
                 <Emoji id={id} />
               </button>

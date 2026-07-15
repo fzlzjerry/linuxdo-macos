@@ -5,7 +5,11 @@
   line-height: var(--lh-relaxed);
   color: var(--ink);
   word-wrap: break-word;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word; /* prose breaks at word boundaries… */
+}
+
+.cooked a {
+  overflow-wrap: anywhere; /* …but long bare URLs may break anywhere */
 }
 
 .cooked > *:first-child {
@@ -450,4 +454,81 @@
 :root[data-theme='dark'] .hljs-type,
 :root[data-theme='dark'] .hljs-selector-class {
   color: oklch(0.74 0.14 300);
+}
+
+/* ---- Footnotes (discourse-footnote) ---- */
+.cooked sup.footnote-ref a {
+  font-size: var(--fs-xs);
+  padding: 0 0.35em;
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  text-decoration: none;
+}
+.cooked hr.footnotes-sep {
+  margin: var(--sp-6) 0 var(--sp-3);
+}
+.cooked ol.footnotes-list {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  padding-left: 1.5em;
+}
+.cooked li.footnote-item p {
+  margin: 0 0 var(--sp-1);
+}
+.cooked a.footnote-backref {
+  text-decoration: none;
+}
+
+/* ---- Task lists (GFM + discourse checklist plugin) ---- */
+.cooked li.task-list-item {
+  list-style: none;
+}
+.cooked ul:has(> li.task-list-item) {
+  padding-left: 0.5em;
+}
+.cooked li.task-list-item input[type='checkbox'] {
+  vertical-align: -0.15em;
+  margin-right: 0.45em;
+  /* accent-color inherited from body */
+}
+.cooked .chcklst-box {
+  color: var(--accent);
+}
+
+/* ---- Inline semantics ---- */
+.cooked mark {
+  background: color-mix(in oklch, var(--warning) 28%, transparent);
+  color: inherit;
+  padding: 0.05em 0.25em;
+  border-radius: 3px;
+}
+.cooked del,
+.cooked s {
+  color: var(--ink-3);
+}
+.cooked ins {
+  color: var(--success);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.cooked sub,
+.cooked sup {
+  font-size: 0.75em;
+  line-height: 0; /* no line-height jumps */
+}
+
+/* ---- Math / KaTeX fallback ---- */
+.cooked .math,
+.cooked .katex-display {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.cooked span.math {
+  font-family: var(--font-mono);
+  font-size: 0.9em; /* unrendered LaTeX source stays legible */
+}
+
+/* ---- Quote controls (non-functional in this static render) ---- */
+.cooked aside.quote .title .quote-controls {
+  display: none;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode, type MouseEvent } from 'react'
+import { useEffect, useId, useRef, type ReactNode, type MouseEvent } from 'react'
 import { X } from 'lucide-react'
 import { IconButton } from './IconButton'
 import styles from './Modal.module.css'
@@ -16,6 +16,7 @@ interface Props {
  *  is never clipped by an ancestor's overflow/stacking context. */
 export function Modal({ open, onClose, title, children, footer, width = 620 }: Props): JSX.Element {
   const ref = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
 
   useEffect(() => {
     const d = ref.current
@@ -29,11 +30,19 @@ export function Modal({ open, onClose, title, children, footer, width = 620 }: P
   }
 
   return (
-    <dialog ref={ref} className={styles.dialog} onCancel={onClose} onClick={onBackdrop}>
+    <dialog
+      ref={ref}
+      className={styles.dialog}
+      aria-labelledby={title ? titleId : undefined}
+      onCancel={onClose}
+      onClick={onBackdrop}
+    >
       <div className={styles.inner} style={{ maxWidth: width }}>
         {title && (
           <header className={styles.header}>
-            <h2 className={styles.title}>{title}</h2>
+            <h2 className={styles.title} id={titleId}>
+              {title}
+            </h2>
             <IconButton label="关闭" onClick={onClose}>
               <X size={18} />
             </IconButton>

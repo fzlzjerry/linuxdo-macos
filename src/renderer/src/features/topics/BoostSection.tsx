@@ -155,7 +155,7 @@ export function BoostSection({ post }: { post: Post }): JSX.Element | null {
       )}
 
       {canBoost && (
-        <button className={styles.trigger} onClick={openModal} title="助推 (Boost)">
+        <button className={styles.trigger} onClick={openModal} title="助推">
           <Rocket size={14} />
           <span>助推</span>
         </button>
@@ -164,7 +164,7 @@ export function BoostSection({ post }: { post: Post }): JSX.Element | null {
       <Modal
         open={open}
         onClose={closeModal}
-        title="助推 (Boost)"
+        title="助推"
         width={440}
         footer={
           <>
