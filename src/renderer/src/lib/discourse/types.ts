@@ -468,6 +468,16 @@ export interface DraftsResponse {
 
 export type NotificationLevel = 0 | 1 | 2 | 3 // muted / regular / tracking / watching
 
+// ---- Emojis (/emojis.json) — Discourse's own set (linux.do = twemoji + custom packs) ----
+export interface DiscourseEmoji {
+  name: string
+  url: string
+  group: string
+  tonable?: boolean
+}
+/** Keyed by group name; groups include custom packs like 'b站' / '飞书'. */
+export type EmojiGroups = Record<string, DiscourseEmoji[]>
+
 // ---- User activity stream (/user_actions.json) ----
 export interface UserAction {
   action_type: number // 4=topic, 5=reply(post), 1=like given, 2=like received…

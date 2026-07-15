@@ -164,6 +164,11 @@ export const discourse = {
     })
   },
 
+  /** Discourse's own emoji set (linux.do: twemoji + custom packs), grouped. */
+  emojis(): Promise<import('./types').EmojiGroups> {
+    return request<import('./types').EmojiGroups>({ path: '/emojis.json' })
+  },
+
   topic(id: number, postNumber?: number): Promise<TopicDetail> {
     const path = postNumber ? `/t/${id}/${postNumber}.json` : `/t/${id}.json`
     return request<TopicDetail>({ path })

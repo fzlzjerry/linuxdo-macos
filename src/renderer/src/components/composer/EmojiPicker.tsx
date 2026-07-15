@@ -1,32 +1,40 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
-import { EMOJI } from '../../lib/emoji'
+import { useEmojis } from '../../lib/discourse/queries'
+import { absolutize } from '../../lib/discourse/urls'
+import type { DiscourseEmoji } from '../../lib/discourse/types'
 import styles from './EmojiPicker.module.css'
 
-interface Group {
-  key: string
-  label: string
-  icon: string
+// Friendly labels for the standard Unicode groups; custom packs (b站 / 飞书 / …)
+// keep their own group name.
+const GROUP_LABELS: Record<string, string> = {
+  'smileys_&_emotion': '表情',
+  'people_&_body': '人物',
+  'animals_&_nature': '动物',
+  'food_&_drink': '食物',
+  'travel_&_places': '旅行',
+  activities: '活动',
+  objects: '物件',
+  symbols: '符号',
+  flags: '旗帜'
 }
-
-const GROUPS: Group[] = [
-  { key: 'smileys', label: '表情', icon: '😀' },
-  { key: 'gestures', label: '手势', icon: '👍' },
-  { key: 'hearts', label: '爱心', icon: '❤️' },
-  { key: 'objects', label: '物件', icon: '💡' },
-  { key: 'symbols', label: '符号', icon: '✅' }
-]
+const groupLabel = (g: string): string => GROUP_LABELS[g] ?? g
 
 interface Props {
   anchor: { left: number; top: number }
   /** The toolbar trigger — clicks inside it must not count as "outside". */
   triggerRef: RefObject<HTMLElement>
   onClose: () => void
-  onPick: (char: string) => void
+  /** Receives the emoji shortcode to insert, e.g. ":clap:". */
+  onPick: (text: string) => void
 }
 
+/** linux.do (Discourse) emoji picker: renders the site's own emoji images
+ *  (twemoji + custom packs) and inserts the `:shortcode:` so sent content
+ *  renders identically to the web. */
 export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX.Element {
+  const { data, isLoading } = useEmojis()
   const [q, setQ] = useState('')
-  const [group, setGroup] = useState(GROUPS[0].key)
+  const [group, setGroup] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -35,8 +43,8 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
       if (rootRef.current?.contains(t) || triggerRef.current?.contains(t)) return
       onClose()
     }
-    // Capture + preventDefault: Escape must close ONLY the picker, not also
-    // cancel the enclosing native <dialog> (which would drop composer content).
+    // Capture + preventDefault: Escape closes ONLY the picker, not the enclosing
+    // native <dialog>.
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         e.preventDefault()
@@ -44,8 +52,6 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
         onClose()
       }
     }
-    // Capture-phase scroll fires for inner scroll containers too — ignore scrolls
-    // that originate inside the grid, else browsing the emoji list closes it.
     const onScroll = (e: Event): void => {
       if (rootRef.current?.contains(e.target as Node)) return
       onClose()
@@ -62,15 +68,28 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
     }
   }, [onClose, triggerRef])
 
-  const list = useMemo(() => {
-    const term = q.trim().toLowerCase()
+  const groups = useMemo(() => (data ? Object.keys(data) : []), [data])
+  const activeGroup = group ?? groups[0] ?? ''
+
+  const list = useMemo<DiscourseEmoji[]>(() => {
+    if (!data) return []
+    const term = q.trim().toLowerCase().replace(/[:\s]/g, '')
     if (term) {
-      return EMOJI.filter(
-        (e) => e.name.includes(term) || e.keywords.includes(term) || e.char === term
-      )
+      const seen = new Set<string>()
+      const out: DiscourseEmoji[] = []
+      for (const arr of Object.values(data)) {
+        for (const e of arr) {
+          if (e.name.includes(term) && !seen.has(e.name)) {
+            seen.add(e.name)
+            out.push(e)
+            if (out.length >= 200) return out
+          }
+        }
+      }
+      return out
     }
-    return EMOJI.filter((e) => e.group === group)
-  }, [q, group])
+    return data[activeGroup] ?? []
+  }, [data, q, activeGroup])
 
   return (
     <div ref={rootRef} className={styles.popover} style={{ left: anchor.left, top: anchor.top }}>
@@ -82,37 +101,46 @@ export function EmojiPicker({ anchor, triggerRef, onClose, onPick }: Props): JSX
         autoFocus
         onChange={(e) => setQ(e.target.value)}
       />
-      {!q && (
+      {!q && groups.length > 0 && (
         <div className={styles.tabs} role="radiogroup" aria-label="表情分组">
-          {GROUPS.map((g) => (
-            <button
-              key={g.key}
-              type="button"
-              role="radio"
-              aria-checked={g.key === group}
-              className={g.key === group ? styles.tabActive : styles.tab}
-              title={g.label}
-              aria-label={g.label}
-              onClick={() => setGroup(g.key)}
-            >
-              {g.icon}
-            </button>
-          ))}
+          {groups.map((g) => {
+            const icon = data?.[g]?.[0]
+            return (
+              <button
+                key={g}
+                type="button"
+                role="radio"
+                aria-checked={g === activeGroup}
+                className={g === activeGroup ? styles.tabActive : styles.tab}
+                title={groupLabel(g)}
+                aria-label={groupLabel(g)}
+                onClick={() => setGroup(g)}
+              >
+                {icon ? (
+                  <img className={styles.tabImg} src={absolutize(icon.url)} alt="" loading="lazy" />
+                ) : (
+                  groupLabel(g).slice(0, 1)
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
       <div className={styles.grid}>
-        {list.length === 0 ? (
+        {isLoading ? (
+          <div className={styles.empty}>加载表情…</div>
+        ) : list.length === 0 ? (
           <div className={styles.empty}>没有找到表情</div>
         ) : (
           list.map((e) => (
             <button
-              key={e.char}
+              key={e.name}
               type="button"
               className={styles.cell}
-              title={e.name}
-              onClick={() => onPick(e.char)}
+              title={`:${e.name}:`}
+              onClick={() => onPick(`:${e.name}:`)}
             >
-              {e.char}
+              <img className={styles.cellImg} src={absolutize(e.url)} alt={e.name} loading="lazy" />
             </button>
           ))
         )}

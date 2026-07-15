@@ -35,18 +35,21 @@
 .tabs {
   display: flex;
   gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 .tab,
 .tabActive {
-  flex: 1;
+  flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 30px;
   height: 30px;
   border: none;
   background: transparent;
   border-radius: var(--r-sm);
-  font-size: var(--fs-md);
+  font-size: var(--fs-sm);
   line-height: 1;
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease-out);
@@ -56,6 +59,11 @@
 }
 .tabActive {
   background: var(--accent-soft);
+}
+.tabImg {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
 .grid {
@@ -74,13 +82,17 @@
   border: none;
   background: transparent;
   border-radius: var(--r-sm);
-  font-size: var(--fs-lg);
   line-height: 1;
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease-out);
 }
 .cell:hover {
   background: var(--surface-hover);
+}
+.cellImg {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
 }
 
 .empty {

@@ -52,6 +52,14 @@ export function useCategories() {
   })
 }
 
+export function useEmojis() {
+  return useQuery({
+    queryKey: ['emojis'],
+    queryFn: () => discourse.emojis(),
+    staleTime: 60 * 60_000
+  })
+}
+
 export function useFlagTypes(enabled: boolean) {
   return useQuery({
     queryKey: ['flag-types'],
