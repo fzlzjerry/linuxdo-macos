@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify'
 import hljs from 'highlight.js/lib/common'
 import { useNavigate } from 'react-router-dom'
 import { absolutize } from '../../lib/discourse/urls'
+import { enhanceAdmonitions } from './enhanceCooked'
 
 function sanitize(html: string): string {
   return DOMPurify.sanitize(html, {
@@ -24,6 +25,7 @@ export function CookedContent({ html }: { html: string }): JSX.Element {
   useEffect(() => {
     const root = ref.current
     if (!root) return
+    enhanceAdmonitions(root)
     root.querySelectorAll('img').forEach((img) => {
       const src = img.getAttribute('src')
       if (src) img.setAttribute('src', absolutize(src))

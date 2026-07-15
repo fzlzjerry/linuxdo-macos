@@ -130,6 +130,13 @@ export const discourse = {
     })
   },
 
+  toggleReaction(postId: number, reactionId: string): Promise<unknown> {
+    return request({
+      path: `/discourse-reactions/posts/${postId}/custom-reactions/${reactionId}/toggle.json`,
+      method: 'PUT'
+    })
+  },
+
   reply(params: { topicId: number; raw: string; replyToPostNumber?: number }): Promise<Post> {
     return request<Post>({
       path: '/posts.json',

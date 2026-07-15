@@ -35,6 +35,69 @@
   color: var(--ink-3);
 }
 
+.status {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.05em;
+  line-height: 1;
+}
+.statusImg {
+  width: 1.1em;
+  height: 1.1em;
+  object-fit: contain;
+}
+
+.trust {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.trust.trust0 {
+  color: var(--ink-3);
+}
+.trust.trust12 {
+  color: var(--ink-2);
+}
+.trust.trust3 {
+  color: var(--accent);
+  border-color: var(--accent-soft);
+}
+.trust.trust4 {
+  color: var(--warning);
+  border-color: color-mix(in oklch, var(--warning) 40%, transparent);
+}
+
+.flair {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  border: 1px solid var(--border);
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+}
+.flairImg {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+.flairDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-full);
+}
+.flairName {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .staff {
   font-size: var(--fs-xs);
   font-weight: 600;
@@ -103,9 +166,6 @@
 }
 .action:disabled {
   opacity: 0.5;
-}
-.action.liked {
-  color: var(--like);
 }
 .action.bookmarked {
   color: var(--accent);

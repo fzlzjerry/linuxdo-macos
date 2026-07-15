@@ -88,6 +88,25 @@ export interface ActionSummary {
   can_undo?: boolean
 }
 
+// discourse-reactions plugin shapes. `type` is present in some payloads but the
+// verified live listing omits it, so it stays optional (the client never reads it).
+export interface PostReaction {
+  id: string
+  type?: string
+  count: number
+}
+
+export interface CurrentUserReaction {
+  id: string
+  type?: string
+  can_undo: boolean
+}
+
+export interface UserStatus {
+  emoji?: string
+  description?: string
+}
+
 export interface Post {
   id: number
   name?: string
@@ -117,7 +136,15 @@ export interface Post {
   can_delete?: boolean
   user_title?: string | null
   primary_group_name?: string | null
+  flair_name?: string | null
+  flair_url?: string | null
+  flair_bg_color?: string | null
+  flair_color?: string | null
+  user_status?: UserStatus | null
   actions_summary?: ActionSummary[]
+  reactions?: PostReaction[]
+  current_user_reaction?: CurrentUserReaction | null
+  reaction_users_count?: number
   bookmarked?: boolean
 }
 

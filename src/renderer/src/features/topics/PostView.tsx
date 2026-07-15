@@ -1,14 +1,43 @@
 import { useState } from 'react'
-import { Bookmark, Heart, Link2, Pencil, Reply, Trash2 } from 'lucide-react'
+import { Bookmark, Link2, Pencil, Reply, Trash2 } from 'lucide-react'
 import { Avatar } from '../../components/ui/Avatar'
 import { relativeTime } from '../../lib/format'
 import { discourse } from '../../lib/discourse/client'
-import { LIKE_ACTION_ID, type Post } from '../../lib/discourse/types'
-import { LINUXDO_ORIGIN } from '../../lib/discourse/urls'
+import type { Post, UserStatus } from '../../lib/discourse/types'
+import { reactionEmoji } from '../../lib/discourse/reactions'
+import { absolutize, LINUXDO_ORIGIN } from '../../lib/discourse/urls'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
 import { CookedContent } from './CookedContent'
+import { ReactionBar } from './ReactionBar'
 import styles from './PostView.module.css'
+
+/** Discourse trust levels 0–4 → a subtle pill accent. */
+function trustClass(level: number): string {
+  if (level >= 4) return styles.trust4
+  if (level === 3) return styles.trust3
+  if (level >= 1) return styles.trust12
+  return styles.trust0
+}
+
+/** A flair_url that points at an image rather than an emoji shortcode. */
+function isImageUrl(u: string): boolean {
+  return /^(https?:)?\/\//i.test(u) || u.startsWith('/') || /\.(png|jpe?g|gif|svg|webp)(\?|$)/i.test(u)
+}
+
+function StatusEmoji({ status }: { status: UserStatus }): JSX.Element | null {
+  if (!status.emoji) return null
+  const e = reactionEmoji(status.emoji)
+  return (
+    <span className={styles.status} title={status.description}>
+      {e.img ? (
+        <img className={styles.statusImg} src={e.img} alt={status.description ?? status.emoji} />
+      ) : (
+        e.char
+      )}
+    </span>
+  )
+}
 
 interface Props {
   post: Post
@@ -19,10 +48,6 @@ interface Props {
 
 export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Element {
   const auth = useAuth()
-  const likeSummary = post.actions_summary?.find((a) => a.id === LIKE_ACTION_ID)
-
-  const [liked, setLiked] = useState(!!likeSummary?.acted)
-  const [likes, setLikes] = useState(likeSummary?.count ?? 0)
   const [bookmarked, setBookmarked] = useState(!!post.bookmarked)
   const [bookmarkId, setBookmarkId] = useState<number | null>(null)
   const [confirmDel, setConfirmDel] = useState(false)
@@ -30,6 +55,9 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
 
   const edited = post.updated_at && post.created_at && post.updated_at !== post.created_at
   const groupTitle = post.user_title || post.primary_group_name
+  const flairName = post.primary_group_name || post.flair_name
+  const showFlair = !!post.flair_name && (!!post.flair_bg_color || !!post.flair_url)
+  const flairImg = post.flair_url && isImageUrl(post.flair_url) ? absolutize(post.flair_url) : null
 
   function guard(): boolean {
     if (!auth.loggedIn) {
@@ -38,21 +66,6 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
       return false
     }
     return true
-  }
-
-  async function toggleLike(): Promise<void> {
-    if (!guard()) return
-    const willLike = !liked
-    setLiked(willLike)
-    setLikes((n) => n + (willLike ? 1 : -1))
-    try {
-      if (willLike) await discourse.like(post.id)
-      else await discourse.unlike(post.id)
-    } catch {
-      setLiked(!willLike)
-      setLikes((n) => n + (willLike ? -1 : 1))
-      toast.error('操作失败')
-    }
   }
 
   async function toggleBookmark(): Promise<void> {
@@ -106,11 +119,32 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
         <div className={styles.identity}>
           <div className={styles.nameLine}>
             <span className={styles.name}>{post.name || post.username}</span>
+            {post.user_status && <StatusEmoji status={post.user_status} />}
             {post.username && post.name && <span className={styles.handle}>@{post.username}</span>}
+            {post.trust_level != null && (
+              <span className={`${styles.trust} ${trustClass(post.trust_level)}`}>
+                Lv{post.trust_level}
+              </span>
+            )}
             {(post.admin || post.moderator) && (
               <span className={styles.staff}>{post.admin ? '管理员' : '版主'}</span>
             )}
-            {groupTitle && <span className={styles.groupTitle}>{groupTitle}</span>}
+            {showFlair && (
+              <span className={styles.flair} title={flairName ?? undefined}>
+                {flairImg ? (
+                  <img className={styles.flairImg} src={flairImg} alt="" />
+                ) : post.flair_bg_color ? (
+                  <span
+                    className={styles.flairDot}
+                    style={{ background: `#${post.flair_bg_color}` }}
+                  />
+                ) : null}
+                {flairName && <span className={styles.flairName}>{flairName}</span>}
+              </span>
+            )}
+            {groupTitle && !(showFlair && groupTitle === flairName) && (
+              <span className={styles.groupTitle}>{groupTitle}</span>
+            )}
           </div>
           <div className={styles.metaLine}>
             <time title={post.created_at}>{relativeTime(post.created_at)}</time>
@@ -129,14 +163,7 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
       </div>
 
       <footer className={styles.footer}>
-        <button
-          className={`${styles.action} ${liked ? styles.liked : ''}`}
-          onClick={() => void toggleLike()}
-          title={liked ? '取消赞' : '赞'}
-        >
-          <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
-          {likes > 0 && <span>{likes}</span>}
-        </button>
+        <ReactionBar post={post} />
 
         {onReply && (
           <button className={styles.action} onClick={() => onReply(post)} title="回复">

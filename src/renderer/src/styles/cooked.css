@@ -197,14 +197,70 @@
   padding: 0.1em 0.4em;
 }
 
-.cooked .onebox,
-.cooked .onebox-body {
+.cooked .onebox {
+  display: block;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: var(--sp-3);
   margin: 0 0 var(--sp-4);
   background: var(--surface-2);
   font-size: var(--fs-sm);
+}
+.cooked .onebox .source {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.cooked .onebox .source img {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--r-sm);
+  margin: 0;
+}
+.cooked .onebox .source a {
+  color: var(--ink-3);
+}
+.cooked .onebox-body::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+/* Float the thumbnail so the title and description stack and wrap beside it. */
+.cooked .onebox-body .aspect-image,
+.cooked .onebox-body > img.thumbnail {
+  float: left;
+  width: 84px;
+  max-height: 84px;
+  object-fit: cover;
+  margin: 0 var(--sp-3) var(--sp-1) 0;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.cooked .onebox-body .aspect-image img {
+  display: block;
+  width: 100%;
+  max-height: 84px;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  margin: 0;
+}
+.cooked .onebox-body h3,
+.cooked .onebox-body h4 {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-base);
+  line-height: var(--lh-tight);
+}
+.cooked .onebox-body h3 a,
+.cooked .onebox-body h4 a {
+  color: var(--ink);
+}
+.cooked .onebox-body p {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: var(--lh-normal);
 }
 .cooked .onebox img {
   border-radius: var(--r-sm);
@@ -223,9 +279,102 @@
   color: var(--ink-2);
 }
 
-.cooked .spoiler:not(:hover) {
+.cooked .spoiler:not(:hover),
+.cooked .spoiled:not(:hover) {
   filter: blur(5px);
   transition: filter var(--dur) var(--ease-out);
+}
+
+/* ---- Admonitions / callouts ([!note], [!warning], … built in enhanceCooked) ---- */
+.cooked .admonition {
+  --adm: var(--accent);
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid color-mix(in oklch, var(--adm) 30%, var(--border));
+  border-radius: var(--r-md);
+  background: color-mix(in oklch, var(--adm) 8%, var(--surface));
+}
+.cooked .admonition-success,
+.cooked .admonition-tip {
+  --adm: var(--success);
+}
+.cooked .admonition-warning {
+  --adm: var(--warning);
+}
+.cooked .admonition-danger {
+  --adm: var(--danger);
+}
+.cooked .admonition-title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--adm);
+}
+.cooked .admonition-icon {
+  display: inline-flex;
+  line-height: 1;
+}
+.cooked .admonition-content {
+  color: var(--ink);
+}
+.cooked .admonition-content > *:first-child {
+  margin-top: 0;
+}
+.cooked .admonition-content > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ---- Polls (read-only display) ---- */
+.cooked .poll {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.cooked .poll-title {
+  font-weight: 650;
+  margin-bottom: var(--sp-2);
+  color: var(--ink);
+}
+.cooked .poll-container ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cooked .poll-container li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-1) 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+  color: var(--ink);
+}
+.cooked .poll-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin-top: var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.cooked .poll-info p {
+  margin: 0;
+}
+.cooked .poll-info .info-number {
+  font-weight: 600;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.cooked .poll-buttons {
+  display: none;
 }
 
 /* ---- highlight.js tokens (theme-aware, no external stylesheet) ---- */
