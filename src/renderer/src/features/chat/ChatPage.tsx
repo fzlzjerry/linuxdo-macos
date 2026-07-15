@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Hash, MessagesSquare, RefreshCw, User } from 'lucide-react'
+import { Hash, MessagesSquare, RefreshCw, Send } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { Avatar } from '../../components/ui/Avatar'
 import { IconButton } from '../../components/ui/IconButton'
@@ -8,7 +9,10 @@ import { LoginGate } from '../../components/ui/LoginGate'
 import { EmptyState, ErrorState, Spinner } from '../../components/ui/states'
 import { CookedContent } from '../topics/CookedContent'
 import { useChatChannels, useChatMessages } from '../../lib/discourse/queries'
+import { discourse } from '../../lib/discourse/client'
 import { useAuth } from '../../store/auth'
+import { toast } from '../../store/toast'
+import { errorMessage } from '../../lib/errors'
 import { relativeTime } from '../../lib/format'
 import type { ChatChannel } from '../../lib/discourse/types'
 import styles from './ChatPage.module.css'
@@ -163,8 +167,33 @@ function ChannelGroup({
 
 function ChatThread({ channel }: { channel: ChatChannel }): JSX.Element {
   const { data, isLoading, isError, error, refetch } = useChatMessages(channel.id)
+  const queryClient = useQueryClient()
   const scrollRef = useRef<HTMLDivElement>(null)
   const messages = data?.messages ?? []
+  const [text, setText] = useState('')
+  const [sending, setSending] = useState(false)
+
+  async function send(): Promise<void> {
+    const body = text.trim()
+    if (!body || sending) return
+    setSending(true)
+    try {
+      await discourse.sendChatMessage(channel.id, body)
+      setText('')
+      await queryClient.invalidateQueries({ queryKey: ['chat-messages', channel.id] })
+    } catch (e) {
+      toast.error(errorMessage(e, '发送失败'))
+    } finally {
+      setSending(false)
+    }
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>): void {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      void send()
+    }
+  }
 
   // Jump to the newest message whenever the channel or message set changes.
   useLayoutEffect(() => {
@@ -219,10 +248,27 @@ function ChatThread({ channel }: { channel: ChatChannel }): JSX.Element {
         )}
       </div>
 
-      <div className={styles.composerNote}>
-        <User size={13} />
-        发送消息与实时更新即将支持
-      </div>
+      <form
+        className={styles.composer}
+        onSubmit={(e) => {
+          e.preventDefault()
+          void send()
+        }}
+      >
+        <textarea
+          className={styles.composerInput}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder={`发送到 ${channelName(channel)}…`}
+          rows={1}
+          disabled={sending}
+          aria-label="聊天消息"
+        />
+        <IconButton label="发送" type="submit" disabled={sending || !text.trim()}>
+          <Send size={16} />
+        </IconButton>
+      </form>
     </>
   )
 }

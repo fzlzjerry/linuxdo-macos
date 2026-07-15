@@ -1,0 +1,73 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-2) 0 var(--sp-6);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  text-align: left;
+  padding: var(--sp-3) var(--sp-5);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle, var(--border));
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.row:hover {
+  background: var(--surface-hover);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.star {
+  flex: none;
+  color: #d4a017;
+}
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.time {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}

@@ -1,5 +1,6 @@
 import type { DiscourseRequest } from '../../../../shared/api'
 import type {
+  AiConversationsResponse,
   BadgesResponse,
   BookmarksResponse,
   CategoryListResponse,
@@ -20,6 +21,7 @@ import type {
   TopicListResponse,
   TopPeriod,
   TypeaheadResponse,
+  UserActionsResponse,
   UserProfileResponse,
   UserSummaryResponse
 } from './types'
@@ -468,6 +470,24 @@ export const discourse = {
     })
   },
 
+  /** The logged-in user's server-side preferences (user_option map). */
+  async userPreferences(username: string): Promise<Record<string, unknown>> {
+    const r = await request<{ user?: { user_option?: Record<string, unknown> } }>({
+      path: `/u/${encodeURIComponent(username)}.json`
+    })
+    return r.user?.user_option ?? {}
+  },
+
+  /** Update a single preference. The user drives this from the Settings UI. */
+  updatePreference(username: string, field: string, value: boolean): Promise<unknown> {
+    return request({
+      path: `/u/${encodeURIComponent(username)}.json`,
+      method: 'PUT',
+      form: true,
+      body: { [field]: value }
+    })
+  },
+
   userBookmarks(username: string): Promise<BookmarksResponse> {
     return request<BookmarksResponse>({
       path: `/u/${encodeURIComponent(username)}/bookmarks.json`
@@ -512,6 +532,26 @@ export const discourse = {
     return request<ChatMessagesResponse>({
       path: `/chat/api/channels/${channelId}/messages?page_size=${pageSize}`
     })
+  },
+
+  sendChatMessage(channelId: number, message: string): Promise<unknown> {
+    return request({
+      path: `/chat/api/channels/${channelId}/messages`,
+      method: 'POST',
+      form: true,
+      body: { message }
+    })
+  },
+
+  userActions(username: string, filter: string, offset = 0, limit = 30): Promise<UserActionsResponse> {
+    return request<UserActionsResponse>({
+      path: `/user_actions.json?username=${encodeURIComponent(username)}&filter=${filter}&offset=${offset}&limit=${limit}`
+    })
+  },
+
+  // discourse-ai: the user's AI-bot conversations (private_message topics).
+  aiConversations(): Promise<AiConversationsResponse> {
+    return request<AiConversationsResponse>({ path: '/discourse-ai/ai-bot/conversations.json' })
   },
 
   deleteDraft(key: string, sequence: number): Promise<unknown> {

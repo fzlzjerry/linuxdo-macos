@@ -1,25 +1,84 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Award, ExternalLink, Heart, MapPin, MessageSquare, Reply, User } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { Avatar } from '../../components/ui/Avatar'
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
-import { EmptyState, ErrorState, TopicListSkeleton } from '../../components/ui/states'
+import { Segmented } from '../../components/ui/Segmented'
+import { EmptyState, ErrorState, Spinner, TopicListSkeleton } from '../../components/ui/states'
 import { CookedContent } from '../topics/CookedContent'
-import { useUserProfile, useUserSummary } from '../../lib/discourse/queries'
+import { useUserActions, useUserProfile, useUserSummary } from '../../lib/discourse/queries'
 import { useAuth } from '../../store/auth'
 import { relativeTime, compactNumber } from '../../lib/format'
 import { absolutize } from '../../lib/discourse/urls'
+import type { UserAction } from '../../lib/discourse/types'
 import styles from './ProfilePage.module.css'
+
+function stripHtml(html?: string): string {
+  if (!html) return ''
+  const el = document.createElement('div')
+  el.innerHTML = html
+  return (el.textContent ?? '').replace(/\s+/g, ' ').trim()
+}
+
+function ActivityList({
+  actions,
+  loading,
+  onOpen,
+  emptyLabel
+}: {
+  actions?: UserAction[]
+  loading: boolean
+  onOpen: (topicId: number) => void
+  emptyLabel: string
+}): JSX.Element {
+  if (loading) return <Spinner label="加载中…" />
+  const list = actions ?? []
+  if (list.length === 0) {
+    return <EmptyState icon={<MessageSquare size={24} strokeWidth={1.6} />} title={emptyLabel} />
+  }
+  return (
+    <section className={styles.section}>
+      <div className={styles.topics}>
+        {list.map((a, i) => (
+          <button
+            key={`${a.topic_id}-${a.post_number ?? 0}-${i}`}
+            className={styles.topicRow}
+            onClick={() => a.topic_id && onOpen(a.topic_id)}
+            aria-label={a.title}
+          >
+            <span className={styles.topicMain}>
+              <span className={styles.topicTitle}>{a.title}</span>
+              {stripHtml(a.excerpt) && <span className={styles.actExcerpt}>{stripHtml(a.excerpt)}</span>}
+              <span className={styles.topicSub}>
+                {a.post_number != null && <span className={styles.subStat}>#{a.post_number} 楼</span>}
+                {a.created_at && <span className={styles.topicTime}>{relativeTime(a.created_at)}</span>}
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+type ProfileTab = 'overview' | 'topics' | 'replies'
+const TABS: { value: ProfileTab; label: string }[] = [
+  { value: 'overview', label: '概览' },
+  { value: 'topics', label: '话题' },
+  { value: 'replies', label: '回复' }
+]
 
 export function ProfilePage(): JSX.Element {
   const { username = '' } = useParams()
   const navigate = useNavigate()
   const auth = useAuth()
+  const [tab, setTab] = useState<ProfileTab>('overview')
 
   const profileQuery = useUserProfile(username)
   const summaryQuery = useUserSummary(username)
+  const actionsQuery = useUserActions(username, tab === 'topics' ? '4' : '5', tab !== 'overview')
 
   const user = profileQuery.data?.user
   const summary = summaryQuery.data?.user_summary
@@ -147,7 +206,20 @@ export function ProfilePage(): JSX.Element {
             </div>
           )}
 
-          {badges && badges.length > 0 && (
+          <div className={styles.tabs}>
+            <Segmented options={TABS} value={tab} onChange={setTab} aria-label="资料内容" />
+          </div>
+
+          {tab !== 'overview' && (
+            <ActivityList
+              actions={actionsQuery.data?.user_actions}
+              loading={actionsQuery.isLoading}
+              onOpen={(topicId) => navigate(`/t/${topicId}`)}
+              emptyLabel={tab === 'topics' ? '还没有发过话题' : '还没有回复'}
+            />
+          )}
+
+          {tab === 'overview' && badges && badges.length > 0 && (
             <section className={styles.section}>
               <h3 className={styles.sectionTitle}>徽章</h3>
               <div className={styles.badges}>
@@ -165,7 +237,7 @@ export function ProfilePage(): JSX.Element {
             </section>
           )}
 
-          {ownTopics.length > 0 && (
+          {tab === 'overview' && ownTopics.length > 0 && (
             <section className={styles.section}>
               <h3 className={styles.sectionTitle}>最近话题</h3>
               <div className={styles.topics}>
@@ -203,7 +275,7 @@ export function ProfilePage(): JSX.Element {
             </section>
           )}
 
-          {replies.length > 0 && (
+          {tab === 'overview' && replies.length > 0 && (
             <section className={styles.section}>
               <h3 className={styles.sectionTitle}>最近回复</h3>
               <div className={styles.topics}>

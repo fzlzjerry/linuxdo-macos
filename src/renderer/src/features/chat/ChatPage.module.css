@@ -177,14 +177,29 @@
   margin-bottom: 0;
 }
 
-.composerNote {
+.composer {
   flex: none;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
   gap: var(--sp-2);
-  padding: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border-top: 1px solid var(--border);
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
+}
+.composerInput {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  max-height: 140px;
+  padding: 8px var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+.composerInput:focus {
+  outline: none;
+  border-color: var(--accent);
 }

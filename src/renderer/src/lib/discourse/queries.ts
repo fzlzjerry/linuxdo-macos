@@ -126,6 +126,15 @@ export function usePrivateMessages(username: string | undefined) {
   })
 }
 
+export function useUserPreferences(username: string | undefined) {
+  return useQuery({
+    queryKey: ['preferences', username],
+    queryFn: () => discourse.userPreferences(username as string),
+    enabled: !!username,
+    staleTime: 60_000
+  })
+}
+
 export function useDrafts(enabled: boolean) {
   return useQuery({
     queryKey: ['drafts'],
@@ -190,6 +199,26 @@ export function useChatMessages(channelId: number) {
     queryKey: ['chat-messages', channelId],
     queryFn: () => discourse.chatMessages(channelId),
     enabled: channelId > 0,
-    staleTime: 5_000
+    staleTime: 3_000,
+    // Near-realtime: poll while the channel is open (no MessageBus yet).
+    refetchInterval: channelId > 0 ? 4_000 : false
+  })
+}
+
+export function useUserActions(username: string, filter: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['user-actions', username, filter],
+    queryFn: () => discourse.userActions(username, filter),
+    enabled: enabled && !!username,
+    staleTime: 60_000
+  })
+}
+
+export function useAiConversations(enabled: boolean) {
+  return useQuery({
+    queryKey: ['ai-conversations'],
+    queryFn: () => discourse.aiConversations(),
+    enabled,
+    staleTime: 30_000
   })
 }

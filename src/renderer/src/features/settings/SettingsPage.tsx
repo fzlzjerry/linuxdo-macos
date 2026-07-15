@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ExternalLink } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
@@ -9,7 +9,69 @@ import { useSettings } from '../../store/settings'
 import type { ThemeMode } from '../../store/settings'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
+import { useUserPreferences } from '../../lib/discourse/queries'
+import { discourse } from '../../lib/discourse/client'
+import { errorMessage } from '../../lib/errors'
 import styles from './SettingsPage.module.css'
+
+const ONOFF: { value: string; label: string }[] = [
+  { value: 'on', label: '开' },
+  { value: 'off', label: '关' }
+]
+const PREF_TOGGLES: { field: string; label: string; description: string }[] = [
+  { field: 'email_digests', label: '邮件摘要', description: '不活跃时通过邮件接收热门内容摘要' },
+  { field: 'allow_private_messages', label: '允许私信', description: '允许其他用户给你发送私信' },
+  { field: 'hide_presence', label: '隐藏在线状态', description: '不向他人显示你的在线状态' },
+  { field: 'external_links_in_new_tab', label: '外链新标签打开', description: '在新标签页打开站外链接' },
+  { field: 'notify_on_linked_posts', label: '被链接时通知', description: '有人链接到你的帖子时通知你' }
+]
+
+function PreferencesSection({ username }: { username: string }): JSX.Element {
+  const { data, isLoading } = useUserPreferences(username)
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({})
+  const [busy, setBusy] = useState<string | null>(null)
+
+  const valueOf = (field: string): boolean => overrides[field] ?? Boolean(data?.[field])
+
+  async function toggle(field: string, next: boolean): Promise<void> {
+    setOverrides((o) => ({ ...o, [field]: next }))
+    setBusy(field)
+    try {
+      await discourse.updatePreference(username, field, next)
+      toast.success('已保存')
+    } catch (e) {
+      setOverrides((o) => ({ ...o, [field]: !next }))
+      toast.error(errorMessage(e, '保存失败'))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>偏好</h2>
+      <div className={styles.card}>
+        {isLoading ? (
+          <div className={styles.row}>
+            <span className={styles.rowLabel}>加载中…</span>
+          </div>
+        ) : (
+          PREF_TOGGLES.map((p) => (
+            <Row key={p.field} label={p.label} description={p.description}>
+              <Segmented
+                options={ONOFF}
+                value={valueOf(p.field) ? 'on' : 'off'}
+                onChange={(v) => void toggle(p.field, v === 'on')}
+                aria-label={p.label}
+                disabled={busy === p.field}
+              />
+            </Row>
+          ))
+        )}
+      </div>
+    </section>
+  )
+}
 
 const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: 'system', label: '跟随系统' },
@@ -99,6 +161,8 @@ export function SettingsPage(): JSX.Element {
             )}
           </div>
         </section>
+
+        {auth.loggedIn && auth.username && <PreferencesSection username={auth.username} />}
 
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>关于</h2>

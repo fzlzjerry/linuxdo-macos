@@ -11,6 +11,7 @@ import { EventsPage } from './features/events/EventsPage'
 import { BadgesPage } from './features/badges/BadgesPage'
 import { GroupsPage } from './features/groups/GroupsPage'
 import { ChatPage } from './features/chat/ChatPage'
+import { AiBotPage } from './features/ai/AiBotPage'
 import { NotificationsPage } from './features/notifications/NotificationsPage'
 import { SearchPage } from './features/search/SearchPage'
 import { ProfilePage } from './features/users/ProfilePage'
@@ -21,7 +22,7 @@ import { DraftsPage } from './features/drafts/DraftsPage'
 import { Toaster } from './components/ui/Toaster'
 import { LightboxHost } from './components/ui/Lightbox'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
-import { initAuthBridge } from './store/auth'
+import { initAuthBridge, useAuth } from './store/auth'
 import { initSettings } from './store/settings'
 import { ensureSvgSprite } from './lib/svgSprite'
 import { useGlobalShortcuts } from './lib/shortcuts'
@@ -90,6 +91,15 @@ export function App(): JSX.Element {
     return initAuthBridge()
   }, [])
 
+  // Live-ish sidebar badges: refresh unread notification/PM counts periodically
+  // (no MessageBus yet — a lightweight /session/current.json poll).
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (useAuth.getState().loggedIn) void useAuth.getState().refresh()
+    }, 45_000)
+    return () => clearInterval(id)
+  }, [])
+
   return (
     <div className={styles.shell}>
       <AppShortcuts />
@@ -112,6 +122,7 @@ export function App(): JSX.Element {
           <Route path="/badges" element={<BadgesPage />} />
           <Route path="/groups" element={<GroupsPage />} />
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/ai" element={<AiBotPage />} />
           <Route path="/t/:id" element={<TopicPage />} />
           <Route path="/bookmarks" element={<BookmarksPage />} />
           <Route path="/search" element={<SearchPage />} />

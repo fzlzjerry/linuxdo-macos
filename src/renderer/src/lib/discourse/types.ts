@@ -468,6 +468,41 @@ export interface DraftsResponse {
 
 export type NotificationLevel = 0 | 1 | 2 | 3 // muted / regular / tracking / watching
 
+// ---- User activity stream (/user_actions.json) ----
+export interface UserAction {
+  action_type: number // 4=topic, 5=reply(post), 1=like given, 2=like received…
+  title?: string
+  excerpt?: string
+  slug?: string
+  topic_id?: number
+  post_number?: number
+  post_id?: number
+  created_at: string
+  category_id?: number
+  username?: string
+  acting_username?: string
+  acting_avatar_template?: string
+}
+export interface UserActionsResponse {
+  user_actions: UserAction[]
+}
+
+// ---- AI bot conversations (private_message topics) ----
+export interface AiConversation {
+  id: number
+  title: string
+  fancy_title?: string
+  posts_count?: number
+  created_at?: string
+  last_posted_at?: string
+  bumped_at?: string
+  ai_conversation_starred?: boolean
+}
+export interface AiConversationsResponse {
+  meta?: { page?: number; per_page?: number; has_more?: boolean }
+  conversations: AiConversation[]
+}
+
 // ---- Chat (discourse-chat) ----
 export interface ChatUser {
   id: number
