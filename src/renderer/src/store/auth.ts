@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { AuthState } from '../../../shared/api'
+import { toast } from './toast'
 
 interface AuthStore extends AuthState {
   ready: boolean
@@ -35,6 +36,14 @@ export function initAuthBridge(): () => void {
     return () => {}
   }
   const unsub = window.api.auth.onChanged((s) => useAuth.getState().setState(s))
+  const unsubNotice = window.api.auth.onNotice?.((n) => {
+    if (n.level === 'error') toast.error(n.message)
+    else if (n.level === 'warning') toast.warning(n.message)
+    else toast.info(n.message)
+  })
   void useAuth.getState().refresh()
-  return unsub
+  return () => {
+    unsub()
+    unsubNotice?.()
+  }
 }

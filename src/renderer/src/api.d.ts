@@ -1,4 +1,5 @@
 import type {
+  AuthNotice,
   AuthState,
   DiscourseRequest,
   DiscourseResponse,
@@ -14,6 +15,7 @@ export interface LinuxDoApi {
     showLogin(): Promise<AuthState>
     logout(): Promise<AuthState>
     onChanged(cb: (s: AuthState) => void): () => void
+    onNotice(cb: (n: AuthNotice) => void): () => void
   }
   openExternal(url: string): Promise<void>
   window: {

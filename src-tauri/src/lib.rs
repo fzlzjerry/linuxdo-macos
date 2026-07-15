@@ -18,6 +18,7 @@ const ORIGIN: &str = "https://linux.do";
 struct PendingLogin {
     private_key: RsaPrivateKey,
     nonce: String,
+    created: std::time::Instant,
 }
 
 /// Shared state: pending bridge requests, an id counter, the cached auth state,
@@ -30,6 +31,8 @@ struct AppState {
     pending_login: Mutex<Option<PendingLogin>>,
     started: std::time::Instant,
     cold_reload_done: AtomicBool,
+    /// ms since `started` of the last challenge-recovery engine reload (0 = never).
+    last_engine_reload_ms: AtomicU64,
 }
 
 impl AppState {
@@ -42,8 +45,24 @@ impl AppState {
             pending_login: Mutex::new(None),
             started: std::time::Instant::now(),
             cold_reload_done: AtomicBool::new(false),
+            last_engine_reload_ms: AtomicU64::new(0),
         }
     }
+}
+
+/// Whether we run from a macOS .app bundle. Unbundled dev binaries can NOT
+/// receive discourse:// deep links (LaunchServices routes them to whatever
+/// bundle claimed the scheme, and single-instance drops the URL on macOS),
+/// so the browser OTP login flow only makes sense when bundled.
+fn running_from_bundle() -> bool {
+    std::env::current_exe()
+        .map(|p| p.to_string_lossy().contains(".app/Contents/MacOS"))
+        .unwrap_or(false)
+}
+
+/// Push a user-visible auth notice to the renderer (toasted there).
+fn emit_notice(app: &AppHandle, level: &str, message: &str) {
+    let _ = app.emit("auth:notice", json!({ "level": level, "message": message }));
 }
 
 fn random_hex(n: usize) -> String {
@@ -118,7 +137,7 @@ async function __linuxdoFetch(id, reqJson) {
     if (isJson) { json = await r.json(); } else { text = (await r.text()).slice(0, 4000); }
     const challenge = !isJson && /just a moment|checking your browser|attention required|cf-browser-verification|请稍候|verify you are human/i.test(text || '');
     const needsAuth = r.status === 401 || r.status === 403 || challenge;
-    payload = { id: id, ok: r.ok, status: r.status, isJson: isJson, json: json, text: text, needsAuth: needsAuth };
+    payload = { id: id, ok: r.ok, status: r.status, isJson: isJson, json: json, text: text, needsAuth: needsAuth, challenge: challenge };
   } catch (e) {
     payload = { id: id, ok: false, status: 0, error: String((e && e.message) || e) };
   }
@@ -149,6 +168,14 @@ fn ensure_engine(app: &AppHandle) -> Result<(), String> {
     })
     .map_err(|e| e.to_string())?;
     Ok(())
+}
+
+/// Reload the engine on the origin (fresh session cookies / clear a challenge).
+fn reload_engine(app: &AppHandle) {
+    let _ = ensure_engine(app);
+    if let Some(e) = app.get_webview_window("engine") {
+        let _ = e.eval(&format!("location.replace('{ORIGIN}/')"));
+    }
 }
 
 /// Run one fetch inside the engine webview and await the bridged result.
@@ -202,11 +229,26 @@ async fn do_request(app: &AppHandle, req: Value) -> Result<Value, String> {
             if needs_auth && attempt < 1 && st.started.elapsed() < Duration::from_secs(15) {
                 attempt += 1;
                 if !st.cold_reload_done.swap(true, Ordering::SeqCst) {
-                    if let Some(e) = app.get_webview_window("engine") {
-                        let _ = e.eval(&format!("location.replace('{ORIGIN}/')"));
-                    }
+                    reload_engine(app);
                 }
                 tokio::time::sleep(Duration::from_millis(1800)).await;
+                continue;
+            }
+            // Mid-session challenge recovery: Cloudflare re-challenged the engine
+            // even though the session cookie may be perfectly valid. Reload the
+            // origin (rate-limited to one reload per 30s so concurrent requests
+            // and persistent challenges can't thrash) and retry. Scoped strictly
+            // to challenge pages — a plain 401/403 must NOT reload the engine.
+            let challenged = raw.get("challenge").and_then(|v| v.as_bool()).unwrap_or(false);
+            if challenged && attempt < 2 {
+                attempt += 1;
+                let now_ms = st.started.elapsed().as_millis() as u64;
+                let last = st.last_engine_reload_ms.load(Ordering::SeqCst);
+                if last == 0 || now_ms.saturating_sub(last) > 30_000 {
+                    st.last_engine_reload_ms.store(now_ms.max(1), Ordering::SeqCst);
+                    reload_engine(app);
+                }
+                tokio::time::sleep(Duration::from_millis(2200)).await;
                 continue;
             }
         }
@@ -338,8 +380,55 @@ async fn auth_get_state(app: AppHandle) -> Result<Value, String> {
     Ok(refresh_auth(&app).await)
 }
 
+/// In-app WKWebView login window + poll. Shares the engine's cookie store, so
+/// a completed login is immediately visible to the engine after reload. This
+/// is the ONLY reliable flow when running unbundled (deep links can't reach
+/// a non-bundle process on macOS).
+async fn webview_login(app: AppHandle) -> Result<Value, String> {
+    open_login_window(&app)?;
+    let state = app.state::<AppState>();
+    if !state.login_polling.swap(true, Ordering::SeqCst) {
+        let app2 = app.clone();
+        tauri::async_runtime::spawn(async move {
+            let start = std::time::Instant::now();
+            loop {
+                if app2.get_webview_window("login").is_none() {
+                    break;
+                }
+                let s = refresh_auth(&app2).await;
+                if s.get("loggedIn").and_then(|v| v.as_bool()).unwrap_or(false) {
+                    if let Some(w) = app2.get_webview_window("login") {
+                        let _ = w.close();
+                    }
+                    // Reload the engine on the freshly authenticated session.
+                    reload_engine(&app2);
+                    break;
+                }
+                if start.elapsed() > Duration::from_secs(300) {
+                    if let Some(w) = app2.get_webview_window("login") {
+                        let _ = w.close();
+                        emit_notice(&app2, "warning", "登录窗口已超时，请重新尝试");
+                    }
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(2500)).await;
+            }
+            app2.state::<AppState>()
+                .login_polling
+                .store(false, Ordering::SeqCst);
+        });
+    }
+    Ok(app.state::<AppState>().auth.lock().unwrap().clone())
+}
+
 #[tauri::command]
 async fn auth_show_login(app: AppHandle) -> Result<Value, String> {
+    // Deep links only reach bundled apps on macOS — unbundled (npm run dev)
+    // falls back to the in-app login window, which is deterministic.
+    if !running_from_bundle() {
+        return webview_login(app).await;
+    }
+
     // Discourse User-API-Key (OTP) flow: the user authorizes in their own browser
     // (already logged in — one click, no password) and the app receives an encrypted
     // token back via the discourse:// deep link.
@@ -350,14 +439,10 @@ async fn auth_show_login(app: AppHandle) -> Result<Value, String> {
     let nonce = random_hex(16);
     let client_id = random_hex(16);
 
-    {
-        use tauri_plugin_deep_link::DeepLinkExt;
-        let _ = app.deep_link().register("discourse");
-    }
-
     *app.state::<AppState>().pending_login.lock().unwrap() = Some(PendingLogin {
         private_key: priv_key,
         nonce: nonce.clone(),
+        created: std::time::Instant::now(),
     });
 
     let mut url = Url::parse(&format!("{ORIGIN}/user-api-key/new")).unwrap();
@@ -375,53 +460,43 @@ async fn auth_show_login(app: AppHandle) -> Result<Value, String> {
             .open_url(url.to_string(), None::<&str>)
             .map_err(|e| e.to_string())?;
     }
+    emit_notice(&app, "info", "已在浏览器中打开授权页，完成授权后将自动登录");
 
     Ok(app.state::<AppState>().auth.lock().unwrap().clone())
 }
 
-/// Fallback: the in-app WKWebView login sheet (kept if the browser flow is unavailable).
+/// Explicit in-app WKWebView login (also used as the unbundled default).
 #[tauri::command]
 async fn auth_show_login_webview(app: AppHandle) -> Result<Value, String> {
-    open_login_window(&app)?;
-    let state = app.state::<AppState>();
-    if !state.login_polling.swap(true, Ordering::SeqCst) {
-        let app2 = app.clone();
-        tauri::async_runtime::spawn(async move {
-            let start = std::time::Instant::now();
-            loop {
-                if app2.get_webview_window("login").is_none() {
-                    break;
-                }
-                let s = refresh_auth(&app2).await;
-                if s.get("loggedIn").and_then(|v| v.as_bool()).unwrap_or(false) {
-                    if let Some(w) = app2.get_webview_window("login") {
-                        let _ = w.close();
-                    }
-                    // Reload the engine on the freshly authenticated session.
-                    if let Some(e) = app2.get_webview_window("engine") {
-                        let _ = e.eval(&format!("location.replace('{ORIGIN}/')"));
-                    }
-                    break;
-                }
-                if start.elapsed() > Duration::from_secs(300) {
-                    break;
-                }
-                tokio::time::sleep(Duration::from_millis(1500)).await;
-            }
-            app2.state::<AppState>()
-                .login_polling
-                .store(false, Ordering::SeqCst);
-        });
-    }
-    Ok(app.state::<AppState>().auth.lock().unwrap().clone())
+    webview_login(app).await
 }
 
 #[tauri::command]
 async fn auth_logout(app: AppHandle) -> Result<Value, String> {
-    if let Some(engine) = app.get_webview_window("engine") {
-        let _ = engine.clear_all_browsing_data();
-        let _ = engine.eval(&format!("location.replace('{ORIGIN}/')"));
+    // Prefer a server-side logout: clearing all browsing data would also wipe
+    // cf_clearance and put the engine straight back into a Cloudflare
+    // challenge (which is what used to break the NEXT login attempt).
+    let username = app
+        .state::<AppState>()
+        .auth
+        .lock()
+        .unwrap()
+        .get("username")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let mut server_ok = false;
+    if let Some(u) = username {
+        let res = do_request(&app, json!({ "path": format!("/session/{u}"), "method": "DELETE" }))
+            .await
+            .unwrap_or_else(|_| json!({}));
+        server_ok = res.get("ok").and_then(|v| v.as_bool()).unwrap_or(false);
     }
+    if !server_ok {
+        if let Some(engine) = app.get_webview_window("engine") {
+            let _ = engine.clear_all_browsing_data();
+        }
+    }
+    reload_engine(&app);
     tokio::time::sleep(Duration::from_millis(600)).await;
     Ok(refresh_auth(&app).await)
 }
@@ -437,8 +512,10 @@ async fn open_external(app: AppHandle, url: String) -> Result<(), String> {
     Ok(())
 }
 
-/// Handle a `discourse://auth_redirect?payload=…&oneTimePassword=…` callback:
-/// decrypt with our private key, verify the nonce, then redeem the OTP for a session.
+/// Handle a `discourse://auth_redirect?payload=…&oneTimePassword=…` callback.
+/// Validates against the pending attempt WITHOUT consuming it, so a stale tab,
+/// a duplicate delivery or a foreign discourse:// link can never destroy an
+/// in-flight login. Only a fully valid callback consumes the pending state.
 fn handle_deep_link(app: &AppHandle, url: &str) {
     let parsed = match Url::parse(url) {
         Ok(u) => u,
@@ -456,29 +533,59 @@ fn handle_deep_link(app: &AppHandle, url: &str) {
             _ => {}
         }
     }
-    let pending = match app.state::<AppState>().pending_login.lock().unwrap().take() {
-        Some(p) => p,
-        None => return,
+
+    let state = app.state::<AppState>();
+    // Peek (clone key + nonce) — do not take yet.
+    let (key, nonce) = {
+        let guard = state.pending_login.lock().unwrap();
+        match guard.as_ref() {
+            Some(p) if p.created.elapsed() < Duration::from_secs(600) => {
+                (p.private_key.clone(), p.nonce.clone())
+            }
+            Some(_) => {
+                emit_notice(app, "error", "登录授权已过期，请重新点击登录");
+                return;
+            }
+            // Duplicate delivery after a completed login, or an unrelated link.
+            None => return,
+        }
     };
     let payload_b64 = match payload_b64 {
         Some(p) => p,
-        None => return,
+        None => {
+            emit_notice(app, "error", "授权回调缺少数据，请重试");
+            return;
+        }
     };
-    let payload_bytes = match rsa_decrypt(&pending.private_key, &payload_b64) {
+    let payload_bytes = match rsa_decrypt(&key, &payload_b64) {
         Ok(b) => b,
-        Err(_) => return,
+        Err(_) => {
+            // Encrypted for a different (older) key: user authorized a stale tab.
+            emit_notice(app, "warning", "收到的是较早一次登录的授权，请使用最新打开的授权页");
+            return;
+        }
     };
     let payload: Value = match serde_json::from_slice(&payload_bytes) {
         Ok(v) => v,
-        Err(_) => return,
+        Err(_) => {
+            emit_notice(app, "error", "授权数据无效，请重试");
+            return;
+        }
     };
-    if payload.get("nonce").and_then(|v| v.as_str()) != Some(pending.nonce.as_str()) {
+    if payload.get("nonce").and_then(|v| v.as_str()) != Some(nonce.as_str()) {
+        emit_notice(app, "warning", "收到的是较早一次登录的授权，请使用最新打开的授权页");
         return;
     }
-    let otp = match otp_b64.and_then(|o| rsa_decrypt(&pending.private_key, &o).ok()) {
+    let otp = match otp_b64.and_then(|o| rsa_decrypt(&key, &o).ok()) {
         Some(bytes) => String::from_utf8_lossy(&bytes).into_owned(),
-        None => return,
+        None => {
+            emit_notice(app, "error", "授权数据无效，请重试");
+            return;
+        }
     };
+    // Fully validated — consume the pending attempt now.
+    state.pending_login.lock().unwrap().take();
+
     let app2 = app.clone();
     tauri::async_runtime::spawn(async move {
         redeem_otp(&app2, &otp).await;
@@ -486,32 +593,41 @@ fn handle_deep_link(app: &AppHandle, url: &str) {
 }
 
 /// Redeem the one-time password for a `_t` session cookie in the engine webview.
+/// The OTP is single-use, so make sure the engine isn't stuck on a Cloudflare
+/// challenge before spending it, and verify the result instead of assuming it.
 async fn redeem_otp(app: &AppHandle, otp: &str) {
-    let csrf_res = do_request(app, json!({ "path": "/session/csrf.json" }))
-        .await
-        .unwrap_or_else(|_| json!({}));
-    let csrf = csrf_res
-        .get("json")
-        .and_then(|j| j.get("csrf"))
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .to_string();
-
-    let _ = do_request(
-        app,
-        json!({
-            "path": format!("/session/otp/{otp}"),
-            "method": "POST",
-            "headers": { "X-CSRF-Token": csrf, "X-Requested-With": "XMLHttpRequest" }
-        }),
-    )
-    .await;
-
-    if let Some(e) = app.get_webview_window("engine") {
-        let _ = e.eval(&format!("location.replace('{ORIGIN}/')"));
+    // Clear the path: probe with a lightweight request; on a challenge, reload
+    // the engine and give it a moment (common right after logout).
+    for _ in 0..2 {
+        let probe = do_request(app, json!({ "path": "/session/csrf.json" }))
+            .await
+            .unwrap_or_else(|_| json!({}));
+        let challenged = probe.get("challenge").and_then(|v| v.as_bool()).unwrap_or(false)
+            || probe.get("status").and_then(|v| v.as_u64()).unwrap_or(0) == 0;
+        if !challenged {
+            break;
+        }
+        reload_engine(app);
+        tokio::time::sleep(Duration::from_millis(2500)).await;
     }
-    tokio::time::sleep(Duration::from_millis(700)).await;
-    let _ = refresh_auth(app).await;
+
+    // FETCH_JS attaches CSRF + X-Requested-With to every non-GET on its own.
+    let _ = do_request(app, json!({ "path": format!("/session/otp/{otp}"), "method": "POST" })).await;
+
+    reload_engine(app);
+    // Verify: poll the session until it reports logged-in (don't trust the POST —
+    // Discourse answers it with a redirect, not JSON).
+    for i in 0..6u64 {
+        tokio::time::sleep(Duration::from_millis(700 + 300 * i)).await;
+        let s = refresh_auth(app).await;
+        if s.get("loggedIn").and_then(|v| v.as_bool()).unwrap_or(false) {
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.set_focus();
+            }
+            return;
+        }
+    }
+    emit_notice(app, "error", "登录未完成：授权码兑换失败，请重新登录");
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.set_focus();
     }

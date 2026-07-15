@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import type {
+  AuthNotice,
   AuthState,
   DiscourseRequest,
   DiscourseResponse,
@@ -32,6 +33,13 @@ const api = {
     onChanged(cb: (s: AuthState) => void): () => void {
       let dispose = (): void => {}
       void listen<AuthState>('auth:changed', (e) => cb(e.payload)).then((un) => {
+        dispose = un
+      })
+      return () => dispose()
+    },
+    onNotice(cb: (n: AuthNotice) => void): () => void {
+      let dispose = (): void => {}
+      void listen<AuthNotice>('auth:notice', (e) => cb(e.payload)).then((un) => {
         dispose = un
       })
       return () => dispose()

@@ -55,4 +55,10 @@ export interface AuthState {
   unreadPersonalMessages?: number
 }
 
+/** User-visible auth-flow message pushed from the backend (toasted by the renderer). */
+export interface AuthNotice {
+  level: 'info' | 'warning' | 'error'
+  message: string
+}
+
 export type WindowControlAction = 'minimize' | 'maximize' | 'close'
