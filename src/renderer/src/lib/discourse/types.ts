@@ -187,6 +187,7 @@ export interface TopicDetail {
   title: string
   fancy_title?: string
   posts_count: number
+  highest_post_number?: number
   created_at: string
   views: number
   reply_count: number

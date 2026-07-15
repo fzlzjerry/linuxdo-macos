@@ -1,0 +1,56 @@
+/* Pinned over the scroll region — positions against PageScaffold's .page. */
+.pill {
+  position: absolute;
+  right: var(--sp-5);
+  bottom: var(--sp-5);
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition:
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+}
+
+.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.count {
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  padding: 0 var(--sp-1);
+  white-space: nowrap;
+}
+
+.jump {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--ink-2);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.jump:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.jump:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

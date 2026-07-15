@@ -51,3 +51,28 @@
   font-size: var(--fs-sm);
   padding: var(--sp-6) 0;
 }
+
+/* Mid-stream gap left by jump-to-bottom — fills top-down on click. */
+.gap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-4);
+  margin: var(--sp-3) 0;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.gap:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.gap:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
