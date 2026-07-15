@@ -25,6 +25,13 @@ export interface DiscourseRequest {
    */
   body?: Record<string, unknown> | string
   form?: boolean
+  /** Multipart file upload (POST /uploads.json). Binary is passed as base64. */
+  upload?: {
+    base64: string
+    filename: string
+    mime: string
+    type?: string
+  }
 }
 
 export interface DiscourseResponse<T = unknown> {

@@ -81,7 +81,17 @@ async function __linuxdoFetch(id, reqJson) {
       } catch (e) {}
     }
     if (csrf) headers['X-CSRF-Token'] = csrf;
-    if (req.body != null) {
+    if (req.upload) {
+      const bin = atob(req.upload.base64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const fd = new FormData();
+      fd.append('file', new Blob([arr], { type: req.upload.mime || 'application/octet-stream' }), req.upload.filename || 'file');
+      fd.append('type', req.upload.type || 'composer');
+      fd.append('synchronous', 'true');
+      body = fd;
+      delete headers['Content-Type'];
+    } else if (req.body != null) {
       if (req.form && typeof req.body === 'object') {
         const p = new URLSearchParams();
         for (const k in req.body) {

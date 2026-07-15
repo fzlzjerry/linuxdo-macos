@@ -146,6 +146,17 @@ export interface Post {
   current_user_reaction?: CurrentUserReaction | null
   reaction_users_count?: number
   bookmarked?: boolean
+  boosts?: Boost[]
+  can_boost?: boolean
+}
+
+/** discourse-boosts: a short "boost" (🚀) comment attached to a post. */
+export interface Boost {
+  id: number
+  cooked: string
+  can_delete?: boolean
+  can_flag?: boolean
+  user: DiscourseUser
 }
 
 export interface TopicPostStream {

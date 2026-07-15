@@ -1,0 +1,99 @@
+/* Fixed popover — rendered inside the composer subtree (not portaled) so it stays
+   inside the dialog top layer. Shadow-only elevation, no paired border. */
+.popover {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 300px;
+  padding: var(--sp-2);
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+}
+
+.search {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  padding: 6px 10px;
+  outline: none;
+}
+.search:focus {
+  border-color: var(--accent);
+}
+.search::placeholder {
+  color: var(--ink-3);
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+}
+.tab,
+.tabActive {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-md);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.tab:hover {
+  background: var(--surface-hover);
+}
+.tabActive {
+  background: var(--accent-soft);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 1px;
+  max-height: 216px;
+  overflow-y: auto;
+}
+
+.cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-lg);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.cell:hover {
+  background: var(--surface-hover);
+}
+
+.empty {
+  grid-column: 1 / -1;
+  padding: var(--sp-4);
+  text-align: center;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab,
+  .tabActive,
+  .cell {
+    transition: none;
+  }
+}

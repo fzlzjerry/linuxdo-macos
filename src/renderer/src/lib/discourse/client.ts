@@ -28,6 +28,27 @@ export class DiscourseApiError extends Error {
   }
 }
 
+export interface UploadResult {
+  id?: number
+  url: string
+  short_url?: string
+  original_filename?: string
+  width?: number
+  height?: number
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (): void => {
+      const res = String(reader.result)
+      resolve(res.slice(res.indexOf(',') + 1))
+    }
+    reader.onerror = (): void => reject(reader.error ?? new Error('read failed'))
+    reader.readAsDataURL(file)
+  })
+}
+
 function ensureBridge(): void {
   if (typeof window === 'undefined' || !window.api) {
     throw new DiscourseApiError(
@@ -135,6 +156,35 @@ export const discourse = {
       path: `/discourse-reactions/posts/${postId}/custom-reactions/${reactionId}/toggle.json`,
       method: 'PUT'
     })
+  },
+
+  async upload(file: File): Promise<UploadResult> {
+    const base64 = await fileToBase64(file)
+    return request<UploadResult>({
+      path: '/uploads.json',
+      method: 'POST',
+      upload: {
+        base64,
+        filename: file.name || 'upload',
+        mime: file.type || 'application/octet-stream',
+        type: 'composer'
+      }
+    })
+  },
+
+  searchUsers(term: string): Promise<{ users?: { username: string; name?: string; avatar_template?: string }[] }> {
+    return request({
+      path: `/u/search/users.json?term=${encodeURIComponent(term)}&include_groups=false&limit=6`
+    })
+  },
+
+  // discourse-boosts plugin. Endpoint inferred from the RestModel convention; verify live.
+  createBoost(postId: number, raw: string): Promise<unknown> {
+    return request({ path: '/boosts', method: 'POST', form: true, body: { post_id: postId, raw } })
+  },
+
+  deleteBoost(boostId: number): Promise<unknown> {
+    return request({ path: `/boosts/${boostId}`, method: 'DELETE' })
   },
 
   reply(params: { topicId: number; raw: string; replyToPostNumber?: number }): Promise<Post> {

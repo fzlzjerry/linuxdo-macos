@@ -9,6 +9,7 @@ import { absolutize, LINUXDO_ORIGIN } from '../../lib/discourse/urls'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
 import { CookedContent } from './CookedContent'
+import { BoostSection } from './BoostSection'
 import { ReactionBar } from './ReactionBar'
 import styles from './PostView.module.css'
 
@@ -160,6 +161,7 @@ export function PostView({ post, onReply, onEdit, onDeleted }: Props): JSX.Eleme
 
       <div className={styles.body}>
         <CookedContent html={post.cooked} />
+        <BoostSection post={post} />
       </div>
 
       <footer className={styles.footer}>
