@@ -1,8 +1,13 @@
 .shell {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
+  /* Lock the single row to exactly the viewport height so tall children
+     (the sidebar nav, page content) scroll internally instead of overflowing
+     the window and getting clipped by body{overflow:hidden}. */
+  grid-template-rows: minmax(0, 1fr);
   height: 100%;
   width: 100%;
+  overflow: hidden;
 }
 
 .content {
