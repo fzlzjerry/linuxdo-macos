@@ -7,6 +7,14 @@
   flex: none;
   background: var(--surface-2);
   user-select: none;
+  /* Crisping ring: inset shadows don't paint over <img> content, so use an
+     inward outline. The global :focus-visible outline overrides it on focus. */
+  outline: 1px solid oklch(0 0 0 / 0.06);
+  outline-offset: -1px;
+}
+
+:global(:root[data-theme='dark']) .avatar {
+  outline-color: oklch(1 0 0 / 0.08);
 }
 
 /* Pastel tile + same-hue ink; adapts to both themes (hue via --avatar-h). */

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Bell, CheckCheck, RefreshCw } from 'lucide-react'
@@ -12,9 +12,9 @@ import { EmptyState, ErrorState, ListSkeleton, Spinner } from '../../components/
 import { useNotifications } from '../../lib/discourse/queries'
 import { useAuth } from '../../store/auth'
 import {
+  colorFor,
   describe,
   iconFor,
-  isLike,
   markAllNotificationsRead,
   markNotificationRead,
   notificationRoute
@@ -42,7 +42,11 @@ function NotificationRow({
       onClick={() => onOpen(item)}
       aria-label={text}
     >
-      <span className={`${styles.icon} ${isLike(item.notification_type) ? styles.iconLike : ''}`} aria-hidden>
+      <span
+        className={styles.icon}
+        style={{ '--nc': colorFor(item.notification_type) } as CSSProperties}
+        aria-hidden
+      >
         {iconFor(item.notification_type)}
       </span>
       <span className={styles.body}>

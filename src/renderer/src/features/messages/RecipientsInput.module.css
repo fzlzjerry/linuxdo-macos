@@ -12,8 +12,9 @@
   padding: var(--sp-1);
   list-style: none;
   background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--r-md);
-  box-shadow: var(--shadow-pop);
+  box-shadow: var(--edge-highlight), var(--shadow-md);
   max-height: 240px;
   overflow-y: auto;
 }

@@ -60,8 +60,9 @@
   gap: var(--sp-2);
   padding: var(--sp-2);
   background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-pop);
+  box-shadow: var(--edge-highlight), var(--shadow-md);
 }
 
 .search {

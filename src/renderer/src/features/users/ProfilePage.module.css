@@ -208,9 +208,11 @@
   composes: row from '../../components/ui/listRow.module.css';
   padding-left: var(--sp-4);
   padding-right: var(--sp-4);
+  --row-sep-inset: var(--sp-4); /* separator inset follows the tighter padding */
 }
-.topicRow:last-child {
-  border-bottom: none;
+/* The card's own border closes the list — no separator under the last row. */
+.topicRow:last-child::after {
+  content: none;
 }
 
 .topicMain {

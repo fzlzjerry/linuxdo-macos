@@ -56,8 +56,20 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-pop);
+  box-shadow: var(--edge-highlight), var(--shadow-md);
   overflow: hidden;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .panel {
+    transform-origin: top right; /* anchored to the bell in the toolbar */
+    animation: bell-in var(--dur-fast) var(--ease-out);
+  }
+  @keyframes bell-in {
+    from {
+      opacity: 0;
+      transform: translateY(-2px) scale(0.98);
+    }
+  }
 }
 
 .head {
@@ -136,6 +148,7 @@
     var(--surface-hover);
 }
 
+/* Type-colored chip: --nc is set inline per row (colorFor). */
 .rowIcon {
   flex: none;
   display: inline-flex;
@@ -144,11 +157,13 @@
   width: 26px;
   height: 26px;
   border-radius: var(--r-full);
-  background: var(--surface-2);
-  color: var(--ink-2);
+  background: color-mix(in oklch, var(--nc, var(--ink-2)) 14%, transparent);
+  /* Light theme pulls the glyph toward ink — raw semantic colors fall
+     below 3:1 on their own near-white tint (see NotificationsPage.icon). */
+  color: color-mix(in oklch, var(--nc, var(--ink-2)) 72%, var(--ink));
 }
-.rowIconLike {
-  color: var(--like);
+:global(:root[data-theme='dark']) .rowIcon {
+  color: var(--nc, var(--ink-2)); /* dark passes at full saturation */
 }
 
 .rowText {

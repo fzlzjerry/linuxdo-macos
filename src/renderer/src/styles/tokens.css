@@ -52,22 +52,27 @@
   --dur-slow: 240ms;
 
   /* ---- Light palette ---- */
-  --bg: oklch(0.995 0 0);
+  /* --bg sits a step below pure white so --surface (cards, popovers, the
+     reading column) can actually float above it. */
+  --bg: oklch(0.982 0.002 250);
   --surface: oklch(1 0 0);
-  --surface-2: oklch(0.965 0.002 250);
-  --surface-hover: oklch(0.955 0.004 250);
-  --surface-active: oklch(0.93 0.006 250);
-  --sidebar-bg: oklch(0.975 0.002 250); /* second neutral layer */
+  --surface-2: oklch(0.962 0.003 250);
+  --surface-hover: oklch(0.952 0.004 250);
+  --surface-active: oklch(0.928 0.006 250);
+  --sidebar-bg: oklch(0.966 0.004 250); /* second neutral layer */
   --sidebar-item-hover: oklch(0.5 0.01 250 / 0.1);
   --sidebar-item-active: oklch(0.66 0.132 233 / 0.16);
 
   --ink: oklch(0.24 0.006 250);
   --ink-2: oklch(0.44 0.008 250);
-  --ink-3: oklch(0.55 0.01 250); /* ≥4.5:1 on --bg; decorative/redundant meta only */
+  --ink-3: oklch(0.53 0.01 250); /* ≥4.5:1 on --bg AND --sidebar-bg/--surface-2; decorative/redundant meta only */
   --ink-inverse: oklch(0.99 0 0);
 
   --border: oklch(0.5 0.01 250 / 0.14);
   --border-strong: oklch(0.5 0.01 250 / 0.24);
+  /* List-row separators only — lighter than --border so long lists read as
+     rhythm, not grid. Rows inset it past the leading padding (see listRow). */
+  --separator: oklch(0.5 0.008 250 / 0.09);
 
   --accent: oklch(0.63 0.132 233);
   --accent-hover: oklch(0.58 0.14 233);
@@ -82,9 +87,16 @@
 
   --scrim: oklch(0 0 0 / 0.4);
 
-  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.08);
-  --shadow-md: 0 6px 20px oklch(0 0 0 / 0.12);
-  --shadow-pop: 0 12px 32px oklch(0 0 0 / 0.18);
+  /* Elevation ramp — one recipe per layer: xs controls, sm cards/sticky,
+     md popovers, pop modals. In-flow cards pick hairline OR shadow, never
+     both; floating layers pair border + shadow (that's the macOS material). */
+  --shadow-xs: 0 1px 1px oklch(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.05), 0 2px 8px oklch(0 0 0 / 0.05);
+  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.08), 0 12px 28px oklch(0 0 0 / 0.1);
+  --shadow-pop: 0 8px 20px oklch(0 0 0 / 0.1), 0 24px 64px oklch(0 0 0 / 0.18);
+  /* Top inner hairline for floating layers; near-invisible in light, reads
+     as the macOS panel edge in dark. */
+  --edge-highlight: inset 0 1px 0 oklch(1 0 0 / 0.5);
 
   /* Focus ring geometry: a real outline (follows element radius, survives
      forced-colors). Full-bleed list rows use the inset variant in listRow. */
@@ -105,12 +117,14 @@
 /* Dark palette. Theme is JS-driven: the app sets data-theme="dark|light" on
    <html> (resolving "system" via matchMedia), so there is a single dark block. */
 :root[data-theme='dark'] {
-  --bg: oklch(0.205 0.006 260);
-    --surface: oklch(0.245 0.007 260);
-    --surface-2: oklch(0.275 0.008 260);
-    --surface-hover: oklch(0.3 0.009 260);
-    --surface-active: oklch(0.33 0.01 260);
-    --sidebar-bg: oklch(0.185 0.006 260); /* second neutral layer */
+  /* Deeper chrome, clearer surface steps — the flat gray wash reads as
+     Electron; native dark macOS separates its layers. */
+  --bg: oklch(0.196 0.007 260);
+    --surface: oklch(0.24 0.008 260);
+    --surface-2: oklch(0.285 0.009 260);
+    --surface-hover: oklch(0.31 0.01 260);
+    --surface-active: oklch(0.34 0.011 260);
+    --sidebar-bg: oklch(0.168 0.008 260); /* second neutral layer */
     --sidebar-item-hover: oklch(0.9 0.01 250 / 0.08);
     --sidebar-item-active: oklch(0.66 0.14 233 / 0.24);
 
@@ -119,13 +133,14 @@
     --ink-3: oklch(0.62 0.01 250);
     --ink-inverse: oklch(0.2 0.006 260);
 
-    --border: oklch(0.85 0.01 250 / 0.12);
-    --border-strong: oklch(0.85 0.01 250 / 0.2);
+    --border: oklch(0.85 0.01 250 / 0.14);
+    --border-strong: oklch(0.85 0.01 250 / 0.24);
+    --separator: oklch(0.85 0.01 250 / 0.09);
 
     --accent: oklch(0.72 0.13 233);
     --accent-hover: oklch(0.78 0.13 233);
     --accent-ink: oklch(0.16 0.01 260);
-    --accent-soft: oklch(0.72 0.13 233 / 0.18);
+    --accent-soft: oklch(0.72 0.13 233 / 0.2);
 
     --success: oklch(0.72 0.15 152);
     --danger: oklch(0.68 0.19 32);
@@ -134,9 +149,11 @@
 
     --scrim: oklch(0 0 0 / 0.55);
 
-    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.3);
-    --shadow-md: 0 8px 24px oklch(0 0 0 / 0.4);
-    --shadow-pop: 0 14px 36px oklch(0 0 0 / 0.5);
+    --shadow-xs: 0 1px 1px oklch(0 0 0 / 0.2);
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.25), 0 2px 8px oklch(0 0 0 / 0.25);
+    --shadow-md: 0 4px 12px oklch(0 0 0 / 0.35), 0 12px 28px oklch(0 0 0 / 0.45);
+    --shadow-pop: 0 8px 20px oklch(0 0 0 / 0.4), 0 24px 64px oklch(0 0 0 / 0.6);
+    --edge-highlight: inset 0 1px 0 oklch(1 0 0 / 0.06);
 
     color-scheme: dark;
 }

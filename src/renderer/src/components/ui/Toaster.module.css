@@ -18,7 +18,7 @@
   border-radius: var(--r-md);
   background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--edge-highlight), var(--shadow-md);
   color: var(--ink);
   font-size: var(--fs-sm);
   font-weight: 500;

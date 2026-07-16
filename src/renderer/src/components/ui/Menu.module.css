@@ -33,10 +33,25 @@
   gap: 2px;
   padding: var(--sp-2);
   background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-pop);
+  box-shadow: var(--edge-highlight), var(--shadow-md);
   max-height: 60vh;
   overflow-y: auto;
+}
+
+/* Entrance: opacity-led and short; skipped entirely under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .panel {
+    transform-origin: top;
+    animation: menu-in var(--dur-fast) var(--ease-out);
+  }
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-2px) scale(0.98);
+    }
+  }
 }
 
 .item {
@@ -69,10 +84,10 @@
 }
 
 .itemDanger {
-  color: var(--danger, #dc2626);
+  color: var(--danger);
 }
 .itemDanger:hover:not(:disabled) {
-  background: var(--danger-soft, rgba(220, 38, 38, 0.1));
+  background: var(--danger-soft);
 }
 
 .itemIcon {

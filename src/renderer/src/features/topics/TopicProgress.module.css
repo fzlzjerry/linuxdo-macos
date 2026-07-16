@@ -8,10 +8,12 @@
   align-items: center;
   gap: 2px;
   padding: 3px 4px;
-  background: var(--surface);
+  background: color-mix(in oklch, var(--surface) 82%, transparent);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
   border: 1px solid var(--border);
   border-radius: var(--r-full);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
   opacity: 0;
   transform: translateY(6px);
   pointer-events: none;

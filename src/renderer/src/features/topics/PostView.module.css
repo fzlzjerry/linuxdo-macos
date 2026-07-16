@@ -1,6 +1,6 @@
 .post {
-  padding: var(--sp-5) 0;
-  border-bottom: 1px solid var(--border);
+  padding: var(--sp-6) 0;
+  border-bottom: 1px solid var(--separator);
 }
 /* j/k focus target — inset ring, same treatment as full-bleed list rows. */
 .post:focus-visible {
@@ -198,18 +198,31 @@
   background: var(--danger-soft);
 }
 .action.solved {
-  color: var(--success, #16a34a);
+  color: var(--success);
   font-weight: 600;
 }
 .action.solved:disabled {
   opacity: 1;
 }
 
-/* The accepted-answer post gets a subtle green accent frame. */
+/* The accepted-answer post gets a subtle green accent frame. Horizontal
+   padding added because .post only pads vertically — without it the text
+   would sit against the frame. */
 .accepted {
+  border: 1px solid color-mix(in oklch, var(--success) 35%, transparent);
+  background: color-mix(in oklch, var(--success) 8%, transparent);
   border-radius: var(--r-lg);
-  box-shadow: inset 3px 0 0 var(--success, #16a34a);
-  background: var(--success-soft, rgba(22, 163, 74, 0.06));
+  box-shadow: none;
+  padding-left: var(--sp-4);
+  padding-right: var(--sp-4);
+  /* The frame's padding grows outward into the reader gutter so the
+     content column stays flush with neighboring posts. */
+  margin-inline: calc(-1 * var(--sp-4));
+  margin-block: var(--sp-2);
+}
+/* Don't stack the previous post's separator against the frame's own edge. */
+.post:has(+ .accepted) {
+  border-bottom-color: transparent;
 }
 
 .spacer {

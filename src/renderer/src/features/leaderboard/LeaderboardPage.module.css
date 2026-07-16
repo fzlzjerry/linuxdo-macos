@@ -15,6 +15,11 @@
   z-index: var(--z-sticky);
   border-bottom: 1px solid var(--border);
 }
+/* The sticky row's full-bleed border IS its edge — drop the inherited
+   inset separator so the two don't stack. */
+.highlight::after {
+  content: none;
+}
 .highlight:hover {
   background: var(--accent-soft);
 }

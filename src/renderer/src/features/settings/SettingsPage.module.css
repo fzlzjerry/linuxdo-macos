@@ -104,7 +104,7 @@
 
 .progressTrack {
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--r-full);
   background: var(--surface-2);
   overflow: hidden;
 }
@@ -113,7 +113,7 @@
   height: 100%;
   border-radius: inherit;
   background: var(--accent);
-  transition: width 0.2s ease;
+  transition: width var(--dur) var(--ease-out);
 }
 
 /* Account row: identity on the left, action on the right */

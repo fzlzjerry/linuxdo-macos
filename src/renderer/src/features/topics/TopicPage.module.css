@@ -4,10 +4,19 @@
   padding: var(--sp-6) var(--sp-6) var(--sp-10);
 }
 
+/* Category-tinted panel — tint only, no border/shadow. --cat is set inline
+   from the topic's category color; unset it falls back to a neutral ink tint. */
 .head {
-  padding-bottom: var(--sp-4);
-  border-bottom: 1px solid var(--border);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-lg);
+  /* transparent fallback: no category (PMs) → the mix collapses to --bg,
+     i.e. no tint at all, instead of a gray ink wash. */
+  background: color-mix(in oklch, var(--cat, transparent) 6%, var(--bg));
   margin-bottom: var(--sp-2);
+}
+
+:global(:root[data-theme='dark']) .head {
+  background: color-mix(in oklch, var(--cat, transparent) 10%, var(--bg));
 }
 
 .title {
@@ -26,7 +35,9 @@
   flex-wrap: wrap;
   margin-top: var(--sp-3);
   font-size: var(--fs-sm);
-  color: var(--ink-3);
+  /* --ink-2, not -3: this row sits on the category tint, which eats the
+     margin --ink-3 has on plain --bg. */
+  color: var(--ink-2);
 }
 
 .metaStat {
@@ -37,7 +48,7 @@
 }
 
 .metaTime {
-  color: var(--ink-3);
+  color: var(--ink-2); /* same tinted-panel contrast constraint as .meta */
 }
 
 .posts {

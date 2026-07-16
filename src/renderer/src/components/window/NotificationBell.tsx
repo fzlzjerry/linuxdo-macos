@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -7,9 +7,9 @@ import { discourse } from '../../lib/discourse/client'
 import { useAuth } from '../../store/auth'
 import { relativeTime, absoluteTime } from '../../lib/format'
 import {
+  colorFor,
   describe,
   iconFor,
-  isLike,
   markAllNotificationsRead,
   markNotificationRead,
   notificationRoute
@@ -171,9 +171,8 @@ export function NotificationBell(): JSX.Element | null {
                     onClick={() => openItem(n)}
                   >
                     <span
-                      className={`${styles.rowIcon} ${
-                        isLike(n.notification_type) ? styles.rowIconLike : ''
-                      }`}
+                      className={styles.rowIcon}
+                      style={{ '--nc': colorFor(n.notification_type) } as CSSProperties}
                       aria-hidden
                     >
                       {iconFor(n.notification_type, 14)}

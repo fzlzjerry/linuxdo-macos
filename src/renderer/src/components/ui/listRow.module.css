@@ -3,6 +3,7 @@
    profile). Vertical padding is density-aware via --list-pad-y. */
 
 .row {
+  position: relative; /* anchors the inset separator */
   display: flex;
   align-items: center;
   gap: var(--sp-3);
@@ -11,8 +12,19 @@
   padding: var(--list-pad-y) var(--sp-5);
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--border);
   transition: background var(--dur-fast) var(--ease-out);
+}
+/* Inset separator (native macOS list rhythm): starts at the content column,
+   not the window edge, and is lighter than --border so long lists read as
+   rhythm instead of a grid. Hover/active backgrounds stay full-bleed. */
+.row::after {
+  content: '';
+  position: absolute;
+  left: var(--row-sep-inset, var(--sp-5));
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--separator);
 }
 .row:hover {
   background: var(--surface-hover);
@@ -60,11 +72,20 @@
 
 /* Non-interactive variant: same shell, no hover affordance. */
 .rowStatic {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--sp-3);
   width: 100%;
   text-align: left;
   padding: var(--list-pad-y) var(--sp-5);
-  border-bottom: 1px solid var(--border);
+}
+.rowStatic::after {
+  content: '';
+  position: absolute;
+  left: var(--row-sep-inset, var(--sp-5));
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--separator);
 }

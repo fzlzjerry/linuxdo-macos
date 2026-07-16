@@ -11,11 +11,14 @@
   transition:
     background var(--dur) var(--ease-out),
     border-color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out),
     opacity var(--dur) var(--ease-out);
 }
 .btn:disabled {
   opacity: 0.5;
   cursor: default;
+  box-shadow: none;
+  background-image: none;
 }
 
 .sm {
@@ -30,27 +33,37 @@
   font-size: var(--fs-base);
 }
 
+/* macOS push-button light: a faint top sheen + hairline inner highlight.
+   Both drop on :active so the press reads as the surface sinking. */
 .primary {
   background: var(--accent);
+  background-image: linear-gradient(oklch(1 0 0 / 0.14), oklch(1 0 0 / 0) 55%);
   color: var(--accent-ink);
+  box-shadow:
+    var(--shadow-xs),
+    inset 0 1px 0 oklch(1 0 0 / 0.14);
 }
 .primary:not(:disabled):hover {
-  background: var(--accent-hover);
+  background-color: var(--accent-hover);
 }
 .primary:not(:disabled):active {
-  background: color-mix(in oklch, var(--accent-hover) 88%, oklch(0 0 0));
+  background-color: color-mix(in oklch, var(--accent-hover) 88%, oklch(0 0 0));
+  background-image: none;
+  box-shadow: none;
 }
 
 .secondary {
-  background: var(--surface-2);
+  background: var(--surface);
   color: var(--ink);
   border-color: var(--border);
+  box-shadow: var(--shadow-xs);
 }
 .secondary:not(:disabled):hover {
   background: var(--surface-hover);
 }
 .secondary:not(:disabled):active {
   background: var(--surface-active);
+  box-shadow: none;
 }
 
 .ghost {

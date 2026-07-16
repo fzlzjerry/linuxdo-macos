@@ -39,9 +39,11 @@
   white-space: nowrap;
 }
 
-/* Fully-read topics fade, like the Discourse web UI. */
+/* Fully-read topics fade, like the Discourse web UI (one weight step below
+   the unread title's 600). */
 .visited {
   color: var(--ink-2);
+  font-weight: 500;
 }
 
 /* Unread count for tracked topics (blue pill, like the site). */
@@ -103,7 +105,8 @@
 /* Heat tiers for reply/view counts. */
 .warm {
   color: color-mix(in oklch, var(--warning) 62%, var(--ink-2));
-  font-weight: 550;
+  /* 500, not 550: must not outweigh a visited row's title (500). */
+  font-weight: 500;
 }
 .hot {
   color: var(--warning);

@@ -42,5 +42,10 @@
 .seg.active {
   background: var(--surface);
   color: var(--ink);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
+}
+/* Dark --surface (0.24) sits BELOW the --surface-2 track (0.285), which
+   would read as pressed-in — lift the knob above the track instead. */
+:global(:root[data-theme='dark']) .seg.active {
+  background: var(--surface-active);
 }

@@ -94,9 +94,18 @@
 
 .cooked blockquote {
   margin: 0 0 var(--sp-4);
-  padding: var(--sp-1) var(--sp-4);
-  border-left: 3px solid var(--border-strong);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
   color: var(--ink-2);
+}
+/* Inside surface-2 panels (spoilers, polls, admonitions) the surface-2
+   quote fill vanishes — step it up to --surface to keep the box legible. */
+.cooked details blockquote,
+.cooked .poll blockquote,
+.cooked .admonition blockquote {
+  background: var(--surface);
 }
 
 .cooked aside.quote {
@@ -131,10 +140,13 @@
   height: 20px;
   border-radius: var(--r-full);
 }
+/* aside.quote is the card; its inner blockquote must not double-frame. */
 .cooked aside.quote blockquote {
   margin: 0;
   padding: var(--sp-3);
   border: none;
+  border-radius: 0;
+  background: none;
   color: var(--ink);
 }
 
@@ -264,10 +276,10 @@
 .cooked .onebox {
   display: block;
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   padding: var(--sp-3);
   margin: 0 0 var(--sp-4);
-  background: var(--surface-2);
+  background: var(--surface);
   font-size: var(--fs-sm);
 }
 .cooked .onebox .source {

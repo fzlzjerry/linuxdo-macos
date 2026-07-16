@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ExternalLink, Eye, Loader2, MessageSquare, Reply, RefreshCw } from 'lucide-react'
@@ -17,6 +17,7 @@ import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { ErrorState, Spinner } from '../../components/ui/states'
 import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
 import { useTopic } from '../../lib/discourse/queries'
+import { useCategory } from '../../lib/discourse/CategoriesContext'
 import { useBackNav } from '../../lib/useBackNav'
 import { useListNav } from '../../lib/useListNav'
 import { useDraftAutosave } from '../../lib/useDraftAutosave'
@@ -536,6 +537,9 @@ export function TopicPage(): JSX.Element {
   const tagNames = (topic?.tags ?? []).map(tagText)
   const tagIcons = useTagIcons(tagNames)
 
+  // Category color tints the header panel (--cat consumed in the CSS module).
+  const category = useCategory(topic?.category_id)
+
   const toolbar = (
     <Toolbar
       left={
@@ -580,7 +584,10 @@ export function TopicPage(): JSX.Element {
         <ErrorState error={error} onRetry={() => void refetch()} onLogin={() => void auth.showLogin()} />
       ) : (
         <div className={styles.reader}>
-          <header className={styles.head}>
+          <header
+            className={styles.head}
+            style={{ '--cat': category?.color ? `#${category.color}` : undefined } as CSSProperties}
+          >
             <h1 className={styles.title}>{topic.title}</h1>
             <div className={styles.meta}>
               <CategoryBadge categoryId={topic.category_id} size="md" />

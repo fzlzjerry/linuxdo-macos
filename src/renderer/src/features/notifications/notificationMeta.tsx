@@ -36,6 +36,31 @@ export function iconFor(type: number, size = 17): JSX.Element {
   }
 }
 
+/** Chip color for a notification type — a CSS var expression, never a raw value. */
+export function colorFor(type: number): string {
+  switch (type) {
+    case 5: // liked
+    case 24: // liked_consolidated
+      return 'var(--like)'
+    case 1: // mentioned
+    case 15: // group_mentioned
+    case 2: // replied
+    case 3: // quoted
+    case 9: // posted
+    case 11: // linked
+      return 'var(--accent)'
+    case 6: // private_message
+      return 'var(--success)'
+    case 12: // granted_badge
+      return 'var(--warning)'
+    case 17: // watching_first_post
+    default:
+      // --ink-2, not -3: the chip glyph must stay ≥3:1 even composited over
+      // an unread row's accent-soft wash in dark theme.
+      return 'var(--ink-2)'
+  }
+}
+
 /** Build a concise Chinese sentence describing the notification from its data. */
 export function describe(n: NotificationItem): string {
   const who = n.data.display_username || n.data.original_username || '有人'
