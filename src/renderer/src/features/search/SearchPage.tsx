@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { Avatar } from '../../components/ui/Avatar'
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
 import { Tag } from '../../components/ui/Tag'
-import { EmptyState, ErrorState, Spinner } from '../../components/ui/states'
+import { EmptyState, ErrorState, ListSkeleton } from '../../components/ui/states'
 import { useCategories, useSearch } from '../../lib/discourse/queries'
 import { useScrollMemory } from '../../lib/useScrollMemory'
 import { useFocusMemory } from '../../lib/useFocusMemory'
@@ -68,9 +68,23 @@ export function SearchPage(): JSX.Element {
   const [advanced, setAdvanced] = useState(() => Object.keys(lastFilters).length > 0)
   const [term, setTerm] = useState(() => buildSearchQuery(lastSearchInput, lastFilters))
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const urlQ = searchParams.get('q') ?? ''
   const auth = useAuth()
   const scrollRef = useRef<HTMLDivElement>(null)
   const { data: categoriesData } = useCategories()
+
+  // ⌘K 命令面板的「搜索 …」兜底项会导航到 /search?q=...：
+  // 挂载（或 q 变化）时若当前没有搜索会话，则预填输入框并立即执行搜索（跳过防抖）。
+  // 已有会话时不覆盖，避免返回本页时 URL 残留的 q 冲掉用户后续输入。
+  useEffect(() => {
+    const q = urlQ.trim()
+    if (!q || term.trim()) return
+    setInput(q)
+    setTerm(buildSearchQuery(q, filters))
+    // 仅在 q 变化时评估；input/filters 的后续变化由防抖 effect 处理
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlQ])
 
   const topCategories = useMemo(
     () => (categoriesData?.category_list.categories ?? []).filter((c) => !c.parent_category_id),
@@ -89,7 +103,7 @@ export function SearchPage(): JSX.Element {
   const patch = (p: Partial<SearchFilters>): void => setFilters((f) => ({ ...f, ...p }))
 
   const active = term.trim().length > 1
-  const { data, isLoading, isError, error, refetch } = useSearch(term, active)
+  const { data, isLoading, isFetching, isError, error, refetch } = useSearch(term, active)
 
   useScrollMemory(scrollRef, `search:${term}`, active && !isLoading && !!data)
   useFocusMemory(scrollRef, `search:${term}`, active && !isLoading && !!data)
@@ -235,15 +249,15 @@ export function SearchPage(): JSX.Element {
           onLogin={() => void auth.showLogin()}
         />
       ) : isLoading ? (
-        <Spinner label="搜索中…" />
+        <ListSkeleton leading="avatar" />
       ) : !hasResults ? (
         <EmptyState
           icon={<Search size={26} strokeWidth={1.6} />}
           title="没有找到结果"
-          description="试试其他关键词。"
+          description="试试更短或不同的关键词，或用高级筛选按分类、标签、用户缩小范围。"
         />
       ) : (
-        <div className={styles.results}>
+        <div className={`${styles.results} ${isFetching ? styles.resultsStale : ''}`}>
           {topics.length > 0 && (
             <section className={styles.section}>
               <div className={styles.sectionHead}>

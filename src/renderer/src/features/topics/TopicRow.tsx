@@ -5,7 +5,7 @@ import { CategoryBadge } from '../../components/ui/CategoryBadge'
 import { Tag } from '../../components/ui/Tag'
 import { SpriteIcon } from '../../components/ui/SpriteIcon'
 import { useTagIcons } from '../../lib/tagIcons'
-import { relativeTime, compactNumber } from '../../lib/format'
+import { relativeTime, absoluteTime, compactNumber } from '../../lib/format'
 import { tagKey, tagText, type DiscourseUser, type TopicListItem } from '../../lib/discourse/types'
 import styles from './TopicRow.module.css'
 
@@ -38,6 +38,9 @@ export function TopicRow({ topic, users }: Props): JSX.Element {
   const href =
     unreadCount > 0 && lastRead > 0 ? `/t/${topic.id}?post=${lastRead + 1}` : `/t/${topic.id}`
 
+  // Fully-read topics fade like the Discourse web UI.
+  const visited = lastRead > 0 && unreadCount === 0 && !isNew
+
   return (
     <button
       className={styles.row}
@@ -49,7 +52,9 @@ export function TopicRow({ topic, users }: Props): JSX.Element {
       <div className={styles.main}>
         <div className={styles.titleLine}>
           {topic.pinned && <Pin size={13} className={styles.pin} aria-label="置顶" />}
-          <span className={styles.title}>{topic.title}</span>
+          <span className={visited ? `${styles.title} ${styles.visited}` : styles.title}>
+            {topic.title}
+          </span>
           {unreadCount > 0 ? (
             <span className={styles.unreadPill} title={`${unreadCount} 条未读`}>
               {compactNumber(unreadCount)}
@@ -60,7 +65,7 @@ export function TopicRow({ topic, users }: Props): JSX.Element {
         </div>
         <div className={styles.metaLine}>
           <CategoryBadge categoryId={topic.category_id} />
-          {(topic.tags ?? []).slice(0, 4).map((tg) => {
+          {(topic.tags ?? []).slice(0, 3).map((tg) => {
             const t = tagText(tg)
             return (
               <Tag key={tagKey(tg)}>
@@ -96,7 +101,9 @@ export function TopicRow({ topic, users }: Props): JSX.Element {
       >
         {compactNumber(topic.views)}
       </span>
-      <span className={styles.time}>{relativeTime(topic.bumped_at)}</span>
+      <span className={styles.time} title={absoluteTime(topic.bumped_at)}>
+        {relativeTime(topic.bumped_at)}
+      </span>
     </button>
   )
 }

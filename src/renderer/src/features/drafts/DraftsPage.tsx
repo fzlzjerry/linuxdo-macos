@@ -1,21 +1,25 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { FileText, Loader2, Trash2 } from 'lucide-react'
+import { FileText, Loader2, RefreshCw, Trash2 } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
+import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
 import { Tag } from '../../components/ui/Tag'
 import { LoginGate } from '../../components/ui/LoginGate'
-import { EmptyState, ErrorState, TopicListSkeleton } from '../../components/ui/states'
+import { EmptyState, ErrorState, ListSkeleton } from '../../components/ui/states'
 import { useDrafts } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
 import { NewTopicModal } from '../../components/composer/NewTopicModal'
 import { NewMessageModal } from '../messages/NewMessageModal'
 import { parseDraftContent } from '../../lib/discourse/draftContent'
 import { useAuth } from '../../store/auth'
+import { useComposerStore } from '../../store/composer'
 import { toast } from '../../store/toast'
-import { relativeTime } from '../../lib/format'
+import { useListNav } from '../../lib/useListNav'
+import { useFocusMemory } from '../../lib/useFocusMemory'
+import { absoluteTime, relativeTime } from '../../lib/format'
 import type { DraftItem } from '../../lib/discourse/types'
 import styles from './DraftsPage.module.css'
 
@@ -39,10 +43,14 @@ export function DraftsPage(): JSX.Element {
   const auth = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const scrollRef = useRef<HTMLDivElement>(null)
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
   const [resume, setResume] = useState<{ kind: 'topic' | 'pm'; draft: DraftItem } | null>(null)
 
-  const { data, isLoading, isError, error, refetch } = useDrafts(auth.loggedIn)
+  const { data, isLoading, isError, error, refetch, isRefetching } = useDrafts(auth.loggedIn)
+
+  useListNav(scrollRef)
+  useFocusMemory(scrollRef, 'drafts', !isLoading && !!data)
 
   /** Silently drop a draft once its resumed content is posted. */
   const dropDraft = useCallback(
@@ -98,9 +106,21 @@ export function DraftsPage(): JSX.Element {
   const drafts = data?.drafts ?? []
 
   return (
-    <PageScaffold toolbar={<Toolbar title="草稿" />}>
+    <PageScaffold
+      ref={scrollRef}
+      toolbar={
+        <Toolbar
+          title="草稿"
+          right={
+            <IconButton label="刷新" onClick={() => void refetch()} disabled={isRefetching}>
+              <RefreshCw size={16} className={isRefetching ? 'spin' : undefined} />
+            </IconButton>
+          }
+        />
+      }
+    >
       {isLoading ? (
-        <TopicListSkeleton />
+        <ListSkeleton leading="avatar" />
       ) : isError ? (
         <ErrorState error={error} onRetry={() => void refetch()} onLogin={() => void auth.showLogin()} />
       ) : drafts.length === 0 ? (
@@ -108,6 +128,11 @@ export function DraftsPage(): JSX.Element {
           icon={<FileText size={26} strokeWidth={1.6} />}
           title="没有草稿"
           description="你还没有未完成的草稿。"
+          action={
+            <Button variant="primary" onClick={() => useComposerStore.getState().openNewTopic()}>
+              发新帖
+            </Button>
+          }
         />
       ) : (
         <div className={styles.list}>
@@ -164,7 +189,8 @@ function DraftRow({
   const label = draftLabel(draft.draft_key)
   const title = draft.title?.trim()
   const excerpt = htmlToText(draft.excerpt)
-  const time = relativeTime(draft.created_at || draft.updated_at)
+  const timeIso = draft.created_at || draft.updated_at
+  const time = relativeTime(timeIso)
 
   return (
     <div className={clickable ? styles.row : styles.rowStatic}>
@@ -172,6 +198,8 @@ function DraftRow({
         <button
           type="button"
           className={styles.overlay}
+          data-row
+          data-row-id={draft.draft_key}
           aria-label={title || label}
           onClick={onOpen}
         />
@@ -187,7 +215,11 @@ function DraftRow({
           {title && <span className={styles.title}>{title}</span>}
         </div>
         {excerpt && <p className={styles.excerpt}>{excerpt}</p>}
-        {time && <span className={styles.time}>{time}</span>}
+        {time && (
+          <span className={styles.time} title={absoluteTime(timeIso)}>
+            {time}
+          </span>
+        )}
       </div>
 
       <span className={styles.actions}>

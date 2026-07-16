@@ -39,6 +39,11 @@
   white-space: nowrap;
 }
 
+/* Fully-read topics fade, like the Discourse web UI. */
+.visited {
+  color: var(--ink-2);
+}
+
 /* Unread count for tracked topics (blue pill, like the site). */
 .unreadPill {
   flex: none;

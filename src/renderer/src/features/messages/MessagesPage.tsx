@@ -1,15 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Mail, MessageSquare, Send } from 'lucide-react'
+import { Mail, MessageSquare, RefreshCw, Send } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { Avatar } from '../../components/ui/Avatar'
 import { Button } from '../../components/ui/Button'
+import { IconButton } from '../../components/ui/IconButton'
 import { LoginGate } from '../../components/ui/LoginGate'
-import { EmptyState, ErrorState, TopicListSkeleton } from '../../components/ui/states'
+import { EmptyState, ErrorState, ListSkeleton } from '../../components/ui/states'
 import { usePrivateMessages, mergeUsers } from '../../lib/discourse/queries'
 import { useAuth } from '../../store/auth'
-import { relativeTime, compactNumber } from '../../lib/format'
+import { relativeTime, absoluteTime, compactNumber } from '../../lib/format'
+import { useListNav } from '../../lib/useListNav'
+import { useFocusMemory } from '../../lib/useFocusMemory'
 import type { DiscourseUser, TopicListItem } from '../../lib/discourse/types'
 import { NewMessageModal } from './NewMessageModal'
 import styles from './MessagesPage.module.css'
@@ -17,11 +20,15 @@ import styles from './MessagesPage.module.css'
 export function MessagesPage(): JSX.Element {
   const auth = useAuth()
   const navigate = useNavigate()
+  const scrollRef = useRef<HTMLDivElement>(null)
   const [composing, setComposing] = useState(false)
 
-  const { data, isLoading, isError, error, refetch } = usePrivateMessages(
+  const { data, isLoading, isError, error, refetch, isRefetching } = usePrivateMessages(
     auth.loggedIn ? auth.username : undefined
   )
+
+  useListNav(scrollRef)
+  useFocusMemory(scrollRef, 'messages', !isLoading && !!data)
 
   const users = useMemo(() => mergeUsers(data ? [data] : []), [data])
   const topics = data?.topic_list.topics ?? []
@@ -39,22 +46,32 @@ export function MessagesPage(): JSX.Element {
   }
 
   const right = (
-    <Button variant="primary" size="sm" icon={<Send size={15} />} onClick={() => setComposing(true)}>
-      写私信
-    </Button>
+    <>
+      <Button variant="primary" size="sm" icon={<Send size={15} />} onClick={() => setComposing(true)}>
+        写私信
+      </Button>
+      <IconButton label="刷新" onClick={() => void refetch()} disabled={isRefetching}>
+        <RefreshCw size={16} className={isRefetching ? 'spin' : undefined} />
+      </IconButton>
+    </>
   )
 
   return (
-    <PageScaffold toolbar={<Toolbar title="私信" right={right} />}>
+    <PageScaffold ref={scrollRef} toolbar={<Toolbar title="私信" right={right} />}>
       {isLoading ? (
-        <TopicListSkeleton />
+        <ListSkeleton leading="avatar" />
       ) : isError ? (
         <ErrorState error={error} onRetry={() => void refetch()} onLogin={() => void auth.showLogin()} />
       ) : topics.length === 0 ? (
         <EmptyState
           icon={<Mail size={26} strokeWidth={1.6} />}
           title="没有私信"
-          description="你还没有收到任何私信。"
+          description="私信是与其他成员一对一交流的地方。写一封私信，开始对话吧。"
+          action={
+            <Button variant="primary" size="sm" icon={<Send size={15} />} onClick={() => setComposing(true)}>
+              写私信
+            </Button>
+          }
         />
       ) : (
         topics.map((t) => (
@@ -90,7 +107,13 @@ function MessageRow({
   const participants = names.length > 0 ? names.join('、') : (topic.last_poster_username ?? '')
 
   return (
-    <button className={styles.row} onClick={onOpen} aria-label={topic.title}>
+    <button
+      className={styles.row}
+      data-row
+      data-row-id={topic.id}
+      onClick={onOpen}
+      aria-label={topic.title}
+    >
       <Avatar template={op?.avatar_template} username={op?.username} name={op?.name} size={38} />
 
       <div className={styles.main}>
@@ -103,7 +126,9 @@ function MessageRow({
           <MessageSquare size={13} />
           {compactNumber(topic.reply_count)}
         </span>
-        <span className={styles.time}>{relativeTime(topic.bumped_at)}</span>
+        <span className={styles.time} title={absoluteTime(topic.bumped_at)}>
+          {relativeTime(topic.bumped_at)}
+        </span>
       </div>
     </button>
   )

@@ -19,6 +19,14 @@
   }
 }
 
+/* The shimmer is decorative — a static bone reads the same without motion. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: var(--surface-2);
+  }
+}
+
 .skeletonList {
   padding: var(--sp-2) 0;
 }
@@ -35,6 +43,24 @@
   flex-direction: column;
   gap: var(--sp-2);
   flex: 1;
+}
+
+/* Generic list skeleton row — density matches the listRow shell
+   (padding: var(--list-pad-y) var(--sp-5), gap var(--sp-3)). */
+.listSkeletonRow {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--list-pad-y) var(--sp-5);
+}
+
+.listSkeletonRow > * {
+  flex-shrink: 0;
+}
+
+.listSkeletonRow > .skeletonLines {
+  flex: 1;
+  min-width: 0;
 }
 
 .spinner {
@@ -85,6 +111,13 @@
 .iconWrap.danger {
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+/* Neutral tone for environmental errors (offline / rate-limit) — not the
+   user's fault, no alarm red. */
+.iconWrap.muted {
+  background: var(--surface-2);
+  color: var(--ink-2);
 }
 
 .title {

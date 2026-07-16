@@ -5,8 +5,12 @@
 .unread {
   background: var(--accent-soft);
 }
+/* Hover must not erase the unread tint: layer the accent wash over the
+   neutral hover surface so both states stay legible in light and dark. */
 .unread:hover {
-  background: var(--surface-hover);
+  background:
+    linear-gradient(var(--accent-soft), var(--accent-soft)),
+    var(--surface-hover);
 }
 
 .icon {

@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom'
+import { LayoutGrid } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
-import { CardGridSkeleton, ErrorState } from '../../components/ui/states'
+import { CardGridSkeleton, EmptyState, ErrorState } from '../../components/ui/states'
 import { useCategories } from '../../lib/discourse/queries'
 import { useAuth } from '../../store/auth'
 import { compactNumber } from '../../lib/format'
@@ -23,6 +24,12 @@ export function CategoriesPage(): JSX.Element {
         <CardGridSkeleton />
       ) : isError ? (
         <ErrorState error={error} onRetry={() => void refetch()} onLogin={() => void auth.showLogin()} />
+      ) : categories.length === 0 ? (
+        <EmptyState
+          icon={<LayoutGrid size={26} strokeWidth={1.6} />}
+          title="暂无分类"
+          description="稍后下拉刷新试试。"
+        />
       ) : (
         <div className={styles.grid}>
           {categories.map((c) => (

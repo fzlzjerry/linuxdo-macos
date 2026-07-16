@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { LayoutGrid, RefreshCw } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { Segmented } from '../../components/ui/Segmented'
+import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
 import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { EmptyState, ErrorState, Spinner, TopicListSkeleton } from '../../components/ui/states'
@@ -26,6 +27,7 @@ const CATEGORY_FILTERS: { value: ListingFilter; label: string }[] = [
 export function CategoryTopicsPage(): JSX.Element {
   const { slug = '', id: idParam } = useParams()
   const id = Number(idParam)
+  const navigate = useNavigate()
   const scrollRef = useRef<HTMLDivElement>(null)
   const auth = useAuth()
   const category = useCategory(id)
@@ -81,7 +83,16 @@ export function CategoryTopicsPage(): JSX.Element {
       ) : isError ? (
         <ErrorState error={error} onRetry={() => void refetch()} onLogin={() => void auth.showLogin()} />
       ) : topics.length === 0 ? (
-        <EmptyState icon={<LayoutGrid size={26} strokeWidth={1.6} />} title="该分类暂无话题" />
+        <EmptyState
+          icon={<LayoutGrid size={26} strokeWidth={1.6} />}
+          title="该分类暂无话题"
+          description="这里还没有内容，去别的分类逛逛吧。"
+          action={
+            <Button variant="secondary" onClick={() => navigate('/categories')}>
+              查看全部分类
+            </Button>
+          }
+        />
       ) : (
         <>
           {topics.map((t) => (

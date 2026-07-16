@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -99,6 +100,22 @@ export function Composer({
       el.selectionEnd = e + before.length
     })
   }
+
+  // 工具栏「链接」与 ⌘K / ⌘⇧K 共用同一个动作。
+  const insertLink = (): void => wrap('[', '](url)')
+
+  // 输入框自适应高度：下限由 minHeight（inline style）保证，上限 45vh，超出内部滚动。
+  const autosize = (): void => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    const max = Math.round(window.innerHeight * 0.45)
+    el.style.height = `${Math.min(el.scrollHeight, max)}px`
+  }
+
+  // value 变化时统一重新量高——覆盖键入、粘贴以及 wrap()/prefixLines() 等程序化改动；
+  // tab 切回「编辑」重挂 textarea 后也要复位。
+  useLayoutEffect(autosize, [text, tab])
 
   const prefixLines = (prefix: string): void => {
     const el = ref.current
@@ -249,6 +266,23 @@ export function Composer({
     if ((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter' && canSubmit) {
       ev.preventDefault()
       void onSubmit(text)
+      return
+    }
+    // Markdown 快捷键（macOS 惯例）：⌘B 粗体、⌘I 斜体、⌘K / ⌘⇧K 插入链接。
+    if ((ev.metaKey || ev.ctrlKey) && !ev.altKey) {
+      const key = ev.key.toLowerCase()
+      if (key === 'b' && !ev.shiftKey) {
+        ev.preventDefault()
+        wrap('**')
+      } else if (key === 'i' && !ev.shiftKey) {
+        ev.preventDefault()
+        wrap('*')
+      } else if (key === 'k') {
+        // textarea 焦点内 ⌘K 归 Composer；全局命令面板会跳过 defaultPrevented 事件。
+        // ⌘⇧K 同样映射插链接，与菜单栏心智一致。
+        ev.preventDefault()
+        insertLink()
+      }
     }
   }
 
@@ -311,7 +345,7 @@ export function Composer({
           </div>
           <span className={styles.sep} />
           <div className={styles.group}>
-            <IconButton label="链接" type="button" onClick={() => wrap('[', '](url)')}>
+            <IconButton label="链接" type="button" onClick={insertLink}>
               <Link2 size={16} />
             </IconButton>
             <IconButton label="上传图片 / 文件" type="button" onClick={pickImage}>

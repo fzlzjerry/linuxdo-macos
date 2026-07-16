@@ -133,6 +133,12 @@
 
 .results {
   padding-bottom: var(--sp-6);
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+/* refetch 时保留已有结果并轻微降不透明度，避免整块换 spinner 造成布局塌陷 */
+.resultsStale {
+  opacity: 0.6;
 }
 
 .section {

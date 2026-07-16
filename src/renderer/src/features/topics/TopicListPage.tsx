@@ -1,8 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CheckCheck, Newspaper, RefreshCw } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { Segmented } from '../../components/ui/Segmented'
+import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
 import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { EmptyState, ErrorState, Spinner, TopicListSkeleton } from '../../components/ui/states'
@@ -47,6 +49,7 @@ const PERIODS: { value: TopPeriod; label: string }[] = [
 ]
 
 export function TopicListPage({ filter }: { filter: ListingFilter }): JSX.Element {
+  const navigate = useNavigate()
   const [period, setPeriod] = useState<TopPeriod>('weekly')
   const [filters, setFilters] = useState<TopicFilterState>({})
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -144,6 +147,13 @@ export function TopicListPage({ filter }: { filter: ListingFilter }): JSX.Elemen
                 : filter === 'read'
                   ? '你读过的话题会出现在这里。'
                   : '暂时没有可显示的内容。'
+          }
+          action={
+            filter === 'unread' ? (
+              <Button variant="secondary" onClick={() => navigate('/latest')}>
+                查看最新
+              </Button>
+            ) : undefined
           }
         />
       ) : (

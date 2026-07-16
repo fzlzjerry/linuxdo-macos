@@ -6,6 +6,40 @@
   margin-right: var(--sp-2);
 }
 
+/* Persistent one-tap like — first control in the bar, before the chips. */
+.heart {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  border-radius: var(--r-full);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.heart:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+.heart.liked {
+  background: color-mix(in oklch, var(--like) 12%, transparent);
+  border-color: var(--like);
+  color: var(--like);
+}
+
+.heartIcon {
+  display: inline-flex;
+  align-items: center;
+}
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -103,5 +137,40 @@
 }
 .pick.pickActive {
   background: var(--accent-soft);
+}
+
+/* State-change motion only — classes are applied on transitions (JS-gated so the
+   first render never plays), and everything no-ops under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .heartPop {
+    animation: heart-pop var(--dur) var(--ease-out);
+  }
+
+  .chipIn {
+    animation: chip-in var(--dur-fast) var(--ease-out) backwards;
+  }
+}
+
+@keyframes heart-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes chip-in {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 

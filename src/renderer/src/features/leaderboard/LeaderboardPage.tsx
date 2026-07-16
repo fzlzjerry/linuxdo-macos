@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Trophy, RefreshCw } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
@@ -6,8 +6,10 @@ import { PageScaffold } from '../../components/window/PageScaffold'
 import { Segmented } from '../../components/ui/Segmented'
 import { IconButton } from '../../components/ui/IconButton'
 import { Avatar } from '../../components/ui/Avatar'
-import { EmptyState, ErrorState, TopicListSkeleton } from '../../components/ui/states'
+import { EmptyState, ErrorState, ListSkeleton } from '../../components/ui/states'
 import { useLeaderboard } from '../../lib/discourse/queries'
+import { useFocusMemory } from '../../lib/useFocusMemory'
+import { useListNav } from '../../lib/useListNav'
 import { useAuth } from '../../store/auth'
 import { compactNumber } from '../../lib/format'
 import type { LeaderboardUser } from '../../lib/discourse/types'
@@ -27,10 +29,13 @@ export function LeaderboardPage(): JSX.Element {
   const [period, setPeriod] = useState('all')
   const navigate = useNavigate()
   const auth = useAuth()
+  const scrollRef = useRef<HTMLDivElement>(null)
   const { data, isLoading, isError, error, refetch, isRefetching } = useLeaderboard(
     DEFAULT_LEADERBOARD_ID,
     period === 'all' ? undefined : period
   )
+  useListNav(scrollRef)
+  useFocusMemory(scrollRef, 'leaderboard', !isLoading && !!data)
 
   const users = data?.users ?? []
   const personal = data?.personal
@@ -53,13 +58,17 @@ export function LeaderboardPage(): JSX.Element {
   )
 
   return (
-    <PageScaffold toolbar={toolbar}>
+    <PageScaffold ref={scrollRef} toolbar={toolbar}>
       {isLoading ? (
-        <TopicListSkeleton />
+        <ListSkeleton leading="rank" trailing />
       ) : isError ? (
         <ErrorState error={error} onRetry={() => void refetch()} onLogin={() => void auth.showLogin()} />
       ) : users.length === 0 ? (
-        <EmptyState icon={<Trophy size={26} strokeWidth={1.6} />} title="暂无排行数据" />
+        <EmptyState
+          icon={<Trophy size={26} strokeWidth={1.6} />}
+          title="暂无排行数据"
+          description="这个时间范围内暂时没有数据，换个范围或稍后再来看看。"
+        />
       ) : (
         <div className={styles.list}>
           {personal?.user && personal.position != null && (
@@ -99,6 +108,8 @@ function Row({
     <button
       type="button"
       className={`${styles.row} ${highlight ? styles.highlight : ''}`}
+      data-row
+      data-row-id={highlight ? `me-${user.id}` : user.id}
       onClick={onClick}
       aria-label={`第 ${user.position} 名 ${user.name || user.username}`}
     >

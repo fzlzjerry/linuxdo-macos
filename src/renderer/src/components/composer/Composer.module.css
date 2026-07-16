@@ -48,7 +48,10 @@
   font-size: var(--fs-base);
   line-height: var(--lh-normal);
   padding: var(--sp-4);
-  resize: vertical;
+  /* 高度由 JS auto-grow 接管：随内容增高，至多 45vh，超出内部滚动。 */
+  resize: none;
+  overflow-y: auto;
+  max-height: 45vh;
   outline: none;
   transition: box-shadow var(--dur-fast) var(--ease-out);
 }

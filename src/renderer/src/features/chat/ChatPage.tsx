@@ -242,6 +242,16 @@ function ChatThread({ channel }: { channel: ChatChannel }): JSX.Element {
     }
   }
 
+  // 输入框自适应高度：1 行起步，上限 140px（与 CSS max-height 一致），超出内部滚动；
+  // 发送成功后 setText('') 触发本 effect，高度随之复位。
+  useLayoutEffect(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    const border = el.offsetHeight - el.clientHeight
+    el.style.height = `${Math.min(el.scrollHeight + border, 140)}px`
+  }, [text])
+
   // Auto-scroll to the newest message on channel switch, or when new messages
   // arrive only if the reader was already near the bottom — so polling doesn't
   // yank someone who scrolled up to read history.

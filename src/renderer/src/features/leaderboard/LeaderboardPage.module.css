@@ -5,18 +5,7 @@
 }
 
 .row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  text-align: left;
-  padding: var(--sp-2) var(--sp-5);
-  background: transparent;
-  border: none;
-  transition: background var(--dur-fast) var(--ease-out);
-}
-.row:hover {
-  background: var(--surface-hover);
+  composes: row from '../../components/ui/listRow.module.css';
 }
 
 .highlight {

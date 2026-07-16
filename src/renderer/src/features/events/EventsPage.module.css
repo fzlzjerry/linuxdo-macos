@@ -5,22 +5,14 @@
 }
 
 .row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  text-align: left;
-  padding: var(--sp-3) var(--sp-5);
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border-subtle, var(--border));
-  transition: background var(--dur-fast) var(--ease-out);
-}
-.row:hover:not(:disabled) {
-  background: var(--surface-hover);
+  composes: row from '../../components/ui/listRow.module.css';
 }
 .row:disabled {
   cursor: default;
+}
+.row:disabled:hover,
+.row:disabled:active {
+  background: transparent;
 }
 
 .date {

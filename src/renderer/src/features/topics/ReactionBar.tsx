@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus } from 'lucide-react'
+import { Heart, Plus } from 'lucide-react'
 import { discourse } from '../../lib/discourse/client'
 import type { Post, PostReaction } from '../../lib/discourse/types'
 import { compactNumber } from '../../lib/format'
@@ -31,6 +31,27 @@ export function ReactionBar({ post }: Props): JSX.Element {
   const [anchor, setAnchor] = useState<{ left: number; top: number } | null>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const pickerRef = useRef<HTMLDivElement>(null)
+
+  const liked = current === 'heart'
+  const heartCount = reactions.find((r) => r.id === 'heart')?.count ?? 0
+
+  // Pop animation only when the like *becomes* active — never on first render
+  // (prevLiked starts at the mounted value) and cleared on unlike/rollback so a
+  // re-like replays it.
+  const [heartPop, setHeartPop] = useState(false)
+  const prevLiked = useRef(liked)
+  useEffect(() => {
+    if (liked && !prevLiked.current) setHeartPop(true)
+    else if (!liked) setHeartPop(false)
+    prevLiked.current = liked
+  }, [liked])
+
+  // Chips present on first render must not play the enter animation; only ids
+  // appearing later count as "new".
+  const seenChipIds = useRef<Set<string>>(new Set((post.reactions ?? []).map((r) => r.id)))
+  useEffect(() => {
+    seenChipIds.current = new Set(reactions.map((r) => r.id))
+  }, [reactions])
 
   useEffect(() => {
     if (!pickerOpen) return
@@ -120,20 +141,43 @@ export function ReactionBar({ post }: Props): JSX.Element {
 
   return (
     <div className={styles.bar}>
-      {reactions.map((r) => (
-        <button
-          key={r.id}
-          type="button"
-          className={`${styles.chip} ${current === r.id ? styles.active : ''}`}
-          onClick={() => void toggle(r.id)}
-          title={r.id}
-          aria-label={`回应 ${r.id}`}
-          aria-pressed={current === r.id}
+      <button
+        type="button"
+        className={`${styles.heart} ${liked ? styles.liked : ''}`}
+        onClick={() => void toggle('heart')}
+        title="点赞"
+        aria-label="点赞"
+        aria-pressed={liked}
+      >
+        <span
+          className={`${styles.heartIcon} ${heartPop ? styles.heartPop : ''}`}
+          onAnimationEnd={() => setHeartPop(false)}
+          aria-hidden="true"
         >
-          <Emoji id={r.id} />
-          {r.count > 0 && <span className={styles.count}>{compactNumber(r.count)}</span>}
-        </button>
-      ))}
+          <Heart size={14} fill={liked ? 'currentColor' : 'none'} />
+        </span>
+        {heartCount > 0 && <span className={styles.count}>{compactNumber(heartCount)}</span>}
+      </button>
+
+      {/* heart lives in the persistent button above — keep it out of the chips */}
+      {reactions
+        .filter((r) => r.id !== 'heart')
+        .map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            className={`${styles.chip} ${current === r.id ? styles.active : ''} ${
+              seenChipIds.current.has(r.id) ? '' : styles.chipIn
+            }`}
+            onClick={() => void toggle(r.id)}
+            title={r.id}
+            aria-label={`回应 ${r.id}`}
+            aria-pressed={current === r.id}
+          >
+            <Emoji id={r.id} />
+            {r.count > 0 && <span className={styles.count}>{compactNumber(r.count)}</span>}
+          </button>
+        ))}
 
       <button
         ref={triggerRef}

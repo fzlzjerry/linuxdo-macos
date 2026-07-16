@@ -404,6 +404,18 @@ export function TopicPage(): JSX.Element {
       setExtraPosts((prev) => prev.filter((p) => p.id !== tempId))
       setPatches((p) => new Map(p).set(created.id, created))
       toast.success('回复已发布')
+      // The server-assigned floor may differ from the optimistic guess —
+      // settle the viewport on the real post and flash it once.
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`post-${created.post_number}`)
+        el?.scrollIntoView({ block: 'nearest' })
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          el?.animate(
+            [{ backgroundColor: 'var(--accent-soft)' }, { backgroundColor: 'transparent' }],
+            { duration: 1600, easing: 'ease-out' }
+          )
+        }
+      })
     } catch (e) {
       setExtraPosts((prev) => prev.filter((p) => p.id !== tempId))
       toast.error(errorMessage(e, '发布失败'), {

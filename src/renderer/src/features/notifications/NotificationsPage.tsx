@@ -1,18 +1,21 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { AtSign, Award, Bell, CheckCheck, Heart, Link2, Mail, Quote, Reply } from 'lucide-react'
+import { AtSign, Award, Bell, CheckCheck, Heart, Link2, Mail, Quote, RefreshCw, Reply } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { Button } from '../../components/ui/Button'
+import { IconButton } from '../../components/ui/IconButton'
 import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { LoginGate } from '../../components/ui/LoginGate'
-import { EmptyState, ErrorState, Spinner, TopicListSkeleton } from '../../components/ui/states'
+import { EmptyState, ErrorState, ListSkeleton, Spinner } from '../../components/ui/states'
 import { useNotifications } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
-import { relativeTime } from '../../lib/format'
+import { relativeTime, absoluteTime } from '../../lib/format'
+import { useListNav } from '../../lib/useListNav'
+import { useFocusMemory } from '../../lib/useFocusMemory'
 import type { NotificationItem } from '../../lib/discourse/types'
 import styles from './NotificationsPage.module.css'
 
@@ -89,6 +92,8 @@ function NotificationRow({
   return (
     <button
       className={`${styles.row} ${item.read ? styles.read : styles.unread}`}
+      data-row
+      data-row-id={item.id}
       onClick={() => onOpen(item)}
       aria-label={text}
     >
@@ -98,7 +103,9 @@ function NotificationRow({
       <span className={styles.body}>
         <span className={styles.text}>{text}</span>
       </span>
-      <span className={styles.time}>{relativeTime(item.created_at)}</span>
+      <span className={styles.time} title={absoluteTime(item.created_at)}>
+        {relativeTime(item.created_at)}
+      </span>
       <span className={styles.trailing} aria-hidden>
         {!item.read && <span className={styles.dot} />}
       </span>
@@ -113,8 +120,20 @@ export function NotificationsPage(): JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [markingAll, setMarkingAll] = useState(false)
 
-  const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useNotifications()
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useNotifications()
+
+  useListNav(scrollRef)
+  useFocusMemory(scrollRef, 'notifications', !isLoading && !!data)
 
   const notifications = useMemo(() => {
     const seen = new Set<number>()
@@ -166,29 +185,39 @@ export function NotificationsPage(): JSX.Element {
   }
 
   const right = (
-    <Button
-      variant="secondary"
-      size="sm"
-      icon={<CheckCheck size={15} />}
-      onClick={() => void markAll()}
-      loading={markingAll}
-      disabled={markingAll || notifications.length === 0}
-    >
-      全部已读
-    </Button>
+    <>
+      <Button
+        variant="secondary"
+        size="sm"
+        icon={<CheckCheck size={15} />}
+        onClick={() => void markAll()}
+        loading={markingAll}
+        disabled={markingAll || notifications.length === 0}
+      >
+        全部已读
+      </Button>
+      <IconButton label="刷新" onClick={() => void refetch()} disabled={isRefetching}>
+        <RefreshCw size={16} className={isRefetching ? 'spin' : undefined} />
+      </IconButton>
+    </>
   )
 
   return (
     <PageScaffold ref={scrollRef} toolbar={<Toolbar title="通知" right={right} />}>
       {isLoading ? (
-        <TopicListSkeleton />
+        <ListSkeleton leading="icon" />
       ) : isError ? (
         <ErrorState error={error} onRetry={() => void refetch()} onLogin={() => void auth.showLogin()} />
       ) : notifications.length === 0 ? (
         <EmptyState
           icon={<Bell size={26} strokeWidth={1.6} />}
           title="没有通知"
-          description="当有人提及、回复或赞了你，会显示在这里。"
+          description="当有人提及、回复或赞了你，会显示在这里。先去逛逛，参与讨论吧。"
+          action={
+            <Button variant="primary" size="sm" onClick={() => navigate('/latest')}>
+              去逛最新
+            </Button>
+          }
         />
       ) : (
         <>

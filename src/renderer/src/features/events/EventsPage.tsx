@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { CalendarDays, RefreshCw } from 'lucide-react'
@@ -6,8 +6,10 @@ import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { IconButton } from '../../components/ui/IconButton'
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
-import { EmptyState, ErrorState, TopicListSkeleton } from '../../components/ui/states'
+import { EmptyState, ErrorState, ListSkeleton } from '../../components/ui/states'
 import { useEvents } from '../../lib/discourse/queries'
+import { useFocusMemory } from '../../lib/useFocusMemory'
+import { useListNav } from '../../lib/useListNav'
 import { useAuth } from '../../store/auth'
 import type { EventItem } from '../../lib/discourse/types'
 import styles from './EventsPage.module.css'
@@ -31,7 +33,10 @@ function fmtRange(e: EventItem): string {
 export function EventsPage(): JSX.Element {
   const navigate = useNavigate()
   const auth = useAuth()
+  const scrollRef = useRef<HTMLDivElement>(null)
   const { data, isLoading, isError, error, refetch, isRefetching } = useEvents()
+  useListNav(scrollRef)
+  useFocusMemory(scrollRef, 'events', !isLoading && !!data)
 
   const events = useMemo(() => {
     const list = [...(data?.events ?? [])]
@@ -51,16 +56,16 @@ export function EventsPage(): JSX.Element {
   )
 
   return (
-    <PageScaffold toolbar={toolbar}>
+    <PageScaffold ref={scrollRef} toolbar={toolbar}>
       {isLoading ? (
-        <TopicListSkeleton />
+        <ListSkeleton leading="date" />
       ) : isError ? (
         <ErrorState error={error} onRetry={() => void refetch()} onLogin={() => void auth.showLogin()} />
       ) : events.length === 0 ? (
         <EmptyState
           icon={<CalendarDays size={26} strokeWidth={1.6} />}
-          title="暂无活动"
-          description="社区活动会显示在这里。"
+          title="近期没有社区活动"
+          description="社区发布的线上线下活动会出现在这里，稍后再来看看。"
         />
       ) : (
         <div className={styles.list}>
@@ -72,6 +77,8 @@ export function EventsPage(): JSX.Element {
                 key={e.id}
                 type="button"
                 className={styles.row}
+                data-row={tid ? true : undefined}
+                data-row-id={tid ? e.id : undefined}
                 onClick={() => tid && navigate(`/t/${tid}`)}
                 disabled={!tid}
                 aria-label={title}

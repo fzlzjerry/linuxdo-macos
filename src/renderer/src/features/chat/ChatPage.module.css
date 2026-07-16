@@ -195,8 +195,10 @@
 .composerInput {
   flex: 1;
   min-width: 0;
+  /* 高度由 JS auto-grow 接管：1 行起步，至多 140px，超出内部滚动。 */
   resize: none;
   max-height: 140px;
+  overflow-y: auto;
   padding: 8px var(--sp-3);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
