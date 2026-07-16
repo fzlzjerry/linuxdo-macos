@@ -284,6 +284,14 @@
   border-radius: var(--r-sm);
   margin: 0;
 }
+/* Safety net: onebox fragments come in many shapes (onebox-avatar, bare
+   hero images…) — nothing inside the card may render at natural size. The
+   more specific source/thumbnail/aspect-image rules still win. */
+.cooked .onebox img {
+  max-height: 120px;
+  max-width: 40%;
+  object-fit: contain;
+}
 .cooked .onebox .source a {
   color: var(--ink-3);
 }

@@ -61,6 +61,8 @@ function Emoji({ id }: { id: string }): JSX.Element {
     }
   }, [e.img])
   if (e.char) return <span className={styles.char}>{e.char}</span>
+  // /emojis.json still loading — hold a quiet placeholder, don't guess URLs.
+  if (e.pending) return <span className={styles.img} aria-hidden />
   // Never render an invisible pill: an unresolvable id falls back to its
   // shortcode, the same convention the emoji picker uses.
   if (failed) return <span className={styles.imgFallback}>:{id}:</span>

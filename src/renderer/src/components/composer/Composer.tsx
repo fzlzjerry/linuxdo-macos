@@ -311,7 +311,9 @@ export function Composer({
       if ((p.textContent ?? '').trim() !== (a.textContent ?? '').trim()) return
       const hit = cachedOnebox(href)
       if (hit === undefined) {
-        void fetchOnebox(href).then(() => bumpOnebox())
+        // Re-render only when the cache actually gained an entry — bumping on
+        // the no-op paths would loop render → fetch → bump forever.
+        void fetchOnebox(href).then((settled) => settled && bumpOnebox())
         return
       }
       if (hit) {

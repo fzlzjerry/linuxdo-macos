@@ -4,7 +4,7 @@ import { absolutize } from './discourse/urls'
 
 // url → sanitized onebox HTML ('' = the URL doesn't onebox). Session-lived.
 const cache = new Map<string, string>()
-const inflight = new Map<string, Promise<void>>()
+const inflight = new Map<string, Promise<boolean>>()
 // Transient failures (429/offline) are NOT negative-cached — just cooled
 // down, so a throttled burst doesn't permanently kill previews for a URL.
 const retryAt = new Map<string, number>()
@@ -31,10 +31,13 @@ export function cachedOnebox(url: string): string | undefined {
   return cache.get(url)
 }
 
-/** Ask the server once per url; resolves when the cache is settled. */
-export function fetchOnebox(url: string): Promise<void> {
-  if (cache.has(url)) return Promise.resolve()
-  if (Date.now() < (retryAt.get(url) ?? 0)) return Promise.resolve()
+/** Ask the server once per url. Resolves `true` ONLY when the cache gained
+ *  an entry — callers re-render on true. It must resolve `false` on the
+ *  no-op paths (cooldown, already-cached): resolving "something changed"
+ *  from a render-triggered call creates an infinite render loop. */
+export function fetchOnebox(url: string): Promise<boolean> {
+  if (cache.has(url)) return Promise.resolve(false)
+  if (Date.now() < (retryAt.get(url) ?? 0)) return Promise.resolve(false)
   const running = inflight.get(url)
   if (running) return running
   const p = discourse
@@ -42,9 +45,11 @@ export function fetchOnebox(url: string): Promise<void> {
     .then((html) => {
       // '' here means a definitive 404 — safe to remember for the session.
       cache.set(url, sanitizeOnebox(html))
+      return true
     })
     .catch(() => {
       retryAt.set(url, Date.now() + RETRY_COOLDOWN_MS)
+      return false
     })
     .finally(() => {
       inflight.delete(url)

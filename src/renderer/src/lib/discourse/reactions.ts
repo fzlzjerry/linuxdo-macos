@@ -88,6 +88,7 @@ export function useEnabledReactions(): string[] {
 // name → image url learned from /emojis.json (covers custom packs); filled
 // by whoever has the emoji query handy (ReactionBar does).
 const urlByName = new Map<string, string>()
+let urlsPrimed = false
 
 export function primeReactionUrls(groups: EmojiGroups | undefined): void {
   if (!groups) return
@@ -96,16 +97,20 @@ export function primeReactionUrls(groups: EmojiGroups | undefined): void {
       if (!urlByName.has(e.name)) urlByName.set(e.name, e.url)
     }
   }
+  urlsPrimed = true
 }
 
-/** Resolve a reaction id to a native glyph, or an image URL for site emoji. */
-export function reactionEmoji(id: string): { char?: string; img?: string } {
+/** Resolve a reaction id: native glyph, site-emoji image URL, or `pending`
+ *  while /emojis.json hasn't arrived — guessing a twemoji path for what may
+ *  be a custom-pack id just 404s and flashes the shortcode fallback. */
+export function reactionEmoji(id: string): { char?: string; img?: string; pending?: boolean } {
   const char = nameToChar.get(id)
   if (char) return { char }
   const known = urlByName.get(id)
   if (known) {
     return { img: known.startsWith('http') ? known : `${LINUXDO_ORIGIN}${known}` }
   }
+  if (!urlsPrimed) return { pending: true }
   // linux.do serves twemoji under /images/emoji/twemoji/ (not /twitter/).
   return { img: `${LINUXDO_ORIGIN}/images/emoji/twemoji/${id}.png?v=15` }
 }
