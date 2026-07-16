@@ -103,7 +103,8 @@
 .empty {
   padding: var(--sp-4);
   font-size: var(--fs-sm);
-  color: var(--ink-3);
+  /* Meaningful small text — the only no-results feedback — stays on ink-2. */
+  color: var(--ink-2);
   text-align: center;
 }
 

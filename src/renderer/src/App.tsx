@@ -164,6 +164,10 @@ function RouteFocus({ target }: { target: RefObject<HTMLElement> }): null {
     if (location.pathname === prev.current) return
     prev.current = location.pathname
     if (navType === 'POP') return
+    // Something on the new page already claimed focus during commit (e.g. the
+    // search input's autoFocus) — parking would steal it.
+    const active = document.activeElement
+    if (active && active !== document.body && active !== target.current) return
     target.current?.focus({ preventScroll: true })
   }, [location.pathname, navType, target])
   return null

@@ -80,25 +80,23 @@ export function BookmarksPage(): JSX.Element {
     setHidden((s) => toggled(s, id, false))
     setBusy((s) => toggled(s, id, true))
     try {
-      const r = await discourse.bookmark(
-        bookmark.bookmarkable_id,
-        bookmark.bookmarkable_type === 'Topic' ? 'Topic' : 'Post'
-      )
+      // Pass the type through verbatim — the list also carries ChatMessage
+      // bookmarks; coercing those to 'Post' would rebuild onto a wrong object.
+      const r = await discourse.bookmark(bookmark.bookmarkable_id, bookmark.bookmarkable_type)
       // The server issued a fresh id — patch the cache so removing this row
-      // again targets the new bookmark rather than the deleted one.
-      queryClient.setQueryData<BookmarksResponse>(['bookmarks', auth.username], (old) =>
-        old?.user_bookmark_list
-          ? {
-              ...old,
-              user_bookmark_list: {
-                ...old.user_bookmark_list,
-                bookmarks: old.user_bookmark_list.bookmarks.map((b) =>
-                  b.id === id ? { ...b, id: r.id } : b
-                )
-              }
-            }
-          : old
-      )
+      // again targets the new bookmark rather than the deleted one. If a
+      // refetch replaced the cache meanwhile (the row is gone), re-append it.
+      queryClient.setQueryData<BookmarksResponse>(['bookmarks', auth.username], (old) => {
+        if (!old?.user_bookmark_list) return old
+        const rows = old.user_bookmark_list.bookmarks
+        const next = rows.some((b) => b.id === id)
+          ? rows.map((b) => (b.id === id ? { ...b, id: r.id } : b))
+          : [{ ...bookmark, id: r.id }, ...rows]
+        return {
+          ...old,
+          user_bookmark_list: { ...old.user_bookmark_list, bookmarks: next }
+        }
+      })
     } catch (e) {
       setHidden((s) => toggled(s, id, true))
       toast.error(errorMessage(e, '恢复书签失败'))

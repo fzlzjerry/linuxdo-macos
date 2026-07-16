@@ -68,20 +68,24 @@ export function SearchPage(): JSX.Element {
   const [advanced, setAdvanced] = useState(() => Object.keys(lastFilters).length > 0)
   const [term, setTerm] = useState(() => buildSearchQuery(lastSearchInput, lastFilters))
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const urlQ = searchParams.get('q') ?? ''
   const auth = useAuth()
   const scrollRef = useRef<HTMLDivElement>(null)
   const { data: categoriesData } = useCategories()
 
   // ⌘K 命令面板的「搜索 …」兜底项会导航到 /search?q=...：
-  // 挂载（或 q 变化）时若当前没有搜索会话，则预填输入框并立即执行搜索（跳过防抖）。
-  // 已有会话时不覆盖，避免返回本页时 URL 残留的 q 冲掉用户后续输入。
+  // 带 q 到达时预填输入框并立即执行（跳过防抖），随后把 q 从 URL 剥离——
+  // 消费即焚，这样 POP 返回本页时不会有残留的 q 冲掉用户后续的输入，
+  // 而每一次真正携带 q 的导航（即使已有搜索会话）都必然生效。
   useEffect(() => {
     const q = urlQ.trim()
-    if (!q || term.trim()) return
+    if (!q) return
     setInput(q)
     setTerm(buildSearchQuery(q, filters))
+    const next = new URLSearchParams(searchParams)
+    next.delete('q')
+    setSearchParams(next, { replace: true })
     // 仅在 q 变化时评估；input/filters 的后续变化由防抖 effect 处理
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlQ])

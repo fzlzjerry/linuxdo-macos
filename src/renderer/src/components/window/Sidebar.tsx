@@ -198,7 +198,15 @@ function Section({
             key={item.to}
             to={item.to}
             className={({ isActive }) => `${styles.item} ${isActive ? styles.active : ''}`}
-            title={collapsed ? item.label : undefined}
+            // Collapsed rail shrinks the badge to a dot — the tooltip has to
+            // carry the count, or sighted users lose the number entirely.
+            title={
+              collapsed
+                ? badge && badge > 0
+                  ? `${item.label} · ${badge} 条未读`
+                  : item.label
+                : undefined
+            }
           >
             <span className={styles.itemIcon}>
               <Icon size={17} />

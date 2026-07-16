@@ -58,12 +58,16 @@ export function useReadTracker({
   useEffect(() => {
     if (!enabled) return
     const s = state.current
+    const now = Date.now()
     s.session = topicId
     s.visible = new Set()
     s.pending = new Map()
     s.topicTime = 0
-    s.lastFlushDone = 0
-    s.lastFlushTry = 0
+    // Seeded with entry time, not 0 — otherwise the very first tick trips the
+    // "60s since last flush" check against the epoch and fires ~1s after
+    // entry, defeating the throttle on every topic visit.
+    s.lastFlushDone = now
+    s.lastFlushTry = now
     s.failures = 0
     s.pausedUntil = 0
     s.maxFlushed = 0

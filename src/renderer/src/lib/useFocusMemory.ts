@@ -24,27 +24,39 @@ function remember(key: string, rowId: string): void {
     remembered row is no longer in the list. */
 export function useFocusMemory(ref: RefObject<HTMLElement>, key: string, ready: boolean): void {
   const navigationType = useNavigationType()
-  const restoredKey = useRef<string | null>(null)
+  const attempted = useRef(false)
 
-  // Record via delegated focusin — covers j/k list-nav focus moves as well as
-  // any click/tab focus that lands on a row.
+  // Record via delegated focusin (j/k moves, tab focus) AND pointerdown —
+  // WKWebView never focuses buttons on click, so without the pointer path
+  // mouse users would never be remembered.
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const onFocusIn = (e: FocusEvent): void => {
-      if (!(e.target instanceof Element)) return
-      const id = e.target.closest('[data-row-id]')?.getAttribute('data-row-id')
+    const record = (target: EventTarget | null): void => {
+      if (!(target instanceof Element)) return
+      const id = target.closest('[data-row-id]')?.getAttribute('data-row-id')
       if (id) remember(key, id)
     }
+    const onFocusIn = (e: FocusEvent): void => record(e.target)
+    const onPointerDown = (e: PointerEvent): void => record(e.target)
     el.addEventListener('focusin', onFocusIn)
-    return () => el.removeEventListener('focusin', onFocusIn)
+    el.addEventListener('pointerdown', onPointerDown)
+    return () => {
+      el.removeEventListener('focusin', onFocusIn)
+      el.removeEventListener('pointerdown', onPointerDown)
+    }
   }, [ref, key])
 
   useLayoutEffect(() => {
-    if (navigationType !== 'POP' || !ready || restoredKey.current === key) return
+    // One attempt per mount, and only when this mount IS a history POP.
+    // useNavigationType keeps returning 'POP' until the next navigation, so
+    // without the once-guard a mere key change (filter switch, new search
+    // term) would re-run this and steal focus from whatever control the user
+    // is operating.
+    if (attempted.current || navigationType !== 'POP' || !ready) return
     const el = ref.current
     if (!el) return
-    restoredKey.current = key
+    attempted.current = true
     const id = focusedRows.get(key)
     if (id === undefined) return
     // data-row-id values are plain numeric ids — direct interpolation into the

@@ -81,23 +81,25 @@ export function LightboxHost(): JSX.Element {
 
           {images.length > 1 && (
             <>
+              {/* aria-disabled, not disabled: a truly disabled endpoint drops
+                  focus to body and the arrow keys die with it. */}
               <button
                 type="button"
-                className={`${styles.navBtn} ${styles.navPrev}`}
+                className={`${styles.navBtn} ${styles.navPrev} ${hasPrev ? '' : styles.navBtnOff}`}
                 aria-label="上一张"
                 title="上一张"
-                disabled={!hasPrev}
-                onClick={() => setIndex(index - 1)}
+                aria-disabled={!hasPrev}
+                onClick={() => hasPrev && setIndex(index - 1)}
               >
                 <ChevronLeft size={22} />
               </button>
               <button
                 type="button"
-                className={`${styles.navBtn} ${styles.navNext}`}
+                className={`${styles.navBtn} ${styles.navNext} ${hasNext ? '' : styles.navBtnOff}`}
                 aria-label="下一张"
                 title="下一张"
-                disabled={!hasNext}
-                onClick={() => setIndex(index + 1)}
+                aria-disabled={!hasNext}
+                onClick={() => hasNext && setIndex(index + 1)}
               >
                 <ChevronRight size={22} />
               </button>

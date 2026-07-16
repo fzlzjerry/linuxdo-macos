@@ -41,10 +41,20 @@ export function useSwipeBack(goBack: () => void): void {
     let accumulated = 0
     let lastEventAt = 0
     let cooldownUntil = 0
+    // After firing, the gesture must actually END (a >GAP_MS quiet spell)
+    // before a new one can arm — a fixed cooldown alone lets a slow sustained
+    // swipe or a long inertia tail re-accumulate and pop a second entry.
+    let armed = true
 
     const onWheel = (e: WheelEvent): void => {
       const now = performance.now()
-      if (now < cooldownUntil) return
+      const gapped = now - lastEventAt > GAP_MS
+      lastEventAt = now
+      if (gapped) {
+        accumulated = 0
+        armed = true
+      }
+      if (!armed || now < cooldownUntil) return
 
       // Must be horizontal-dominant and in the back direction; anything else
       // breaks the gesture.
@@ -66,12 +76,11 @@ export function useSwipeBack(goBack: () => void): void {
         return
       }
 
-      if (now - lastEventAt > GAP_MS) accumulated = 0
-      lastEventAt = now
       accumulated += Math.abs(e.deltaX)
 
       if (accumulated > THRESHOLD) {
         accumulated = 0
+        armed = false
         cooldownUntil = now + COOLDOWN_MS
         goBackRef.current()
       }

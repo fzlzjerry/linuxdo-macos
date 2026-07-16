@@ -70,7 +70,9 @@
 .unreadLabel {
   font-size: var(--fs-xs);
   font-weight: 600;
-  color: var(--accent);
+  /* Pulled toward ink: pure --accent on its own soft bg is ~3:1 in light
+     mode — below AA for meaningful 12px text. */
+  color: color-mix(in oklch, var(--accent) 55%, var(--ink));
   background: var(--accent-soft);
   border-radius: var(--r-full);
   padding: 1px var(--sp-2);

@@ -47,10 +47,11 @@ export function ReactionBar({ post }: Props): JSX.Element {
   }, [liked])
 
   // Chips present on first render must not play the enter animation; only ids
-  // appearing later count as "new".
+  // appearing later count as "new". Grow-only: a chip that leaves and comes
+  // back (optimistic swap rolled back on failure) is not "new" either.
   const seenChipIds = useRef<Set<string>>(new Set((post.reactions ?? []).map((r) => r.id)))
   useEffect(() => {
-    seenChipIds.current = new Set(reactions.map((r) => r.id))
+    for (const r of reactions) seenChipIds.current.add(r.id)
   }, [reactions])
 
   useEffect(() => {

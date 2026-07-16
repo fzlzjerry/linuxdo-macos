@@ -69,9 +69,17 @@ export function CookedContent({
       img.removeAttribute('srcset')
       if (isLightboxable(img)) {
         // Keyboard-reachable: Enter/Space on the delegated onKeyDown below.
+        // The accessible name must keep the image's own alt — a bare
+        // "查看图片" would strip every description from screen readers.
         img.tabIndex = 0
         img.setAttribute('role', 'button')
-        img.setAttribute('aria-label', '查看图片')
+        const alt = img.getAttribute('alt')?.trim()
+        img.setAttribute('aria-label', alt ? `查看图片：${alt}` : '查看图片')
+        // Discourse wraps large images in <a class="lightbox">: drop that
+        // anchor from the tab order, or the same picture gets two stops and
+        // Enter on the first one bounces out to the external browser.
+        const wrapper = img.closest('a.lightbox')
+        if (wrapper instanceof HTMLElement) wrapper.tabIndex = -1
       }
     })
     root.querySelectorAll('a[href]').forEach((a) => {

@@ -391,7 +391,7 @@ export const discourse = {
     })
   },
 
-  bookmark(id: number, type: 'Post' | 'Topic' = 'Post'): Promise<{ id: number }> {
+  bookmark(id: number, type: string = 'Post'): Promise<{ id: number }> {
     return request<{ id: number }>({
       path: '/bookmarks.json',
       method: 'POST',

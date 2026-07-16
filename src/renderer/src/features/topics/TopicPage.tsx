@@ -90,7 +90,11 @@ export function TopicPage(): JSX.Element {
     // First arrival of this topic's data — record it for the ⌘K「最近」group
     // (getState: no subscription, so this page never re-renders for recents).
     if (topic.title) useRecents.getState().pushRecent(id, topic.title)
-    if (initialLastRead === null) setInitialLastRead(topic.last_read_post_number ?? 0)
+    // Unconditional: when switching to a cached topic, the reset effect's
+    // setInitialLastRead(null) is still queued in this same commit, so the
+    // closure value is stale — checking it here would skip the freeze and
+    // kill the unread divider for the whole visit.
+    setInitialLastRead(topic.last_read_post_number ?? 0)
     if (!anchor) return
     setProgress((p) => ({ ...p, current: anchor }))
     const win = topic.post_stream.posts
@@ -101,7 +105,7 @@ export function TopicPage(): JSX.Element {
         (fallback ? document.getElementById(`post-${fallback}`) : null)
       el?.scrollIntoView({ block: 'start' })
     })
-  }, [topic, anchor, initialLastRead])
+  }, [topic, anchor, id])
 
   // Reading-position tracking: the last post whose top edge passed the fold.
   useEffect(() => {
@@ -265,11 +269,14 @@ export function TopicPage(): JSX.Element {
     const real = posts.filter((p) => !p.pending)
     for (let i = 0; i < real.length; i++) {
       const p = real[i]
-      if (p.post_number > lastRead) {
-        const prev = real[i - 1]
-        if (prev ? prev.post_number <= lastRead : p.post_number === lastRead + 1) return p.id
-        return null
-      }
+      // Own posts are read by definition — a reply sent this session must not
+      // grow an "unread" divider above itself.
+      if (p.post_number <= lastRead || p.yours) continue
+      const prev = real[i - 1]
+      const prevRead = prev
+        ? prev.post_number <= lastRead || !!prev.yours
+        : p.post_number === lastRead + 1
+      return prevRead ? p.id : null
     }
     return null
   }, [posts, initialLastRead])
@@ -286,9 +293,10 @@ export function TopicPage(): JSX.Element {
     if (unreadStart == null || unreadBusy) return
     const boundary = posts.find((p) => p.id === unreadBoundaryId)
     if (boundary) {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
       document
         .getElementById(`post-${boundary.post_number}`)
-        ?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+        ?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' })
       return
     }
     setUnreadBusy(true)

@@ -29,10 +29,21 @@
   border-color: var(--border-strong);
   color: var(--ink);
 }
+.heart:active {
+  background: var(--surface-active);
+}
+/* The icon carries the like color; the 12px count stays on an ink tone —
+   --like on its own soft bg is ~2.6:1 in light mode, far below AA. */
 .heart.liked {
   background: color-mix(in oklch, var(--like) 12%, transparent);
   border-color: var(--like);
+  color: var(--ink-2);
+}
+.heart.liked .heartIcon {
   color: var(--like);
+}
+.heart.liked:active {
+  background: color-mix(in oklch, var(--like) 20%, transparent);
 }
 
 .heartIcon {
