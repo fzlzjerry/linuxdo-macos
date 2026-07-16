@@ -583,9 +583,27 @@ export const discourse = {
     return request<ChatChannelsResponse>({ path: '/chat/api/me/channels' })
   },
 
-  chatMessages(channelId: number, pageSize = 50): Promise<ChatMessagesResponse> {
+  /** `beforeMessageId` pages backwards through history (older than that id). */
+  chatMessages(
+    channelId: number,
+    pageSize = 50,
+    beforeMessageId?: number
+  ): Promise<ChatMessagesResponse> {
+    const older = beforeMessageId
+      ? `&target_message_id=${beforeMessageId}&direction=past&fetch_from_last_read=false`
+      : ''
     return request<ChatMessagesResponse>({
-      path: `/chat/api/channels/${channelId}/messages?page_size=${pageSize}`
+      path: `/chat/api/channels/${channelId}/messages?page_size=${pageSize}${older}`
+    })
+  },
+
+  /** Mark the channel read up to a message — clears the sidebar unread dot. */
+  chatMarkRead(channelId: number, messageId: number): Promise<void> {
+    return requestVoid({
+      path: `/chat/api/channels/${channelId}/read/${messageId}`,
+      method: 'PUT',
+      form: true,
+      body: {}
     })
   },
 
@@ -617,6 +635,27 @@ export const discourse = {
       method: 'DELETE',
       form: true,
       body: { sequence }
+    })
+  },
+
+  /** Create/update a server-side draft (same payload shape the web composer
+      sends). Returns the next sequence to use; a 409 means another client
+      advanced the sequence — callers should re-read /drafts and back off. */
+  async saveDraft(
+    key: string,
+    sequence: number,
+    data: Record<string, unknown>
+  ): Promise<{ draft_sequence?: number }> {
+    return request<{ draft_sequence?: number }>({
+      path: '/drafts.json',
+      method: 'POST',
+      form: true,
+      body: {
+        draft_key: key,
+        sequence,
+        data: JSON.stringify(data),
+        force_save: true
+      }
     })
   }
 }

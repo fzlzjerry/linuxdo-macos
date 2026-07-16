@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   Bookmark,
   CheckCircle2,
+  CornerUpLeft,
   Flag,
   Link2,
   Loader2,
@@ -65,9 +66,18 @@ interface Props {
   onQuote?: (post: Post, quote: string) => void
   onEdit?: (post: Post) => void
   onDeleted?: () => void
+  /** Scroll to another floor in this topic (reply-to chip, quote headers). */
+  onJumpToPost?: (postNumber: number) => void
 }
 
-export function PostView({ post, onReply, onQuote, onEdit, onDeleted }: Props): JSX.Element {
+export function PostView({
+  post,
+  onReply,
+  onQuote,
+  onEdit,
+  onDeleted,
+  onJumpToPost
+}: Props): JSX.Element {
   const auth = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -219,6 +229,10 @@ export function PostView({ post, onReply, onQuote, onEdit, onDeleted }: Props): 
       ref={articleRef}
       className={`${styles.post} ${post.pending ? styles.pending : ''} ${accepted ? styles.accepted : ''}`}
       id={`post-${post.post_number}`}
+      // j/k moves focus across posts (useListNav); -1 keeps them off Tab.
+      data-row
+      tabIndex={-1}
+      aria-label={`#${post.post_number} 楼 · ${post.name || post.username}`}
     >
       <header className={styles.header}>
         {canVisitProfile ? (
@@ -286,12 +300,30 @@ export function PostView({ post, onReply, onQuote, onEdit, onDeleted }: Props): 
             ) : (
               <span className={styles.postNo}>#{post.post_number}</span>
             )}
+            {/* Hidden for a reply to the floor directly above — web parity. */}
+            {onJumpToPost &&
+              post.reply_to_post_number != null &&
+              post.reply_to_post_number < post.post_number - 1 && (
+                <button
+                  type="button"
+                  className={styles.replyTo}
+                  onClick={() => onJumpToPost(post.reply_to_post_number!)}
+                  title={`跳转到 #${post.reply_to_post_number}`}
+                >
+                  <CornerUpLeft size={11} /> 回复 #{post.reply_to_post_number}
+                </button>
+              )}
           </div>
         </div>
       </header>
 
       <div className={styles.body}>
-        <CookedContent html={post.cooked} hidePolls={polls.length > 0} />
+        <CookedContent
+          html={post.cooked}
+          hidePolls={polls.length > 0}
+          topicId={post.topic_id}
+          onJumpToPost={onJumpToPost}
+        />
         {polls.length > 0 && <PollView post={post} polls={polls} />}
         <BoostSection post={post} />
       </div>

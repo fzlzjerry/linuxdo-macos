@@ -228,6 +228,9 @@ export interface TopicDetail {
   closed?: boolean
   archived?: boolean
   archetype?: string
+  /** Server-side composer draft for this topic (JSON string + its sequence). */
+  draft?: string | null
+  draft_sequence?: number | null
   post_stream: TopicPostStream
   details?: {
     created_by?: DiscourseUser

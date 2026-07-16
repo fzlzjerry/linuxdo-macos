@@ -1,7 +1,8 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery, type QueryClient } from '@tanstack/react-query'
 import { discourse, nextPage } from './client'
 import type {
   DiscourseUser,
+  DraftsResponse,
   ListingFilter,
   TopicListResponse,
   TopPeriod
@@ -151,6 +152,17 @@ export function useDrafts(enabled: boolean) {
     queryFn: () => discourse.drafts(),
     enabled,
     staleTime: 15_000
+  })
+}
+
+/** Imperative drafts lookup sharing the ['drafts'] cache — used by composer
+ *  modals probing for an existing server draft on open. The 30s freshness
+ *  window keeps rapid open/close cycles from hammering /drafts.json. */
+export function fetchDrafts(queryClient: QueryClient): Promise<DraftsResponse> {
+  return queryClient.fetchQuery({
+    queryKey: ['drafts'],
+    queryFn: () => discourse.drafts(),
+    staleTime: 30_000
   })
 }
 

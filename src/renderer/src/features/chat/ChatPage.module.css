@@ -136,6 +136,18 @@
   gap: var(--sp-1);
 }
 
+/* 顶部「加载更早的消息」状态行 — 只在拉取历史时出现。 */
+.historyRow {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) 0 var(--sp-2);
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+
 .msg {
   display: flex;
   gap: var(--sp-2);
@@ -143,6 +155,16 @@
 }
 .msgGrouped {
   padding-top: 0;
+}
+/* 乐观上屏的 staged 消息:轻微降透明度 + 时钟标记表示「发送中」,
+   服务端回显收敛后自然恢复为正常消息(状态表达,无动效)。 */
+.msgPending {
+  opacity: 0.7;
+}
+.msgTimePending {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 .msgAvatar {
   flex: none;
@@ -211,4 +233,14 @@
 .composerInput:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+/* InlineAutocomplete 默认把菜单放在 caret 行下方——聊天输入框贴着窗口底部,
+   菜单会被视口裁掉。这里把菜单(组件根节点,fixed 定位的 role="listbox" 层)
+   整体翻转到 caret 行上方:-100% 收回自身高度,再减去一行行高 + 间距。 */
+.acFlip {
+  display: contents;
+}
+.acFlip > [role='listbox'] {
+  transform: translateY(calc(-100% - 28px));
 }

@@ -116,6 +116,16 @@
   background: color-mix(in oklch, var(--ink) 4%, transparent);
   font-weight: 500;
 }
+/* Quote headers with a data-topic are jump targets (click / Enter). Child
+   combinator: a nested plain [quote] inside must not inherit the affordance. */
+.cooked aside.quote[data-topic] > .title {
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.cooked aside.quote[data-topic] > .title:hover {
+  background: color-mix(in oklch, var(--ink) 8%, transparent);
+  color: var(--ink);
+}
 .cooked aside.quote .title img.avatar {
   width: 20px;
   height: 20px;
@@ -208,6 +218,13 @@
   height: 0.9em;
   flex: none;
 }
+/* The placeholder span that ships in cooked HTML — we swap its children for
+   the real icon (tag sprite / category color square) at render time. */
+.cooked .hashtag-icon-placeholder {
+  display: inline-flex;
+  align-items: center;
+}
+
 .cooked .hashtag-category-square,
 .cooked .hashtag-color-square {
   display: inline-block;

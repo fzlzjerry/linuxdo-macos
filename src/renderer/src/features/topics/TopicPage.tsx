@@ -18,6 +18,9 @@ import { ErrorState, Spinner } from '../../components/ui/states'
 import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
 import { useTopic } from '../../lib/discourse/queries'
 import { useBackNav } from '../../lib/useBackNav'
+import { useListNav } from '../../lib/useListNav'
+import { useDraftAutosave } from '../../lib/useDraftAutosave'
+import { parseDraftContent } from '../../lib/discourse/draftContent'
 import { errorMessage } from '../../lib/errors'
 import { renderMarkdown } from '../../lib/markdown'
 import { discourse } from '../../lib/discourse/client'
@@ -52,6 +55,9 @@ export function TopicPage(): JSX.Element {
 
   const { data: topic, isLoading, isError, error, refetch, isRefetching } = useTopic(id, anchor)
 
+  // j/k walks the posts (they carry data-row + tabIndex=-1).
+  useListNav(scrollRef)
+
   const [extraPosts, setExtraPosts] = useState<Post[]>([])
   const [patches, setPatches] = useState<Map<number, Post>>(new Map())
   const [deleted, setDeleted] = useState<Set<number>>(new Set())
@@ -65,7 +71,31 @@ export function TopicPage(): JSX.Element {
   // last_read_post_number frozen at entry: timings flushes advance the cached
   // value while reading, and the divider must not drift along with it.
   const [initialLastRead, setInitialLastRead] = useState<number | null>(null)
-  const guard = useDiscardGuard(composer != null, () => setComposer(null))
+
+  // Server-side draft autosave for replies (Discourse key topic_{id}).
+  // Deletion is gated on hasSaved(): only a draft this session actually wrote
+  // may be removed — merely opening and closing the composer must never wipe
+  // a draft the user saved from the website.
+  const composerBoxRef = useRef<HTMLDivElement>(null)
+  const replyDraftKey = `topic_${id}`
+  const autosave = useDraftAutosave(
+    composer?.mode === 'reply' ? replyDraftKey : null,
+    topic?.draft_sequence ?? undefined
+  )
+  const pushReplyDraft = (): void => {
+    if (composer?.mode !== 'reply') return
+    const raw = composerBoxRef.current?.querySelector('textarea')?.value.trim() ?? ''
+    autosave.update(raw ? { reply: raw, action: 'reply', archetypeId: 'regular' } : null)
+  }
+
+  const guard = useDiscardGuard(composer != null, () => {
+    // Dirty replies only leave through the DiscardBar (确认丢弃) — drop the
+    // server draft with them; clean closes leave any existing draft alone.
+    if (composer?.mode === 'reply' && autosave.hasSaved()) {
+      void autosave.discard(replyDraftKey)
+    }
+    setComposer(null)
+  })
 
   // The reset effect must not re-run when only ?post= changes, so it reads
   // the anchor through a ref.
@@ -289,6 +319,34 @@ export function TopicPage(): JSX.Element {
       ? initialLastRead + 1
       : null
 
+  /** Scroll a floor into view (fetching its window first when unloaded) and
+   *  flash it. Serves reply-to chips and same-topic quote headers. */
+  const flashPost = (n: number): boolean => {
+    const el = document.getElementById(`post-${n}`)
+    if (!el) return false
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' })
+    if (!reduce) {
+      el.animate(
+        [{ backgroundColor: 'var(--accent-soft)' }, { backgroundColor: 'transparent' }],
+        { duration: 1200, easing: 'ease-out' }
+      )
+    }
+    return true
+  }
+
+  async function jumpToPost(target: number): Promise<void> {
+    if (flashPost(target)) return
+    try {
+      const win = await discourse.topic(id, target)
+      setExtraPosts((prev) => [...prev, ...win.post_stream.posts])
+      const n = win.post_stream.posts.find((p) => p.post_number >= target)?.post_number ?? target
+      requestAnimationFrame(() => flashPost(n))
+    } catch (e) {
+      toast.error(errorMessage(e, '加载失败'))
+    }
+  }
+
   async function jumpToUnread(): Promise<void> {
     if (unreadStart == null || unreadBusy) return
     const boundary = posts.find((p) => p.id === unreadBoundaryId)
@@ -341,7 +399,10 @@ export function TopicPage(): JSX.Element {
 
   function openReply(post?: Post): void {
     if (!requireAuth()) return
-    setComposer({ mode: 'reply', post })
+    // Resume this topic's server-side draft (website parity) — also the
+    // reason autosave must not blind-overwrite: the draft is shown first.
+    const draft = parseDraftContent(topic?.draft ?? undefined).reply
+    setComposer({ mode: 'reply', post, draft })
   }
 
   function openQuote(post: Post, quote: string): void {
@@ -412,6 +473,10 @@ export function TopicPage(): JSX.Element {
       setExtraPosts((prev) => prev.filter((p) => p.id !== tempId))
       setPatches((p) => new Map(p).set(created.id, created))
       toast.success('回复已发布')
+      // Published — the topic draft is spent (website behavior). The key is
+      // passed explicitly: the composer already closed, so the hook's own key
+      // has been nulled by the time this network call resolves.
+      void autosave.discard(replyDraftKey)
       // The server-assigned floor may differ from the optimistic guess —
       // settle the viewport on the real post and flash it once.
       requestAnimationFrame(() => {
@@ -533,6 +598,7 @@ export function TopicPage(): JSX.Element {
                     onQuote={canPost ? openQuote : undefined}
                     onEdit={(post) => void openEdit(post)}
                     onDeleted={() => setDeleted((s) => new Set(s).add(p.id))}
+                    onJumpToPost={(n) => void jumpToPost(n)}
                   />
                 </ErrorBoundary>
               </Fragment>
@@ -579,21 +645,23 @@ export function TopicPage(): JSX.Element {
           }
           width={720}
         >
-          <Composer
-            key={
-              composer.mode === 'edit'
-                ? `edit-${composer.post.id}`
-                : `reply-${composer.post?.id ?? 'topic'}`
-            }
-            initialValue={composer.mode === 'edit' ? composer.raw : (composer.draft ?? '')}
-            submitting={submitting}
-            submitLabel={composer.mode === 'edit' ? '保存' : '回复'}
-            autoFocus
-            minHeight={200}
-            onCancel={guard.requestClose}
-            onDirtyChange={guard.setDirty}
-            onSubmit={(raw) => void submitComposer(raw)}
-          />
+          <div ref={composerBoxRef} onInput={pushReplyDraft}>
+            <Composer
+              key={
+                composer.mode === 'edit'
+                  ? `edit-${composer.post.id}`
+                  : `reply-${composer.post?.id ?? 'topic'}`
+              }
+              initialValue={composer.mode === 'edit' ? composer.raw : (composer.draft ?? '')}
+              submitting={submitting}
+              submitLabel={composer.mode === 'edit' ? '保存' : '回复'}
+              autoFocus
+              minHeight={200}
+              onCancel={guard.requestClose}
+              onDirtyChange={guard.setDirty}
+              onSubmit={(raw) => void submitComposer(raw)}
+            />
+          </div>
           {guard.confirming && (
             <DiscardBar onKeep={guard.keepEditing} onDiscard={guard.confirmDiscard} />
           )}

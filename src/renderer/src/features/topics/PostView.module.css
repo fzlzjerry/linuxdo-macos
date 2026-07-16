@@ -2,6 +2,12 @@
   padding: var(--sp-5) 0;
   border-bottom: 1px solid var(--border);
 }
+/* j/k focus target — inset ring, same treatment as full-bleed list rows. */
+.post:focus-visible {
+  outline: var(--ring-w) solid var(--ring-color);
+  outline-offset: -2px;
+  border-radius: var(--r-md);
+}
 
 .header {
   display: flex;
@@ -131,6 +137,23 @@
 
 .postNo {
   font-variant-numeric: tabular-nums;
+}
+
+/* "回复 #N" jump chip in the meta line. */
+.replyTo {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.replyTo:hover {
+  color: var(--accent);
 }
 
 .body {
