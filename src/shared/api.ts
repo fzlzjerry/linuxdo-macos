@@ -1,15 +1,5 @@
-// Transport contract shared between the Electron main process and the renderer.
-// Domain (Discourse) types live in the renderer; main only relays requests.
-
-export const IPC = {
-  discourseRequest: 'discourse:request',
-  authGetState: 'auth:getState',
-  authShowLogin: 'auth:showLogin',
-  authLogout: 'auth:logout',
-  authChanged: 'auth:changed', // main -> renderer push
-  openExternal: 'app:openExternal',
-  windowControls: 'app:windowControls'
-} as const
+// Transport contract shared between the Rust bridge and the renderer.
+// Domain (Discourse) types live in the renderer; the bridge only relays requests.
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
