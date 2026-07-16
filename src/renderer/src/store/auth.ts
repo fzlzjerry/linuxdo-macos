@@ -8,12 +8,23 @@ interface AuthStore extends AuthState {
   showLogin: () => Promise<void>
   logout: () => Promise<void>
   refresh: () => Promise<void>
+  /** Local optimistic badge sync — the session poll (45s) is authoritative,
+   *  but reading a notification must clear the badge NOW, not next poll. */
+  adjustUnread: (kind: 'notifications' | 'pms', delta: number) => void
+  clearUnread: () => void
 }
 
 export const useAuth = create<AuthStore>((set) => ({
   loggedIn: false,
   ready: false,
   setState: (s) => set({ ...s, ready: true }),
+  adjustUnread: (kind, delta) =>
+    set((s) =>
+      kind === 'notifications'
+        ? { unreadNotifications: Math.max(0, (s.unreadNotifications ?? 0) + delta) }
+        : { unreadPersonalMessages: Math.max(0, (s.unreadPersonalMessages ?? 0) + delta) }
+    ),
+  clearUnread: () => set({ unreadNotifications: 0, unreadPersonalMessages: 0 }),
   showLogin: async () => {
     if (window.api) await window.api.auth.showLogin()
   },

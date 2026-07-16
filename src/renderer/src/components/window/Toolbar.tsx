@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { NotificationBell } from './NotificationBell'
 import styles from './Toolbar.module.css'
 
 interface ToolbarProps {
@@ -31,7 +32,11 @@ export function Toolbar({ title, subtitle, left, right }: ToolbarProps): JSX.Ele
         <h1 className={styles.title}>{title}</h1>
         {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
       </div>
-      {right && <div className={styles.right}>{right}</div>}
+      <div className={styles.right}>
+        {right}
+        {/* Global: unread notifications stay in sight on every page. */}
+        <NotificationBell />
+      </div>
     </header>
   )
 }

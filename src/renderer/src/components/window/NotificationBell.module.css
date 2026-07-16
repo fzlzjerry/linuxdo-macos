@@ -1,0 +1,186 @@
+.bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-2);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.bell:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.bell:active {
+  background: var(--surface-active);
+}
+.bell[aria-expanded='true'] {
+  background: var(--surface-active);
+  color: var(--ink);
+}
+
+.badge {
+  position: absolute;
+  top: -3px;
+  right: -5px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: var(--r-full);
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  /* Cut a hairline of toolbar bg around the pill so it reads as floating. */
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+/* Portaled panel — fixed positioning escapes the toolbar's backdrop-filter. */
+.panel {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  display: flex;
+  flex-direction: column;
+  max-height: min(480px, calc(100vh - 96px));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+.headTitle {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+.headAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-2);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.headAction:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.headAction:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.list {
+  overflow-y: auto;
+  padding: var(--sp-1);
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-6) 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.row:hover {
+  background: var(--surface-hover);
+}
+.row:active {
+  background: var(--surface-active);
+}
+.rowUnread {
+  background: var(--accent-soft);
+}
+/* Keep the unread tint visible under hover (same rule as the full page). */
+.rowUnread:hover {
+  background:
+    linear-gradient(var(--accent-soft), var(--accent-soft)),
+    var(--surface-hover);
+}
+
+.rowIcon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.rowIconLike {
+  color: var(--like);
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowTime {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.footer {
+  width: 100%;
+  padding: var(--sp-2) 0;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--accent);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.footer:hover {
+  background: var(--surface-hover);
+}
+.footer:active {
+  background: var(--surface-active);
+}
