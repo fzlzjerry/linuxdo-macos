@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Download, RefreshCw, RotateCw } from 'lucide-react'
+import { getVersion } from '@tauri-apps/api/app'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
 import { Segmented } from '../../components/ui/Segmented'
@@ -9,6 +10,7 @@ import { Avatar } from '../../components/ui/Avatar'
 import { useSettings } from '../../store/settings'
 import type { ThemeMode } from '../../store/settings'
 import { useAuth } from '../../store/auth'
+import { useUpdater } from '../../store/updater'
 import { toast } from '../../store/toast'
 import { useUserPreferences } from '../../lib/discourse/queries'
 import { discourse } from '../../lib/discourse/client'
@@ -102,16 +104,75 @@ const DENSITY_OPTIONS: { value: string; label: string }[] = [
 ]
 
 const APP_NAME = 'Oh My LinuxDo'
-const APP_VERSION = '0.1.0'
 
 export function SettingsPage(): JSX.Element {
-  const { theme, fontScale, compactList, setTheme, setFontScale, setCompactList } = useSettings()
+  const { theme, fontScale, compactList, autoCheckUpdates, setTheme, setFontScale, setCompactList, setAutoCheckUpdates } =
+    useSettings()
   const auth = useAuth()
+  const updater = useUpdater()
+
+  const [version, setVersion] = useState('')
+  useEffect(() => {
+    void getVersion()
+      .then(setVersion)
+      .catch(() => setVersion(''))
+  }, [])
 
   const handleLogout = async (): Promise<void> => {
     await auth.logout()
     toast.info('已退出登录')
   }
+
+  // Single update button whose label/action reflect the current updater phase.
+  const updateButton = ((): {
+    label: string
+    variant: 'primary' | 'secondary'
+    icon: ReactNode
+    loading: boolean
+    disabled: boolean
+    onClick: () => void
+  } => {
+    switch (updater.status) {
+      case 'checking':
+        return { label: '检查中…', variant: 'secondary', icon: null, loading: true, disabled: true, onClick: () => {} }
+      case 'available':
+        return {
+          label: '下载并安装',
+          variant: 'primary',
+          icon: <Download size={15} />,
+          loading: false,
+          disabled: false,
+          onClick: () => void updater.download()
+        }
+      case 'downloading':
+        return {
+          label: `下载中 ${Math.round(updater.progress * 100)}%`,
+          variant: 'secondary',
+          icon: null,
+          loading: true,
+          disabled: true,
+          onClick: () => {}
+        }
+      case 'ready':
+        return {
+          label: '重启以完成更新',
+          variant: 'primary',
+          icon: <RotateCw size={15} />,
+          loading: false,
+          disabled: false,
+          onClick: () => void updater.restart()
+        }
+      default:
+        return {
+          label: '检查更新',
+          variant: 'secondary',
+          icon: <RefreshCw size={15} />,
+          loading: false,
+          disabled: false,
+          onClick: () => void updater.check({ silent: false })
+        }
+    }
+  })()
 
   return (
     <PageScaffold toolbar={<Toolbar title="设置" />}>
@@ -181,10 +242,42 @@ export function SettingsPage(): JSX.Element {
               <span className={styles.value}>{APP_NAME}</span>
             </Row>
             <Row label="版本">
-              <span className={styles.value}>{APP_VERSION}</span>
+              <span className={styles.value}>{version || '…'}</span>
             </Row>
+            <Row label="自动检查更新" description="启动时静默检查 GitHub 上的新版本">
+              <Segmented
+                options={ONOFF}
+                value={autoCheckUpdates ? 'on' : 'off'}
+                onChange={(v) => setAutoCheckUpdates(v === 'on')}
+                aria-label="自动检查更新"
+              />
+            </Row>
+            {updater.status === 'downloading' && (
+              <div className={styles.progressRow}>
+                <div className={styles.progressHead}>
+                  <span>正在下载更新{updater.version ? ` ${updater.version}` : ''}</span>
+                  <span>{Math.round(updater.progress * 100)}%</span>
+                </div>
+                <div className={styles.progressTrack}>
+                  <div
+                    className={styles.progressFill}
+                    style={{ width: `${Math.round(updater.progress * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
             <p className={styles.note}>linux.do 第三方 macOS 客户端</p>
             <div className={styles.buttonRow}>
+              <Button
+                variant={updateButton.variant}
+                size="sm"
+                icon={updateButton.icon}
+                loading={updateButton.loading}
+                disabled={updateButton.disabled}
+                onClick={updateButton.onClick}
+              >
+                {updateButton.label}
+              </Button>
               <Button
                 variant="secondary"
                 size="sm"

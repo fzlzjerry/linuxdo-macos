@@ -9,6 +9,8 @@
     "core:window:default",
     "core:window:allow-set-title",
     "core:window:allow-start-dragging",
-    "deep-link:default"
+    "deep-link:default",
+    "updater:default",
+    "process:default"
   ]
 }

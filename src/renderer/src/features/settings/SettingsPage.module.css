@@ -80,7 +80,40 @@
 
 .buttonRow {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-4);
+}
+
+/* Update download progress */
+.progressRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.progressHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.progressTrack {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.2s ease;
 }
 
 /* Account row: identity on the left, action on the right */

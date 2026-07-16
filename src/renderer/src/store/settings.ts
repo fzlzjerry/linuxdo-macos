@@ -6,12 +6,14 @@ interface Persisted {
   theme: ThemeMode
   fontScale: number
   compactList: boolean
+  autoCheckUpdates: boolean
 }
 
 interface SettingsState extends Persisted {
   setTheme: (t: ThemeMode) => void
   setFontScale: (n: number) => void
   setCompactList: (b: boolean) => void
+  setAutoCheckUpdates: (b: boolean) => void
 }
 
 const KEY = 'linuxdo-settings'
@@ -22,10 +24,11 @@ function load(): Persisted {
     return {
       theme: (s.theme as ThemeMode) ?? 'system',
       fontScale: typeof s.fontScale === 'number' ? s.fontScale : 1,
-      compactList: !!s.compactList
+      compactList: !!s.compactList,
+      autoCheckUpdates: typeof s.autoCheckUpdates === 'boolean' ? s.autoCheckUpdates : true
     }
   } catch {
-    return { theme: 'system', fontScale: 1, compactList: false }
+    return { theme: 'system', fontScale: 1, compactList: false, autoCheckUpdates: true }
   }
 }
 
@@ -61,7 +64,13 @@ const initial = load()
 export const useSettings = create<SettingsState>((set, get) => {
   const persistPatch = (patch: Partial<Persisted>): void => {
     const cur = get()
-    save({ theme: cur.theme, fontScale: cur.fontScale, compactList: cur.compactList, ...patch })
+    save({
+      theme: cur.theme,
+      fontScale: cur.fontScale,
+      compactList: cur.compactList,
+      autoCheckUpdates: cur.autoCheckUpdates,
+      ...patch
+    })
   }
   return {
     ...initial,
@@ -79,6 +88,10 @@ export const useSettings = create<SettingsState>((set, get) => {
       applyDensity(compactList)
       persistPatch({ compactList })
       set({ compactList })
+    },
+    setAutoCheckUpdates: (autoCheckUpdates) => {
+      persistPatch({ autoCheckUpdates })
+      set({ autoCheckUpdates })
     }
   }
 })

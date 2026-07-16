@@ -23,7 +23,8 @@ import { Toaster } from './components/ui/Toaster'
 import { LightboxHost } from './components/ui/Lightbox'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { initAuthBridge, useAuth } from './store/auth'
-import { initSettings } from './store/settings'
+import { initSettings, useSettings } from './store/settings'
+import { autoCheckUpdatesOnStartup } from './store/updater'
 import { ensureSvgSprite } from './lib/svgSprite'
 import { useGlobalShortcuts } from './lib/shortcuts'
 import { useBackNav } from './lib/useBackNav'
@@ -88,6 +89,7 @@ export function App(): JSX.Element {
   useEffect(() => {
     initSettings()
     void ensureSvgSprite()
+    autoCheckUpdatesOnStartup(useSettings.getState().autoCheckUpdates)
     return initAuthBridge()
   }, [])
 
