@@ -139,8 +139,11 @@ async function __linuxdoFetch(id, reqJson) {
     if (req.binary) {
       const blob = await r.blob();
       dataUrl = await new Promise(function (res) { var fr = new FileReader(); fr.onload = function () { res(String(fr.result)); }; fr.onerror = function () { res(''); }; fr.readAsDataURL(blob); });
-    } else if (isJson) { json = await r.json(); } else { text = (await r.text()).slice(0, 4000); }
-    const challenge = !req.binary && !isJson && /just a moment|checking your browser|attention required|cf-browser-verification|请稍候|verify you are human/i.test(text || '');
+    } else if (isJson) { json = await r.json(); } else { text = (await r.text()).slice(0, req.fullText ? 262144 : 4000); }
+    // Challenge sniffing is status-gated: content-bearing text endpoints
+    // (/onebox previews) can legitimately CONTAIN these phrases in scraped
+    // page titles/excerpts — a 200 must never be treated as an interstitial.
+    const challenge = !req.binary && !isJson && (r.status === 403 || r.status === 503) && /just a moment|checking your browser|attention required|cf-browser-verification|请稍候|verify you are human/i.test(text || '');
     const needsAuth = r.status === 401 || r.status === 403 || challenge;
     payload = { id: id, ok: r.ok, status: r.status, isJson: isJson, json: json, text: text, dataUrl: dataUrl, needsAuth: needsAuth, challenge: challenge };
   } catch (e) {

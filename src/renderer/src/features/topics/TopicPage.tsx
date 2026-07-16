@@ -109,8 +109,11 @@ export function TopicPage(): JSX.Element {
    *  immediate response only has the bare link (the website gets the update
    *  over MessageBus). Re-fetch the post once, after the job had time to run,
    *  so app-authored links grow their Open Graph cards too. */
-  function schedulePostRecook(postId: number, raw: string): void {
-    if (!/https?:\/\/\S+/i.test(raw)) return
+  function schedulePostRecook(post: Post, raw: string): void {
+    // Schemed URL in the raw, or the server already emitted a loading-onebox
+    // stub (bare domains it linkified server-side land here too).
+    if (!/https?:\/\/\S+/i.test(raw) && !/class="onebox/.test(post.cooked ?? '')) return
+    const postId = post.id
     const topicAtSchedule = id
     window.setTimeout(() => {
       if (idRef.current !== topicAtSchedule) return
@@ -454,7 +457,7 @@ export function TopicPage(): JSX.Element {
       try {
         const updated = await discourse.editPost(composer.post.id, raw)
         setPatches((p) => new Map(p).set(updated.id, updated))
-        schedulePostRecook(updated.id, raw)
+        schedulePostRecook(updated, raw)
         toast.success('已保存')
         setComposer(null)
       } catch (e) {
@@ -498,7 +501,7 @@ export function TopicPage(): JSX.Element {
       })
       setExtraPosts((prev) => prev.filter((p) => p.id !== tempId))
       setPatches((p) => new Map(p).set(created.id, created))
-      schedulePostRecook(created.id, raw)
+      schedulePostRecook(created, raw)
       toast.success('回复已发布')
       // Published — the topic draft is spent (website behavior). The key is
       // passed explicitly: the composer already closed, so the hook's own key

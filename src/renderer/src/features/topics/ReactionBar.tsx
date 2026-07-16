@@ -25,25 +25,45 @@ const emojiImgCache = new Map<string, string>() // abs url -> data url ('' = fai
 
 function Emoji({ id }: { id: string }): JSX.Element {
   const e = reactionEmoji(id)
-  const [src, setSrc] = useState<string | undefined>(() =>
-    e.img ? emojiImgCache.get(e.img) || undefined : undefined
-  )
+  const cached = e.img ? emojiImgCache.get(e.img) : undefined
+  const [src, setSrc] = useState<string | undefined>(cached || undefined)
+  const [failed, setFailed] = useState(cached === '')
   useEffect(() => {
     const url = e.img
-    if (!url || emojiImgCache.get(url) !== undefined) return
+    if (!url) return
+    const hit = emojiImgCache.get(url)
+    if (hit !== undefined) {
+      setSrc(hit || undefined)
+      setFailed(hit === '')
+      return
+    }
     let live = true
     window.api
       ?.fetchImage(url)
       .then((data) => {
         emojiImgCache.set(url, data ?? '')
-        if (live && data) setSrc(data)
+        if (!live) return
+        if (data) {
+          setSrc(data)
+          // The twemoji guess may have failed before /emojis.json supplied
+          // the real URL — a late success must clear the shortcode fallback.
+          setFailed(false)
+        } else {
+          setFailed(true)
+        }
       })
-      .catch(() => emojiImgCache.set(url, ''))
+      .catch(() => {
+        emojiImgCache.set(url, '')
+        if (live) setFailed(true)
+      })
     return () => {
       live = false
     }
   }, [e.img])
   if (e.char) return <span className={styles.char}>{e.char}</span>
+  // Never render an invisible pill: an unresolvable id falls back to its
+  // shortcode, the same convention the emoji picker uses.
+  if (failed) return <span className={styles.imgFallback}>:{id}:</span>
   if (!src) return <span className={styles.img} aria-hidden />
   return <img className={styles.img} src={src} alt={id} />
 }

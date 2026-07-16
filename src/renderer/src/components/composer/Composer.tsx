@@ -1,6 +1,7 @@
 import {
   useEffect,
   useLayoutEffect,
+  useReducer,
   useRef,
   useState,
   type ChangeEvent,
@@ -32,6 +33,7 @@ import { discourse } from '../../lib/discourse/client'
 import type { UploadResult } from '../../lib/discourse/client'
 import { absolutize } from '../../lib/discourse/urls'
 import { renderMarkdown } from '../../lib/markdown'
+import { cachedOnebox, fetchOnebox } from '../../lib/oneboxPreview'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
 import { EmojiPicker } from './EmojiPicker'
@@ -286,7 +288,40 @@ export function Composer({
     }
   }
 
-  const renderPreview = (): string => renderMarkdown(text, uploadMap.current)
+  // Bumped when a server onebox preview lands so the pane re-renders with it.
+  const [oneboxTick, bumpOnebox] = useReducer((x: number) => x + 1, 0)
+
+  /** Preview parity with the website: paragraphs that consist of a single
+   *  link get the server's onebox fragment (which also warms the cook cache,
+   *  so the published post usually skips the rebake delay). */
+  const renderPreview = (tick: number): string => {
+    void tick // dependency: re-run when a fetched onebox arrives
+    const html = renderMarkdown(text, uploadMap.current)
+    if (!html.includes('<a ')) return html
+    const doc = new DOMParser().parseFromString(html, 'text/html')
+    doc.body.querySelectorAll('p').forEach((p) => {
+      const links = p.querySelectorAll('a')
+      // Exactly one child element and it's the link — a paragraph that also
+      // carries an <img> (or anything else) must never be swapped away.
+      if (links.length !== 1 || p.children.length !== 1) return
+      const a = links[0]
+      if (p.children[0] !== a) return
+      const href = a.getAttribute('href') ?? ''
+      if (!/^https?:\/\//i.test(href)) return
+      if ((p.textContent ?? '').trim() !== (a.textContent ?? '').trim()) return
+      const hit = cachedOnebox(href)
+      if (hit === undefined) {
+        void fetchOnebox(href).then(() => bumpOnebox())
+        return
+      }
+      if (hit) {
+        const wrap = document.createElement('div')
+        wrap.innerHTML = hit
+        p.replaceWith(...wrap.childNodes)
+      }
+    })
+    return doc.body.innerHTML
+  }
 
   return (
     <div className={styles.composer}>
@@ -389,7 +424,7 @@ export function Composer({
         <div
           className={`${styles.preview} cooked`}
           style={{ minHeight }}
-          dangerouslySetInnerHTML={{ __html: renderPreview() }}
+          dangerouslySetInnerHTML={{ __html: renderPreview(oneboxTick) }}
         />
       ) : (
         <div className={`${styles.preview} ${styles.previewEmpty}`} style={{ minHeight }}>

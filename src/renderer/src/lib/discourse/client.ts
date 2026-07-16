@@ -638,6 +638,23 @@ export const discourse = {
     })
   },
 
+  /** Server-side onebox preview for a URL — the same fragment the website's
+   *  composer shows. The endpoint fetches uncached URLs inline, which also
+   *  warms the cook cache: a previewed link often needs no post-save rebake.
+   *  Returns '' when the URL doesn't onebox. */
+  /** Resolves '' when the URL definitively doesn't onebox (404); throws on
+   *  transient failures (429/offline) so callers can avoid negative-caching. */
+  async oneboxPreview(url: string): Promise<string> {
+    const res = await window.api.discourse.request({
+      path: `/onebox?url=${encodeURIComponent(url)}&refresh=false`,
+      fullText: true
+    })
+    if (res.error) throw new DiscourseApiError(res.error, res.status, !!res.needsAuth)
+    if (res.status === 404) return ''
+    if (!res.ok) throw new DiscourseApiError(`请求失败 (${res.status})`, res.status)
+    return res.text ?? ''
+  },
+
   /** Create/update a server-side draft (same payload shape the web composer
       sends). Returns the next sequence to use; a 409 means another client
       advanced the sequence — callers should re-read /drafts and back off. */

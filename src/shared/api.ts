@@ -25,6 +25,9 @@ export interface DiscourseRequest {
    */
   body?: Record<string, unknown> | string
   form?: boolean
+  /** Non-JSON responses are capped at 4000 chars (challenge sniffing only);
+   *  set for endpoints whose text body is real content (e.g. /onebox). */
+  fullText?: boolean
   /** Multipart file upload (POST /uploads.json). Binary is passed as base64. */
   upload?: {
     base64: string

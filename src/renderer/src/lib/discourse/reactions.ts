@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { LINUXDO_ORIGIN } from './urls'
+import { EMOJI as EMOJI_TABLE } from '../emoji'
 import type { EmojiGroups } from './types'
 
 // Native glyphs for the common reaction ids — cheaper and crisper than
@@ -30,6 +31,13 @@ const EMOJI: Record<string, string> = {
   wave: '👋',
   pray: '🙏',
   '100': '💯'
+}
+
+// Standard-emoji shortcodes → native glyphs, seeded from the composer's
+// curated table so ids like roll_eyes / sweat_smile render without images.
+const nameToChar = new Map<string, string>(Object.entries(EMOJI))
+for (const e of EMOJI_TABLE) {
+  if (!nameToChar.has(e.name)) nameToChar.set(e.name, e.char)
 }
 
 /** Last-resort guess before the picker has learned the real site set. */
@@ -92,7 +100,7 @@ export function primeReactionUrls(groups: EmojiGroups | undefined): void {
 
 /** Resolve a reaction id to a native glyph, or an image URL for site emoji. */
 export function reactionEmoji(id: string): { char?: string; img?: string } {
-  const char = EMOJI[id]
+  const char = nameToChar.get(id)
   if (char) return { char }
   const known = urlByName.get(id)
   if (known) {

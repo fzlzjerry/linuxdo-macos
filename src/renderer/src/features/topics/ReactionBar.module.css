@@ -118,6 +118,16 @@
   vertical-align: -0.15em;
 }
 
+/* Unresolvable reaction id — show its shortcode instead of a blank pill. */
+.imgFallback {
+  font-size: 10px;
+  color: var(--ink-2);
+  max-width: 6em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Floating reaction picker. Elevation via shadow alone — no border paired with a
    large shadow (design rule), rendered in a body portal so nothing clips it. */
 .picker {
