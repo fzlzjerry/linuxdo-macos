@@ -6,9 +6,20 @@ export interface Shortcut {
   /** Requires ⌘ (or Ctrl). Plain-key shortcuts never fire in editable fields. */
   meta?: boolean
   shift?: boolean
+  /** Requires ⌥. Matched via e.code — on macOS ⌥ mutates e.key ('ß', 'å'…). */
+  alt?: boolean
   /** Fire even while a native <dialog> is open (default: blocked). */
   allowInDialog?: boolean
   run: (e: KeyboardEvent) => void
+}
+
+function keyMatches(e: KeyboardEvent, s: Shortcut): boolean {
+  if (!s.alt) return e.key.toLowerCase() === s.key.toLowerCase()
+  return /^[a-z]$/i.test(s.key)
+    ? e.code === `Key${s.key.toUpperCase()}`
+    : /^[0-9]$/.test(s.key)
+      ? e.code === `Digit${s.key}`
+      : e.key.toLowerCase() === s.key.toLowerCase()
 }
 
 export function isEditableTarget(target: EventTarget | null): boolean {
@@ -25,9 +36,10 @@ export function useGlobalShortcuts(shortcuts: Shortcut[]): void {
     const onKey = (e: KeyboardEvent): void => {
       if (e.defaultPrevented) return
       for (const s of shortcuts) {
-        if (e.key.toLowerCase() !== s.key.toLowerCase()) continue
+        if (!keyMatches(e, s)) continue
         if ((e.metaKey || e.ctrlKey) !== !!s.meta) continue
         if (e.shiftKey !== !!s.shift) continue
+        if (e.altKey !== !!s.alt) continue
         if (!s.meta && isEditableTarget(e.target)) return
         if (!s.allowInDialog && document.querySelector('dialog[open]')) return
         s.run(e)

@@ -27,6 +27,7 @@ import { compactNumber, relativeTime } from '../../lib/format'
 import { LINUXDO_ORIGIN } from '../../lib/discourse/urls'
 import { tagKey, tagText, type Post } from '../../lib/discourse/types'
 import { applyLocalReadState } from '../../lib/discourse/readSync'
+import { useRecents } from '../../store/recents'
 import { useReadTracker } from './useReadTracker'
 import { PostView } from './PostView'
 import { TopicProgress } from './TopicProgress'
@@ -86,6 +87,9 @@ export function TopicPage(): JSX.Element {
   useEffect(() => {
     if (!topic || anchoredRef.current) return
     anchoredRef.current = true
+    // First arrival of this topic's data — record it for the ⌘K「最近」group
+    // (getState: no subscription, so this page never re-renders for recents).
+    if (topic.title) useRecents.getState().pushRecent(id, topic.title)
     if (initialLastRead === null) setInitialLastRead(topic.last_read_post_number ?? 0)
     if (!anchor) return
     setProgress((p) => ({ ...p, current: anchor }))

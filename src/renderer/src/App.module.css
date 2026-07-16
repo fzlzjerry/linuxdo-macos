@@ -1,6 +1,9 @@
 .shell {
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
+  /* First column follows the JS-driven sidebar width (settings.ts applySidebar).
+     No transition: WKWebView's grid-template-columns animation support is
+     unreliable, so collapse/expand snaps instantly. */
+  grid-template-columns: var(--sidebar-col, 248px) minmax(0, 1fr);
   /* Lock the single row to exactly the viewport height so tall children
      (the sidebar nav, page content) scroll internally instead of overflowing
      the window and getting clipped by body{overflow:hidden}. */
@@ -14,4 +17,11 @@
   min-width: 0;
   height: 100%;
   overflow: hidden;
+}
+
+/* Route changes park focus here (tabIndex=-1) so keyboard users start from
+   the new page's top — a container, not a control: never show a ring. */
+.content:focus,
+.content:focus-visible {
+  outline: none;
 }

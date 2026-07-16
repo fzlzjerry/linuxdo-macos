@@ -1,4 +1,5 @@
 .sidebar {
+  position: relative; /* anchors the resize handle on the right edge */
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -21,6 +22,13 @@
 /* Width helper for Button inside the sidebar (compose / login). */
 .fullWidth {
   width: 100%;
+}
+
+/* Square icon-only Button for the collapsed compose / login actions. */
+.iconOnly {
+  width: 32px;
+  height: 32px;
+  padding: 0;
 }
 
 .nav {
@@ -142,5 +150,84 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ---- Resize handle (hidden while collapsed: not rendered) ---- */
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none; /* required for pointer capture to own the gesture */
+}
+/* Feedback line: transparent by default, 2px on hover / drag / keyboard focus. */
+.resizeHandle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2px;
+  height: 100%;
+  background: transparent;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.resizeHandle:hover::after,
+.resizeHandle:active::after {
+  background: var(--border-strong);
+}
+.resizeHandle:focus-visible {
+  outline: none; /* the accent line below is the focus indicator */
+}
+.resizeHandle:focus-visible::after {
+  background: var(--ring-color);
+}
+
+/* ---- Collapsed (56px rail): icons only ---- */
+
+.sidebar[data-collapsed] .sectionTitle,
+.sidebar[data-collapsed] .itemLabel,
+.sidebar[data-collapsed] .userMeta {
+  display: none;
+}
+
+.sidebar[data-collapsed] .composeWrap {
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar[data-collapsed] .item {
+  position: relative; /* anchors the badge dot */
+  justify-content: center;
+  padding: 7px 0;
+}
+
+/* Badge count collapses to a 6px dot on the icon's top-right corner. */
+.sidebar[data-collapsed] .badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  font-size: 0;
+  line-height: 0;
+  color: transparent;
+  background: var(--accent);
+}
+
+.sidebar[data-collapsed] .footer {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-3) var(--sp-2);
+}
+
+.sidebar[data-collapsed] .user {
+  justify-content: center;
+  padding: 6px;
 }
 

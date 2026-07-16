@@ -1,118 +1,99 @@
-import { useState } from 'react'
+import { useRef } from 'react'
 import { NavLink } from 'react-router-dom'
-import {
-  Award,
-  Bell,
-  Bot,
-  BookOpenCheck,
-  Bookmark,
-  CalendarDays,
-  CircleDot,
-  FileText,
-  Flame,
-  LayoutGrid,
-  Mail,
-  MessageCircle,
-  MessagesSquare,
-  Newspaper,
-  PenSquare,
-  Search,
-  Settings,
-  Sparkles,
-  TrendingUp,
-  Trophy,
-  Users
-} from 'lucide-react'
+import { LogIn, PenSquare } from 'lucide-react'
 import { Avatar } from '../ui/Avatar'
 import { Button } from '../ui/Button'
 import { NewTopicModal } from '../composer/NewTopicModal'
+import { NAV_SECTIONS, type NavEntry } from '../../lib/nav'
 import { useAuth } from '../../store/auth'
+import { useComposerStore } from '../../store/composer'
+import {
+  SIDEBAR_DEFAULT_WIDTH,
+  SIDEBAR_MAX_WIDTH,
+  SIDEBAR_MIN_WIDTH,
+  clampSidebarWidth,
+  useSettings
+} from '../../store/settings'
 import styles from './Sidebar.module.css'
-
-interface NavItem {
-  to: string
-  label: string
-  icon: JSX.Element
-  badge?: number
-}
 
 export function Sidebar(): JSX.Element {
   const auth = useAuth()
-  const [composing, setComposing] = useState(false)
+  const composing = useComposerStore((s) => s.newTopicOpen)
+  const openNewTopic = useComposerStore((s) => s.openNewTopic)
+  const closeNewTopic = useComposerStore((s) => s.closeNewTopic)
+  const collapsed = useSettings((s) => s.sidebarCollapsed)
 
-  const feeds: NavItem[] = [
-    { to: '/latest', label: '最新', icon: <Newspaper size={17} /> },
-    { to: '/new', label: '新话题', icon: <Sparkles size={17} /> },
-    { to: '/unread', label: '未读', icon: <CircleDot size={17} /> },
-    { to: '/hot', label: '热门', icon: <Flame size={17} /> },
-    { to: '/top', label: '排行', icon: <TrendingUp size={17} /> }
-  ]
-
-  const library: NavItem[] = [
-    { to: '/categories', label: '分类', icon: <LayoutGrid size={17} /> },
-    { to: '/bookmarks', label: '书签', icon: <Bookmark size={17} /> },
-    { to: '/drafts', label: '草稿', icon: <FileText size={17} /> },
-    { to: '/search', label: '搜索', icon: <Search size={17} /> }
-  ]
-
-  const community: NavItem[] = [
-    { to: '/chat', label: '聊天', icon: <MessageCircle size={17} /> },
-    { to: '/ai', label: 'AI 机器人', icon: <Bot size={17} /> },
-    { to: '/leaderboard', label: '积分榜', icon: <Trophy size={17} /> },
-    { to: '/events', label: '活动', icon: <CalendarDays size={17} /> },
-    { to: '/groups', label: '群组', icon: <Users size={17} /> },
-    { to: '/badges', label: '徽章', icon: <Award size={17} /> }
-  ]
-
-  const me: NavItem[] = [
-    { to: '/posted', label: '我的帖子', icon: <MessagesSquare size={17} /> },
-    { to: '/read', label: '已读', icon: <BookOpenCheck size={17} /> },
-    { to: '/notifications', label: '通知', icon: <Bell size={17} />, badge: auth.unreadNotifications },
-    { to: '/messages', label: '私信', icon: <Mail size={17} />, badge: auth.unreadPersonalMessages },
-    { to: '/settings', label: '设置', icon: <Settings size={17} /> }
-  ]
-
-  function compose(): void {
-    if (!auth.loggedIn) {
-      void auth.showLogin()
-      return
-    }
-    setComposing(true)
+  const badges: Record<'notifications' | 'pms', number | undefined> = {
+    notifications: auth.unreadNotifications,
+    pms: auth.unreadPersonalMessages
   }
 
   return (
     // "deep": empty sidebar background drags the window (macOS convention);
     // nav links / buttons block it automatically via Tauri's drag script.
-    <aside className={styles.sidebar} data-tauri-drag-region="deep">
+    <aside
+      className={styles.sidebar}
+      data-tauri-drag-region="deep"
+      data-collapsed={collapsed || undefined}
+    >
       <div className={styles.dragTop} />
 
       <div className={styles.composeWrap}>
-        <Button
-          variant="primary"
-          className={styles.fullWidth}
-          icon={<PenSquare size={16} />}
-          onClick={compose}
-        >
-          发帖
-        </Button>
+        {collapsed ? (
+          <Button
+            variant="primary"
+            className={styles.iconOnly}
+            icon={<PenSquare size={16} />}
+            aria-label="发帖"
+            title="发帖"
+            onClick={openNewTopic}
+          />
+        ) : (
+          <Button
+            variant="primary"
+            className={styles.fullWidth}
+            icon={<PenSquare size={16} />}
+            onClick={openNewTopic}
+          >
+            发帖
+          </Button>
+        )}
       </div>
 
       <nav className={styles.nav}>
-        <Section items={feeds} />
-        <Section title="资料库" items={library} />
-        <Section title="社区" items={community} />
-        <Section title="我的" items={me} />
+        {NAV_SECTIONS.map((section, i) => (
+          <Section
+            key={section.title ?? i}
+            title={section.title}
+            items={section.items}
+            badges={badges}
+            collapsed={collapsed}
+          />
+        ))}
       </nav>
 
       <div className={styles.footer}>
         {auth.loggedIn ? (
-          <NavLink to={auth.username ? `/u/${auth.username}` : '/latest'} className={styles.user}>
+          <NavLink
+            to={auth.username ? `/u/${auth.username}` : '/latest'}
+            className={styles.user}
+            title={collapsed ? auth.name || auth.username : undefined}
+          >
             <Avatar template={auth.avatarUrl} username={auth.username} name={auth.name} size={30} />
             <span className={styles.userMeta}>
               <span className={styles.userName}>{auth.name || auth.username}</span>
               <span className={styles.userHandle}>@{auth.username}</span>
             </span>
           </NavLink>
+        ) : collapsed ? (
+          <Button
+            variant="primary"
+            className={styles.iconOnly}
+            icon={<LogIn size={16} />}
+            aria-label="登录 linux.do"
+            title="登录 linux.do"
+            onClick={() => void auth.showLogin()}
+          />
         ) : (
           <Button
             variant="primary"
@@ -124,26 +105,109 @@ export function Sidebar(): JSX.Element {
         )}
       </div>
 
-      <NewTopicModal open={composing} onClose={() => setComposing(false)} />
+      {!collapsed && <ResizeHandle />}
+
+      <NewTopicModal open={composing} onClose={closeNewTopic} />
     </aside>
   )
 }
 
-function Section({ title, items }: { title?: string; items: NavItem[] }): JSX.Element {
+/** 4px grab strip on the sidebar's right edge. During a drag the width is
+ *  written straight to the --sidebar-col CSS var (no store => no per-frame
+ *  localStorage writes); the final value is committed to the store on release. */
+function ResizeHandle(): JSX.Element {
+  const sidebarWidth = useSettings((s) => s.sidebarWidth)
+  const setSidebarWidth = useSettings((s) => s.setSidebarWidth)
+  const drag = useRef<{ startX: number; startWidth: number; width: number } | null>(null)
+
+  const applyLive = (width: number): number => {
+    const w = clampSidebarWidth(width)
+    document.documentElement.style.setProperty('--sidebar-col', `${w}px`)
+    return w
+  }
+
+  const commit = (): void => {
+    const d = drag.current
+    if (!d) return
+    drag.current = null
+    setSidebarWidth(d.width)
+  }
+
+  return (
+    <div
+      className={styles.resizeHandle}
+      // The sidebar is a deep drag region; without an explicit opt-out this
+      // strip would drag the whole window instead of resizing.
+      data-tauri-drag-region="false"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="调整侧栏宽度"
+      aria-valuemin={SIDEBAR_MIN_WIDTH}
+      aria-valuemax={SIDEBAR_MAX_WIDTH}
+      aria-valuenow={sidebarWidth}
+      tabIndex={0}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return
+        e.preventDefault()
+        e.currentTarget.setPointerCapture(e.pointerId)
+        const startWidth = useSettings.getState().sidebarWidth
+        drag.current = { startX: e.clientX, startWidth, width: startWidth }
+      }}
+      onPointerMove={(e) => {
+        const d = drag.current
+        if (!d) return
+        d.width = applyLive(d.startWidth + (e.clientX - d.startX))
+      }}
+      onPointerUp={commit}
+      onPointerCancel={commit}
+      onDoubleClick={() => setSidebarWidth(SIDEBAR_DEFAULT_WIDTH)}
+      onKeyDown={(e) => {
+        let next: number | null = null
+        if (e.key === 'ArrowLeft') next = sidebarWidth - 16
+        else if (e.key === 'ArrowRight') next = sidebarWidth + 16
+        else if (e.key === 'Home') next = SIDEBAR_MIN_WIDTH
+        else if (e.key === 'End') next = SIDEBAR_MAX_WIDTH
+        if (next !== null) {
+          e.preventDefault()
+          setSidebarWidth(next)
+        }
+      }}
+    />
+  )
+}
+
+function Section({
+  title,
+  items,
+  badges,
+  collapsed
+}: {
+  title?: string
+  items: NavEntry[]
+  badges: Record<'notifications' | 'pms', number | undefined>
+  collapsed: boolean
+}): JSX.Element {
   return (
     <div className={styles.section}>
       {title && <div className={styles.sectionTitle}>{title}</div>}
-      {items.map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          className={({ isActive }) => `${styles.item} ${isActive ? styles.active : ''}`}
-        >
-          <span className={styles.itemIcon}>{item.icon}</span>
-          <span className={styles.itemLabel}>{item.label}</span>
-          {!!item.badge && item.badge > 0 && <span className={styles.badge}>{item.badge}</span>}
-        </NavLink>
-      ))}
+      {items.map((item) => {
+        const badge = item.badgeKey ? badges[item.badgeKey] : undefined
+        const Icon = item.icon
+        return (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) => `${styles.item} ${isActive ? styles.active : ''}`}
+            title={collapsed ? item.label : undefined}
+          >
+            <span className={styles.itemIcon}>
+              <Icon size={17} />
+            </span>
+            <span className={styles.itemLabel}>{item.label}</span>
+            {!!badge && badge > 0 && <span className={styles.badge}>{badge}</span>}
+          </NavLink>
+        )
+      })}
     </div>
   )
 }

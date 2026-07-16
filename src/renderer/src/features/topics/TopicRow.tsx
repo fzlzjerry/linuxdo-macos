@@ -42,6 +42,7 @@ export function TopicRow({ topic, users }: Props): JSX.Element {
     <button
       className={styles.row}
       data-row
+      data-row-id={topic.id}
       onClick={() => navigate(href)}
       aria-label={topic.title}
     >

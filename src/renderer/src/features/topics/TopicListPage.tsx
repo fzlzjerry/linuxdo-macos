@@ -11,6 +11,7 @@ import { discourse } from '../../lib/discourse/client'
 import { toast } from '../../store/toast'
 import { errorMessage } from '../../lib/errors'
 import { useScrollMemory } from '../../lib/useScrollMemory'
+import { useFocusMemory } from '../../lib/useFocusMemory'
 import { useListNav } from '../../lib/useListNav'
 import { useAuth } from '../../store/auth'
 import type { ListingFilter, TopPeriod, TopicListItem } from '../../lib/discourse/types'
@@ -57,11 +58,10 @@ export function TopicListPage({ filter }: { filter: ListingFilter }): JSX.Elemen
   const query = useTopicList(filter, period, categoryParam, filters.tag)
   const { data, isLoading, isError, error, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage } = query
 
-  useScrollMemory(
-    scrollRef,
-    `list:${filter}:${filter === 'top' ? period : ''}:${filters.category?.id ?? ''}:${filters.tag ?? ''}`,
-    !isLoading && !!data
-  )
+  const memoryKey = `list:${filter}:${filter === 'top' ? period : ''}:${filters.category?.id ?? ''}:${filters.tag ?? ''}`
+  const memoryReady = !isLoading && !!data
+  useScrollMemory(scrollRef, memoryKey, memoryReady)
+  useFocusMemory(scrollRef, memoryKey, memoryReady)
   useListNav(scrollRef)
 
   const users = useMemo(() => mergeUsers(data?.pages), [data])

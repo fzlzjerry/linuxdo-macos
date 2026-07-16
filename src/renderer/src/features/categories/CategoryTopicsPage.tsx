@@ -9,6 +9,7 @@ import { InfiniteSentinel } from '../../components/ui/InfiniteSentinel'
 import { EmptyState, ErrorState, Spinner, TopicListSkeleton } from '../../components/ui/states'
 import { useCategoryTopics, mergeUsers } from '../../lib/discourse/queries'
 import { useScrollMemory } from '../../lib/useScrollMemory'
+import { useFocusMemory } from '../../lib/useFocusMemory'
 import { useListNav } from '../../lib/useListNav'
 import { useCategory } from '../../lib/discourse/CategoriesContext'
 import { useAuth } from '../../store/auth'
@@ -34,6 +35,7 @@ export function CategoryTopicsPage(): JSX.Element {
     useCategoryTopics(slug, id, filter)
 
   useScrollMemory(scrollRef, `category:${id}:${filter}`, !isLoading && !!data)
+  useFocusMemory(scrollRef, `category:${id}:${filter}`, !isLoading && !!data)
   useListNav(scrollRef)
 
   const users = useMemo(() => mergeUsers(data?.pages), [data])

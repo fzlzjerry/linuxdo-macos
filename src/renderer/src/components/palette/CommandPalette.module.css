@@ -1,0 +1,121 @@
+/* ⌘K palette — native <dialog>, renders in the top layer (no z-index). */
+
+.dialog {
+  padding: 0;
+  border: none;
+  background: transparent;
+  width: min(560px, calc(100vw - 48px));
+  max-width: none;
+  /* Pinned ~20vh from the top instead of the dialog's centered default. */
+  margin: 20vh auto auto;
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  /* --scrim, but lighter — the palette is transient, not a blocking modal. */
+  background: color-mix(in oklch, var(--scrim, oklch(0 0 0 / 0.4)) 60%, transparent);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+
+.input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--fs-md);
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+.input::placeholder {
+  color: var(--ink-3);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2);
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.groupTitle {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-3);
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+}
+.groupTitle:not(:first-child) {
+  margin-top: var(--sp-1);
+}
+
+/* Item rows follow Menu.module.css's icon + label + hint language. */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 36px;
+  padding: 7px var(--sp-2);
+  border-radius: var(--r-md);
+  user-select: none;
+  cursor: default;
+}
+
+.itemActive {
+  background: var(--accent-soft);
+}
+
+.itemIcon {
+  flex: none;
+  color: var(--ink-2);
+}
+.itemIconPad {
+  flex: none;
+  width: 16px;
+}
+
+.itemLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-base);
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemHint {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.empty {
+  padding: var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  text-align: center;
+}
+
+/* Entrance: opacity-led and short; skipped entirely under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] {
+    animation: palette-in var(--dur-fast) var(--ease-out);
+  }
+  @keyframes palette-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.99);
+    }
+  }
+}

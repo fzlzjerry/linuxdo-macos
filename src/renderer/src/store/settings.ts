@@ -7,6 +7,8 @@ interface Persisted {
   fontScale: number
   compactList: boolean
   autoCheckUpdates: boolean
+  sidebarCollapsed: boolean
+  sidebarWidth: number
 }
 
 interface SettingsState extends Persisted {
@@ -14,6 +16,17 @@ interface SettingsState extends Persisted {
   setFontScale: (n: number) => void
   setCompactList: (b: boolean) => void
   setAutoCheckUpdates: (b: boolean) => void
+  setSidebarCollapsed: (b: boolean) => void
+  setSidebarWidth: (n: number) => void
+}
+
+export const SIDEBAR_DEFAULT_WIDTH = 248
+export const SIDEBAR_MIN_WIDTH = 200
+export const SIDEBAR_MAX_WIDTH = 320
+export const SIDEBAR_COLLAPSED_WIDTH = 56
+
+export function clampSidebarWidth(n: number): number {
+  return Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, Math.round(n)))
 }
 
 const KEY = 'linuxdo-settings'
@@ -25,10 +38,22 @@ function load(): Persisted {
       theme: (s.theme as ThemeMode) ?? 'system',
       fontScale: typeof s.fontScale === 'number' ? s.fontScale : 1,
       compactList: !!s.compactList,
-      autoCheckUpdates: typeof s.autoCheckUpdates === 'boolean' ? s.autoCheckUpdates : true
+      autoCheckUpdates: typeof s.autoCheckUpdates === 'boolean' ? s.autoCheckUpdates : true,
+      sidebarCollapsed: !!s.sidebarCollapsed,
+      sidebarWidth:
+        typeof s.sidebarWidth === 'number'
+          ? clampSidebarWidth(s.sidebarWidth)
+          : SIDEBAR_DEFAULT_WIDTH
     }
   } catch {
-    return { theme: 'system', fontScale: 1, compactList: false, autoCheckUpdates: true }
+    return {
+      theme: 'system',
+      fontScale: 1,
+      compactList: false,
+      autoCheckUpdates: true,
+      sidebarCollapsed: false,
+      sidebarWidth: SIDEBAR_DEFAULT_WIDTH
+    }
   }
 }
 
@@ -59,6 +84,14 @@ function applyDensity(compact: boolean): void {
   document.documentElement.dataset.density = compact ? 'compact' : 'comfortable'
 }
 
+/** The app grid reads --sidebar-col; collapse wins over the stored width. */
+function applySidebar(collapsed: boolean, width: number): void {
+  document.documentElement.style.setProperty(
+    '--sidebar-col',
+    `${collapsed ? SIDEBAR_COLLAPSED_WIDTH : clampSidebarWidth(width)}px`
+  )
+}
+
 const initial = load()
 
 export const useSettings = create<SettingsState>((set, get) => {
@@ -69,6 +102,8 @@ export const useSettings = create<SettingsState>((set, get) => {
       fontScale: cur.fontScale,
       compactList: cur.compactList,
       autoCheckUpdates: cur.autoCheckUpdates,
+      sidebarCollapsed: cur.sidebarCollapsed,
+      sidebarWidth: cur.sidebarWidth,
       ...patch
     })
   }
@@ -92,6 +127,17 @@ export const useSettings = create<SettingsState>((set, get) => {
     setAutoCheckUpdates: (autoCheckUpdates) => {
       persistPatch({ autoCheckUpdates })
       set({ autoCheckUpdates })
+    },
+    setSidebarCollapsed: (sidebarCollapsed) => {
+      applySidebar(sidebarCollapsed, get().sidebarWidth)
+      persistPatch({ sidebarCollapsed })
+      set({ sidebarCollapsed })
+    },
+    setSidebarWidth: (width) => {
+      const sidebarWidth = clampSidebarWidth(width)
+      applySidebar(get().sidebarCollapsed, sidebarWidth)
+      persistPatch({ sidebarWidth })
+      set({ sidebarWidth })
     }
   }
 })
@@ -101,6 +147,7 @@ export function initSettings(): void {
   applyTheme(initial.theme)
   applyFont(initial.fontScale)
   applyDensity(initial.compactList)
+  applySidebar(initial.sidebarCollapsed, initial.sidebarWidth)
   window
     .matchMedia('(prefers-color-scheme: dark)')
     .addEventListener('change', () => {

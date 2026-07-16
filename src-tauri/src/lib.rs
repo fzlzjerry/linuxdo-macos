@@ -12,6 +12,8 @@ use tauri::{AppHandle, Emitter, Listener, Manager, WebviewUrl, WebviewWindowBuil
 use tokio::sync::oneshot;
 use url::Url;
 
+mod menu;
+
 const ORIGIN: &str = "https://linux.do";
 
 /// A browser-authorize attempt in flight (Discourse User-API-Key OTP flow).
@@ -709,6 +711,8 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(AppState::new())
+        .menu(|app| menu::build(app))
+        .on_menu_event(|app, event| menu::handle_event(app, event))
         .setup(|app| {
             let handle = app.handle().clone();
             let _ = create_engine(&handle);

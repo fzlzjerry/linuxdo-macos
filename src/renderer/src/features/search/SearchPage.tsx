@@ -9,6 +9,7 @@ import { Tag } from '../../components/ui/Tag'
 import { EmptyState, ErrorState, Spinner } from '../../components/ui/states'
 import { useCategories, useSearch } from '../../lib/discourse/queries'
 import { useScrollMemory } from '../../lib/useScrollMemory'
+import { useFocusMemory } from '../../lib/useFocusMemory'
 import { useAuth } from '../../store/auth'
 import { relativeTime } from '../../lib/format'
 import { tagKey, tagText } from '../../lib/discourse/types'
@@ -91,6 +92,7 @@ export function SearchPage(): JSX.Element {
   const { data, isLoading, isError, error, refetch } = useSearch(term, active)
 
   useScrollMemory(scrollRef, `search:${term}`, active && !isLoading && !!data)
+  useFocusMemory(scrollRef, `search:${term}`, active && !isLoading && !!data)
 
   const topics = data?.topics ?? []
   const posts = data?.posts ?? []
@@ -252,6 +254,7 @@ export function SearchPage(): JSX.Element {
                 <button
                   key={t.id}
                   className={styles.row}
+                  data-row-id={t.id}
                   onClick={() => navigate(`/t/${t.id}`)}
                   aria-label={t.title}
                 >
@@ -284,6 +287,7 @@ export function SearchPage(): JSX.Element {
                 <button
                   key={p.id}
                   className={`${styles.row} ${styles.rowTop}`}
+                  data-row-id={p.id}
                   onClick={() => navigate(`/t/${p.topic_id}`)}
                   aria-label={p.username ? `${p.username} 的帖子` : '帖子'}
                 >
@@ -317,6 +321,7 @@ export function SearchPage(): JSX.Element {
                 <button
                   key={u.id}
                   className={styles.row}
+                  data-row-id={u.id}
                   onClick={() => navigate(`/u/${u.username}`)}
                   aria-label={u.name || u.username}
                 >
