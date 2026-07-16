@@ -89,10 +89,14 @@ const FETCH_JS: &str = r#"
 async function __linuxdoFetch(id, reqJson) {
   const req = JSON.parse(reqJson);
   const method = (req.method || 'GET').toUpperCase();
-  const headers = Object.assign({}, req.headers || {});
-  // Always: Discourse's check_xhr answers non-XHR GETs on HTML routes
-  // (e.g. /onebox) with the entire app shell instead of the fragment.
-  headers['X-Requested-With'] = 'XMLHttpRequest';
+  // Cross-origin targets (the *.ldstatic.com uploads CDN): no custom headers
+  // (they force a CORS preflight the bucket may reject) and no credentials
+  // (wildcard CORS forbids credentialed reads). Same-origin keeps both, and
+  // always carries X-Requested-With — Discourse's check_xhr answers non-XHR
+  // GETs on HTML routes (e.g. /onebox) with the entire app shell.
+  const sameOrigin = !/^https?:/i.test(req.path) || req.path.indexOf(location.origin + '/') === 0;
+  const headers = sameOrigin ? Object.assign({}, req.headers || {}) : {};
+  if (sameOrigin) headers['X-Requested-With'] = 'XMLHttpRequest';
   let body = undefined;
   if (method !== 'GET' && method !== 'HEAD') {
     let csrf = document.querySelector('meta[name="csrf-token"]');
@@ -134,7 +138,7 @@ async function __linuxdoFetch(id, reqJson) {
   }
   let payload;
   try {
-    const r = await fetch(req.path, { method: method, headers: headers, body: body, credentials: 'include' });
+    const r = await fetch(req.path, { method: method, headers: headers, body: body, credentials: sameOrigin ? 'include' : 'omit' });
     const ct = r.headers.get('content-type') || '';
     const isJson = ct.indexOf('json') !== -1;
     let json = undefined, text = undefined, dataUrl = undefined;
@@ -590,6 +594,18 @@ async fn fetch_image(app: AppHandle, url: String) -> Result<String, String> {
         rest.to_string()
     } else if url.starts_with('/') {
         url.clone()
+    } else if let Ok(parsed) = Url::parse(&url) {
+        // Site uploads (custom emoji, avatars) live on the *.ldstatic.com
+        // CDN — allow it, but nothing else: the engine holds the trusted
+        // session and must not become a general-purpose proxy.
+        let host_ok = parsed
+            .host_str()
+            .is_some_and(|h| h == "linux.do" || h.ends_with(".ldstatic.com"));
+        if parsed.scheme() == "https" && host_ok {
+            url.clone()
+        } else {
+            return Err("only linux.do assets can be proxied".into());
+        }
     } else {
         return Err("only linux.do assets can be proxied".into());
     };

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LINUXDO_ORIGIN } from './urls'
+import { LINUXDO_ORIGIN, absolutize } from './urls'
 import { EMOJI as EMOJI_TABLE } from '../emoji'
 import type { EmojiGroups } from './types'
 
@@ -108,7 +108,9 @@ export function reactionEmoji(id: string): { char?: string; img?: string; pendin
   if (char) return { char }
   const known = urlByName.get(id)
   if (known) {
-    return { img: known.startsWith('http') ? known : `${LINUXDO_ORIGIN}${known}` }
+    // absolutize handles protocol-relative //linuxdo-uploads.s3.ldstatic.com
+    // urls — custom-pack emoji live on the CDN, not on linux.do itself.
+    return { img: absolutize(known) }
   }
   if (!urlsPrimed) return { pending: true }
   // linux.do serves twemoji under /images/emoji/twemoji/ (not /twitter/).
