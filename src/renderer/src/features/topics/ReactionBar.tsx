@@ -20,40 +20,54 @@ interface Props {
 }
 
 // Site-emoji images load through the engine proxy (direct cross-origin
-// bursts trip Cloudflare — same reason EmojiPicker proxies).
-const emojiImgCache = new Map<string, string>() // abs url -> data url ('' = failed)
+// bursts trip Cloudflare — same reason EmojiPicker proxies). Failures are
+// remembered with a timestamp and retried after a cooldown — a single 429
+// burst must not pin a reaction to its :shortcode: for the whole session.
+const emojiImgCache = new Map<string, string>() // abs url -> data url
+const emojiImgFailedAt = new Map<string, number>()
+const EMOJI_RETRY_MS = 30_000
 
 function Emoji({ id }: { id: string }): JSX.Element {
   const e = reactionEmoji(id)
   const cached = e.img ? emojiImgCache.get(e.img) : undefined
-  const [src, setSrc] = useState<string | undefined>(cached || undefined)
-  const [failed, setFailed] = useState(cached === '')
+  const [src, setSrc] = useState<string | undefined>(cached)
+  const [failed, setFailed] = useState(
+    cached === undefined && e.img != null && emojiImgFailedAt.has(e.img)
+  )
   useEffect(() => {
     const url = e.img
     if (!url) return
     const hit = emojiImgCache.get(url)
     if (hit !== undefined) {
-      setSrc(hit || undefined)
-      setFailed(hit === '')
+      setSrc(hit)
+      setFailed(false)
+      return
+    }
+    const failedAt = emojiImgFailedAt.get(url)
+    if (failedAt !== undefined && Date.now() - failedAt < EMOJI_RETRY_MS) {
+      setFailed(true)
       return
     }
     let live = true
     window.api
       ?.fetchImage(url)
       .then((data) => {
-        emojiImgCache.set(url, data ?? '')
-        if (!live) return
         if (data) {
-          setSrc(data)
-          // The twemoji guess may have failed before /emojis.json supplied
-          // the real URL — a late success must clear the shortcode fallback.
-          setFailed(false)
+          emojiImgCache.set(url, data)
+          emojiImgFailedAt.delete(url)
+          if (live) {
+            setSrc(data)
+            // The twemoji guess may have failed before /emojis.json supplied
+            // the real URL — a late success must clear the shortcode fallback.
+            setFailed(false)
+          }
         } else {
-          setFailed(true)
+          emojiImgFailedAt.set(url, Date.now())
+          if (live) setFailed(true)
         }
       })
       .catch(() => {
-        emojiImgCache.set(url, '')
+        emojiImgFailedAt.set(url, Date.now())
         if (live) setFailed(true)
       })
     return () => {

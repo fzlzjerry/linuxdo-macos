@@ -90,9 +90,11 @@ async function __linuxdoFetch(id, reqJson) {
   const req = JSON.parse(reqJson);
   const method = (req.method || 'GET').toUpperCase();
   const headers = Object.assign({}, req.headers || {});
+  // Always: Discourse's check_xhr answers non-XHR GETs on HTML routes
+  // (e.g. /onebox) with the entire app shell instead of the fragment.
+  headers['X-Requested-With'] = 'XMLHttpRequest';
   let body = undefined;
   if (method !== 'GET' && method !== 'HEAD') {
-    headers['X-Requested-With'] = 'XMLHttpRequest';
     let csrf = document.querySelector('meta[name="csrf-token"]');
     csrf = csrf && csrf.getAttribute('content');
     if (!csrf) {
