@@ -102,6 +102,31 @@ export function TopicPage(): JSX.Element {
   const anchorRef = useRef(anchor)
   anchorRef.current = anchor
   const anchoredRef = useRef(false)
+  const idRef = useRef(id)
+  idRef.current = id
+
+  /** Discourse cooks oneboxes for fresh URLs in a background rebake — the
+   *  immediate response only has the bare link (the website gets the update
+   *  over MessageBus). Re-fetch the post once, after the job had time to run,
+   *  so app-authored links grow their Open Graph cards too. */
+  function schedulePostRecook(postId: number, raw: string): void {
+    if (!/https?:\/\/\S+/i.test(raw)) return
+    const topicAtSchedule = id
+    window.setTimeout(() => {
+      if (idRef.current !== topicAtSchedule) return
+      discourse
+        .postsBatch(topicAtSchedule, [postId])
+        .then((batch) => {
+          const fresh = batch[0]
+          if (fresh && idRef.current === topicAtSchedule) {
+            setPatches((p) => new Map(p).set(fresh.id, fresh))
+          }
+        })
+        .catch(() => {
+          /* next natural refetch picks it up */
+        })
+    }, 7_000)
+  }
 
   useEffect(() => {
     setExtraPosts([])
@@ -429,6 +454,7 @@ export function TopicPage(): JSX.Element {
       try {
         const updated = await discourse.editPost(composer.post.id, raw)
         setPatches((p) => new Map(p).set(updated.id, updated))
+        schedulePostRecook(updated.id, raw)
         toast.success('已保存')
         setComposer(null)
       } catch (e) {
@@ -472,6 +498,7 @@ export function TopicPage(): JSX.Element {
       })
       setExtraPosts((prev) => prev.filter((p) => p.id !== tempId))
       setPatches((p) => new Map(p).set(created.id, created))
+      schedulePostRecook(created.id, raw)
       toast.success('回复已发布')
       // Published — the topic draft is spent (website behavior). The key is
       // passed explicitly: the composer already closed, so the hook's own key

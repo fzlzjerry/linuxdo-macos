@@ -4,7 +4,12 @@ import { Heart, Plus } from 'lucide-react'
 import { discourse } from '../../lib/discourse/client'
 import type { Post, PostReaction } from '../../lib/discourse/types'
 import { compactNumber } from '../../lib/format'
-import { ENABLED_REACTIONS, reactionEmoji } from '../../lib/discourse/reactions'
+import {
+  primeReactionUrls,
+  reactionEmoji,
+  useEnabledReactions
+} from '../../lib/discourse/reactions'
+import { useEmojis } from '../../lib/discourse/queries'
 import { useAuth } from '../../store/auth'
 import { toast } from '../../store/toast'
 import { errorMessage } from '../../lib/errors'
@@ -14,10 +19,33 @@ interface Props {
   post: Post
 }
 
+// Site-emoji images load through the engine proxy (direct cross-origin
+// bursts trip Cloudflare — same reason EmojiPicker proxies).
+const emojiImgCache = new Map<string, string>() // abs url -> data url ('' = failed)
+
 function Emoji({ id }: { id: string }): JSX.Element {
   const e = reactionEmoji(id)
-  if (e.img) return <img className={styles.img} src={e.img} alt={id} loading="lazy" />
-  return <span className={styles.char}>{e.char}</span>
+  const [src, setSrc] = useState<string | undefined>(() =>
+    e.img ? emojiImgCache.get(e.img) || undefined : undefined
+  )
+  useEffect(() => {
+    const url = e.img
+    if (!url || emojiImgCache.get(url) !== undefined) return
+    let live = true
+    window.api
+      ?.fetchImage(url)
+      .then((data) => {
+        emojiImgCache.set(url, data ?? '')
+        if (live && data) setSrc(data)
+      })
+      .catch(() => emojiImgCache.set(url, ''))
+    return () => {
+      live = false
+    }
+  }, [e.img])
+  if (e.char) return <span className={styles.char}>{e.char}</span>
+  if (!src) return <span className={styles.img} aria-hidden />
+  return <img className={styles.img} src={src} alt={id} />
 }
 
 export function ReactionBar({ post }: Props): JSX.Element {
@@ -34,6 +62,12 @@ export function ReactionBar({ post }: Props): JSX.Element {
 
   const liked = current === 'heart'
   const heartCount = reactions.find((r) => r.id === 'heart')?.count ?? 0
+
+  // The picker mirrors the site's enabled reaction set — anything else is
+  // rejected server-side. Emoji urls (custom packs) come from /emojis.json.
+  const enabledReactions = useEnabledReactions()
+  const { data: emojiGroups } = useEmojis()
+  useEffect(() => primeReactionUrls(emojiGroups), [emojiGroups])
 
   // Pop animation only when the like *becomes* active — never on first render
   // (prevLiked starts at the mounted value) and cleared on unlike/rollback so a
@@ -203,7 +237,7 @@ export function ReactionBar({ post }: Props): JSX.Element {
             role="group"
             aria-label="选择回应"
           >
-            {ENABLED_REACTIONS.map((id) => (
+            {enabledReactions.map((id) => (
               <button
                 key={id}
                 type="button"

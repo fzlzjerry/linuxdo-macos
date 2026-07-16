@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Award, ExternalLink, Heart, MapPin, MessageSquare, Reply, User } from 'lucide-react'
 import { Toolbar } from '../../components/window/Toolbar'
 import { PageScaffold } from '../../components/window/PageScaffold'
+import { renderBioHtml } from './UserCard'
 import { Avatar } from '../../components/ui/Avatar'
 import { CategoryBadge } from '../../components/ui/CategoryBadge'
 import { Segmented } from '../../components/ui/Segmented'
@@ -191,7 +192,10 @@ export function ProfilePage(): JSX.Element {
                 <CookedContent html={user.bio_cooked} />
               </div>
             ) : user.bio_excerpt ? (
-              <p className={styles.bioExcerpt}>{user.bio_excerpt}</p>
+              <p
+                className={styles.bioExcerpt}
+                dangerouslySetInnerHTML={{ __html: renderBioHtml(user.bio_excerpt) }}
+              />
             ) : null}
           </header>
 

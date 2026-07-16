@@ -535,6 +535,44 @@ async fn svg_sprite(app: AppHandle) -> Result<String, String> {
     }
 }
 
+/// Read one Discourse site setting from the engine page's preloaded data
+/// (`#data-preloaded` → `siteSettings`). There is no public JSON endpoint for
+/// site settings, but the engine sits on a fully-rendered linux.do page that
+/// embeds them — same trick as `svg_sprite`. Returns "" when unavailable.
+#[tauri::command]
+async fn site_setting(app: AppHandle, name: String) -> Result<String, String> {
+    // The name is interpolated into eval'd JS — restrict to setting-name chars.
+    if !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return Err("invalid setting name".to_string());
+    }
+    ensure_engine(&app)?;
+    let webview = app
+        .get_webview_window("engine")
+        .ok_or_else(|| "engine webview not available".to_string())?;
+    let state = app.state::<AppState>();
+    let id = state.next_id.fetch_add(1, Ordering::SeqCst);
+    let (tx, rx) = oneshot::channel::<Value>();
+    state.pending.lock().unwrap().insert(id, tx);
+
+    let script = format!(
+        "(function() {{ var out = ''; \
+         try {{ var el = document.getElementById('data-preloaded'); \
+           var pre = el && JSON.parse(el.dataset.preloaded || '{{}}'); \
+           var ss = pre && pre.siteSettings && JSON.parse(pre.siteSettings); \
+           if (ss && ss['{name}'] != null) out = String(ss['{name}']); }} catch (e) {{}} \
+         try {{ window.__TAURI__.event.emit('bridge:result', {{ id: {id}, ok: true, value: out }}); }} catch (e) {{}} }})();"
+    );
+    webview.eval(&script).map_err(|e| e.to_string())?;
+
+    match tokio::time::timeout(Duration::from_secs(10), rx).await {
+        Ok(Ok(v)) => Ok(v.get("value").and_then(|s| s.as_str()).unwrap_or("").to_string()),
+        _ => {
+            state.pending.lock().unwrap().remove(&id);
+            Ok(String::new())
+        }
+    }
+}
+
 /// Fetch a linux.do asset (e.g. an emoji image) through the engine — which holds
 /// the trusted same-origin session — and return it as a data URL. The renderer is
 /// cross-origin, so a burst of its direct image requests gets rate-limited by
@@ -749,6 +787,7 @@ pub fn run() {
             auth_show_login_webview,
             auth_logout,
             svg_sprite,
+            site_setting,
             open_external,
             fetch_image
         ])

@@ -109,6 +109,9 @@
 }
 
 .img {
+  /* inline-block: also used as an empty placeholder <span> while the
+     proxied image is in flight — a bare span would collapse to 0 width. */
+  display: inline-block;
   width: 1.1em;
   height: 1.1em;
   object-fit: contain;

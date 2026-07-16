@@ -22,6 +22,8 @@ export interface LinuxDoApi {
   fetchImage(url: string): Promise<string>
   /** The site's svg icon sprite markup, extracted from the engine webview. */
   svgSprite(): Promise<string>
+  /** One Discourse site setting, read from the engine page's preloaded data. */
+  siteSetting(name: string): Promise<string>
   window: {
     control(action: WindowControlAction): void
   }

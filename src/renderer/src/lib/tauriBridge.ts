@@ -55,6 +55,9 @@ const api = {
   svgSprite(): Promise<string> {
     return invoke<string>('svg_sprite')
   },
+  siteSetting(name: string): Promise<string> {
+    return invoke<string>('site_setting', { name })
+  },
   window: {
     control(action: WindowControlAction): void {
       const w = getCurrentWindow()

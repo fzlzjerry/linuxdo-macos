@@ -59,6 +59,15 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* Inline emoji/images inside the cooked bio stay at text scale. */
+.bio img {
+  max-height: 1.25em;
+  width: auto;
+  vertical-align: -0.25em;
+}
+.bio a {
+  color: var(--accent);
+}
 
 .meta {
   display: flex;

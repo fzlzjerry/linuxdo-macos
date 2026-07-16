@@ -2,12 +2,26 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode, RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import DOMPurify from 'dompurify'
 import { MapPin, User } from 'lucide-react'
 import { Avatar } from '../../components/ui/Avatar'
 import { Button } from '../../components/ui/Button'
 import { useUserProfile } from '../../lib/discourse/queries'
+import { absolutize } from '../../lib/discourse/urls'
 import { relativeTime } from '../../lib/format'
 import styles from './UserCard.module.css'
+
+/** bio_excerpt is cooked HTML (emoji come as <img>) — sanitize it and fix
+ *  relative asset urls instead of dumping the markup as text. */
+export function renderBioHtml(excerpt: string): string {
+  const doc = new DOMParser().parseFromString(DOMPurify.sanitize(excerpt), 'text/html')
+  doc.body.querySelectorAll('img').forEach((img) => {
+    const src = img.getAttribute('src')
+    if (src) img.setAttribute('src', absolutize(src))
+    img.setAttribute('loading', 'lazy')
+  })
+  return doc.body.innerHTML
+}
 
 interface Props {
   username: string
@@ -143,7 +157,12 @@ function CardPanel({
             <div className={styles.pill}>{user.title || user.primary_group_name}</div>
           )}
 
-          {user.bio_excerpt && <p className={styles.bio}>{user.bio_excerpt}</p>}
+          {user.bio_excerpt && (
+            <p
+              className={styles.bio}
+              dangerouslySetInnerHTML={{ __html: renderBioHtml(user.bio_excerpt) }}
+            />
+          )}
 
           <div className={styles.meta}>
             {user.created_at && <span>加入于 {relativeTime(user.created_at)}</span>}
