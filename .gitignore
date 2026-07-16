@@ -10,3 +10,4 @@ release
 # Rust / Tauri build artifacts
 src-tauri/target
 src-tauri/gen/schemas
+out
