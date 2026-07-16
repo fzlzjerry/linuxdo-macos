@@ -31,7 +31,7 @@ npm run dev
 
 发版:往 main 推一个首行带 `[RELEASE] vX.Y.Z` 的提交,CI 会构建 universal dmg 并发布。
 
-设计文档在 [PRODUCT.md](PRODUCT.md) 和 [DESIGN.md](DESIGN.md)。非官方客户端,和 linux.do 官方无关。MIT License。
+设计文档在 [PRODUCT.md](PRODUCT.md) 和 [DESIGN.md](DESIGN.md)。非官方客户端,和 linux.do 官方无关。[MIT License](LICENSE)。
 
 ## 友链
 
