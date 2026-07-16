@@ -52,6 +52,31 @@
   padding: var(--sp-6) 0;
 }
 
+/* Mail-style unread boundary: where reading stopped last time. */
+.unreadDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0;
+}
+.unreadDivider::before,
+.unreadDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: color-mix(in oklch, var(--accent) 55%, transparent);
+}
+
+.unreadLabel {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--r-full);
+  padding: 1px var(--sp-2);
+  white-space: nowrap;
+}
+
 /* Mid-stream gap left by jump-to-bottom — fills top-down on click. */
 .gap {
   display: flex;

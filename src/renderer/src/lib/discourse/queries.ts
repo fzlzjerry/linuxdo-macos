@@ -69,10 +69,12 @@ export function useFlagTypes(enabled: boolean) {
   })
 }
 
-export function useTopic(id: number) {
+export function useTopic(id: number, near?: number) {
   return useQuery({
-    queryKey: ['topic', id],
-    queryFn: () => discourse.topic(id),
+    // `near` anchors the post window (resume-at-unread); each anchor caches
+    // separately, and ['topic', id] stays a shared prefix for cache writes.
+    queryKey: ['topic', id, near ?? 0],
+    queryFn: () => discourse.topic(id, near || undefined),
     enabled: id > 0,
     staleTime: 15_000
   })

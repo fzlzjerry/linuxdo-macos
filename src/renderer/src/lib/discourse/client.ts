@@ -98,6 +98,21 @@ async function request<T>(req: DiscourseRequest): Promise<T> {
   return res.json
 }
 
+/** Like request(), but for endpoints that answer 200 with an empty body
+ *  (e.g. POST /topics/timings) — success without JSON is fine here. */
+async function requestVoid(req: DiscourseRequest): Promise<void> {
+  ensureBridge()
+  const res = await window.api.discourse.request(req)
+  if (res.error) throw new DiscourseApiError(res.error, res.status, !!res.needsAuth)
+  if (!res.ok) {
+    throw new DiscourseApiError(
+      serverError(res.json) ?? `请求失败 (${res.status})`,
+      res.status,
+      !!res.needsAuth || res.status === 401 || res.status === 403
+    )
+  }
+}
+
 function listingPath(filter: ListingFilter, page: number, period: TopPeriod): string {
   const p = `page=${page}`
   switch (filter) {
@@ -186,6 +201,29 @@ export const discourse = {
       path: `/t/${topicId}/posts.json?${q}`
     })
     return res.post_stream.posts
+  },
+
+  /** Reading-time report — marks posts read server-side (clears unread pills,
+   *  syncs with the website). Discourse answers 200 with an empty body.
+   *  `background` marks the final flush when leaving a topic. */
+  topicTimings(
+    topicId: number,
+    topicTime: number,
+    timings: ReadonlyMap<number, number>,
+    background = false
+  ): Promise<void> {
+    const body: Record<string, unknown> = {
+      topic_id: topicId,
+      topic_time: Math.round(topicTime)
+    }
+    for (const [postNumber, ms] of timings) body[`timings[${postNumber}]`] = Math.round(ms)
+    return requestVoid({
+      path: '/topics/timings',
+      method: 'POST',
+      form: true,
+      body,
+      headers: background ? { 'Discourse-Background': 'true' } : undefined
+    })
   },
 
   // ---- Writes (cookie session + CSRF handled in the engine) ----

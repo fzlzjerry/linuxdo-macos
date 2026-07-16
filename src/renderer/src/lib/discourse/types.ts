@@ -36,6 +36,7 @@ export interface TopicListItem {
   unread?: number
   unread_posts?: number
   new_posts?: number
+  last_read_post_number?: number | null
   excerpt?: string
   visible?: boolean
   liked?: boolean
@@ -217,6 +218,7 @@ export interface TopicDetail {
   fancy_title?: string
   posts_count: number
   highest_post_number?: number
+  last_read_post_number?: number | null
   created_at: string
   views: number
   reply_count: number

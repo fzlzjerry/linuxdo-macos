@@ -33,11 +33,16 @@ export function TopicRow({ topic, users }: Props): JSX.Element {
     .map((p) => users.get(p.user_id))
     .filter((u): u is DiscourseUser => !!u)
 
+  // Resume at the first unread post when the server knows where we stopped.
+  const lastRead = topic.last_read_post_number ?? 0
+  const href =
+    unreadCount > 0 && lastRead > 0 ? `/t/${topic.id}?post=${lastRead + 1}` : `/t/${topic.id}`
+
   return (
     <button
       className={styles.row}
       data-row
-      onClick={() => navigate(`/t/${topic.id}`)}
+      onClick={() => navigate(href)}
       aria-label={topic.title}
     >
       <div className={styles.main}>

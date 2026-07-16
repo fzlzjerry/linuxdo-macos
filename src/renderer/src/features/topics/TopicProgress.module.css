@@ -54,3 +54,11 @@
   opacity: 0.5;
   cursor: default;
 }
+
+.jumpUnread {
+  color: var(--accent);
+}
+.jumpUnread:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
