@@ -12,6 +12,9 @@ const RETRY_COOLDOWN_MS = 30_000
 
 function sanitizeOnebox(html: string): string {
   if (!html.trim()) return ''
+  // A real preview is a small fragment carrying an onebox class. A full
+  // HTML document (app shell / interstitial) must never be cached or shown.
+  if (html.trimStart().startsWith('<!DOCTYPE') || !/class="[^"]*onebox/.test(html)) return ''
   const clean = DOMPurify.sanitize(html)
   const doc = new DOMParser().parseFromString(clean, 'text/html')
   doc.body.querySelectorAll('img').forEach((img) => {

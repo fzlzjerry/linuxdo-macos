@@ -647,7 +647,13 @@ export const discourse = {
   async oneboxPreview(url: string): Promise<string> {
     const res = await window.api.discourse.request({
       path: `/onebox?url=${encodeURIComponent(url)}&refresh=false`,
-      fullText: true
+      fullText: true,
+      // GETs don't get this header automatically (engine adds it for writes
+      // only) — without it Discourse's check_xhr answers with the ENTIRE
+      // 1.7MB app shell (splash screen included) instead of the fragment.
+      // Verified live against linux.do: with header → 927B <aside>; without
+      // → full <!DOCTYPE> document.
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
     if (res.error) throw new DiscourseApiError(res.error, res.status, !!res.needsAuth)
     if (res.status === 404) return ''
