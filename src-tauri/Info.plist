@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Embedded into the DEV binary by tauri-build so the Dock/menu bar
+	     show the product name instead of the cargo bin name "linuxdo".
+	     Deliberately NO CFBundleIdentifier here: WebKit keys the dev
+	     cookie jar by process-name fallback — adding an identifier would
+	     re-key storage and drop the dev login session. -->
+	<key>CFBundleName</key>
+	<string>Oh My LinuxDo</string>
+	<key>CFBundleDisplayName</key>
+	<string>Oh My LinuxDo</string>
+</dict>
+</plist>
