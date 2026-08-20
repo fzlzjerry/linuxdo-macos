@@ -2,7 +2,7 @@
 //!
 //! Every custom item forwards its id to the renderer via a single
 //! `menu:action` event on the main window — no business logic lives here.
-//! Only the two Help links are handled natively (opened in the browser).
+//! Only the Help links (opened in the browser) and "显示主窗口" are native.
 
 use tauri::menu::{
     AboutMetadataBuilder, IsMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu,
@@ -115,6 +115,8 @@ pub fn build(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
         &[
             &PredefinedMenuItem::minimize(app, Some("最小化"))?,
             &PredefinedMenuItem::maximize(app, Some("缩放"))?,
+            &PredefinedMenuItem::separator(app)?,
+            &MenuItem::with_id(app, "window.show-main", "显示主窗口", true, None::<&str>)?,
         ],
     )?;
     #[cfg(target_os = "macos")]
@@ -150,6 +152,7 @@ pub fn handle_event(app: &AppHandle, event: MenuEvent) {
     match event.id().0.as_str() {
         "help.site" => open_url(app, SITE_URL),
         "help.repo" => open_url(app, REPO_URL),
+        "window.show-main" => crate::reveal_main(app),
         // Everything else is a renderer concern — forward the id verbatim.
         _ => {
             let _ = app.emit_to("main", "menu:action", event.id().0.clone());
