@@ -1,0 +1,17 @@
+{
+  "name": "Oh My LinuxDo",
+  "install": "npm ci",
+  "terminals": [
+    {
+      "name": "vite",
+      "command": "npm run vite:dev",
+      "description": "Vite dev server for the React renderer on http://localhost:5173. The native Tauri/macOS shell (Rust + WKWebView) only builds on macOS, so on the Linux Cloud Agent this serves the renderer UI for development."
+    }
+  ],
+  "ports": [
+    {
+      "name": "vite",
+      "port": 5173
+    }
+  ]
+}
