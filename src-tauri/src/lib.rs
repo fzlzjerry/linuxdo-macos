@@ -743,16 +743,40 @@ async fn redeem_otp(app: &AppHandle, otp: &str) {
         tokio::time::sleep(Duration::from_millis(700 + 300 * i)).await;
         let s = refresh_auth(app).await;
         if s.get("loggedIn").and_then(|v| v.as_bool()).unwrap_or(false) {
-            if let Some(w) = app.get_webview_window("main") {
-                let _ = w.set_focus();
-            }
+            reveal_main(app);
             return;
         }
     }
     emit_notice(app, "error", "登录未完成：授权码兑换失败，请重新登录");
-    if let Some(w) = app.get_webview_window("main") {
-        let _ = w.set_focus();
-    }
+    reveal_main(app);
+}
+
+/// Show, unminimize, and focus the main window. The red traffic light hides
+/// it (macOS close ≠ quit); Dock click / second launch must bring it back.
+/// Always hops to the main thread — callers include async OTP redemption.
+pub(crate) fn reveal_main(app: &AppHandle) {
+    let app2 = app.clone();
+    let _ = app.run_on_main_thread(move || {
+        if let Some(w) = app2.get_webview_window("main") {
+            let _ = w.show();
+            let _ = w.unminimize();
+            let _ = w.set_focus();
+            return;
+        }
+        // Window was destroyed (should not happen after hide-on-close). Recreate
+        // from the same tauri.conf.json entry used at first launch.
+        let Some(cfg) = app2
+            .config()
+            .app
+            .windows
+            .iter()
+            .find(|w| w.label == "main")
+            .cloned()
+        else {
+            return;
+        };
+        let _ = WebviewWindowBuilder::from_config(&app2, &cfg).and_then(|b| b.build());
+    });
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -764,6 +788,8 @@ pub fn run() {
                     handle_deep_link(app, &arg);
                 }
             }
+            // Finder / Spotlight re-launch of an already-running instance.
+            reveal_main(app);
         }))
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
@@ -772,6 +798,21 @@ pub fn run() {
         .manage(AppState::new())
         .menu(|app| menu::build(app))
         .on_menu_event(|app, event| menu::handle_event(app, event))
+        .on_window_event(|window, event| {
+            if window.label() != "main" {
+                return;
+            }
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                // macOS: red traffic light closes the window, not the app
+                // (issue #1). Hide so React state survives and the Dock icon
+                // can reveal it. Cmd+Q / 退出 still quits. Other platforms
+                // keep destroy-on-close.
+                if cfg!(target_os = "macos") {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
+        })
         .setup(|app| {
             let handle = app.handle().clone();
             let _ = create_engine(&handle);
@@ -812,6 +853,11 @@ pub fn run() {
             open_external,
             fetch_image
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| match event {
+            #[cfg(target_os = "macos")]
+            tauri::RunEvent::Reopen { .. } => reveal_main(app),
+            _ => {}
+        });
 }
